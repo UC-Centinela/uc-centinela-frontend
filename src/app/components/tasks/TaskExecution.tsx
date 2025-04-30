@@ -7,7 +7,6 @@ export default function TaskExecution() {
   const [photos, setPhotos] = useState<File[]>([]);
   const [strategies, setStrategies] = useState<string[]>([]);
   const [comments, setComments] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchStrategies = async () => {
@@ -116,7 +115,11 @@ export default function TaskExecution() {
           <span className="font-semibold">Instrucciones: </span>
           Añade información que sea útil para el Análisis de Riesgo.
         </p>
-        <textarea className="w-full border border-gray-300 rounded-md p-2" placeholder="Añade comentarios"></textarea>
+        {comments.length > 0 ? (
+          <textarea className="w-full border border-gray-300 rounded-md p-2" placeholder="Añade comentarios"></textarea>
+        ) : (
+          <textarea className="w-full border border-gray-300 rounded-md p-2" placeholder="Añade comentarios"></textarea>
+        )}
       </section>
 
       <button className="w-full bg-teal-700 text-white py-2 rounded-md" disabled={!video || photos.length === 0 || strategies.length === 0}>Generar ARTP</button>
