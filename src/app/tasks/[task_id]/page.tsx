@@ -1,11 +1,5 @@
-"use client";
-
-import { useState } from "react";
-import TaskIntro from "@/app/components/tasks/TaskIntro";
-import TaskExecution from "@/app/components/tasks/TaskExecution";
+import TaskIntro from "@/app/tasks/components/TaskIntro";
 
 export default function TaskPage() {
-  const [started, setStarted] = useState(false);
-
-  return started ? <TaskExecution /> : <TaskIntro onStart={() => setStarted(true)} />;
+  return <TaskIntro />;
 }
