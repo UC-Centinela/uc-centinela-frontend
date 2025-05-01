@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function SignInForm() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (data: FormData) => {
