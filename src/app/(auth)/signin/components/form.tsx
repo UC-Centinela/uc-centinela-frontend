@@ -15,6 +15,7 @@ export default function SignInForm() {
     setLoading(true);
     try {
       // TODO: Implementar sign in con Auth0
+      router.push("/tasks");
     } catch (error) {
       setLoading(false);
       console.error("An unexpected error happened:", error);
