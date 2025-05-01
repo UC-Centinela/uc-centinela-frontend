@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { useState } from "react";
 import Image from "next/image";
 
@@ -14,6 +14,7 @@ export default function SignInForm() {
     setLoading(true);
     try {
       // TODO: Implementar sign in con Auth0
+      router.push("/tasks");
     } catch (error) {
       setLoading(false);
       console.error("An unexpected error happened:", error);

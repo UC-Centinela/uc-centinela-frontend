@@ -1,4 +1,4 @@
-import TaskForm from "@/tasks/components/TaskForm";
+import TaskForm from "@/app/tasks/components/TaskForm";
 
 export default function NewTaskPage() {
   return (
