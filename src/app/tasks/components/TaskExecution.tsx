@@ -5,10 +5,6 @@ import { useState } from "react";
 import { ChevronLeft, Info, AlertCircle } from "lucide-react";
 
 export default function TaskExecution() {
-  const [video, setVideo] = useState<File | null>(null);
-  const [photos, setPhotos] = useState<File[]>([]);
-  const [strategies, setStrategies] = useState<string[]>([]);
-  const [comments, setComments] = useState<string>("");
   const router = useRouter();
 
   return (
@@ -174,10 +170,7 @@ export default function TaskExecution() {
           ></textarea>
         </section>
 
-        <button
-          className="w-full bg-teal-700 text-white py-3 rounded-md font-medium text-base mt-6"
-          disabled={!video || photos.length === 0 || strategies.length === 0}
-        >
+        <button className="w-full bg-teal-700 text-white py-3 rounded-md font-medium text-base mt-6">
           Generar ARTP
         </button>
       </div>
