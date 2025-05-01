@@ -4,13 +4,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function SignInForm() {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (data: FormData) => {
+    console.log(data);
     setLoading(true);
     try {
       // TODO: Implementar sign in con Auth0
