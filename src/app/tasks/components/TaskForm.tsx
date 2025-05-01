@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 
-interface TaskFormProps {
-  onSubmit: (title: string) => void;
-}
-
-export default function TaskForm({ onSubmit }: TaskFormProps) {
+export default function TaskForm() {
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
 
@@ -18,7 +14,6 @@ export default function TaskForm({ onSubmit }: TaskFormProps) {
     }
 
     setError("");
-    onSubmit(title.trim());
     setTitle("");
   };
 
@@ -30,7 +25,10 @@ export default function TaskForm({ onSubmit }: TaskFormProps) {
       <h2 className="text-lg font-semibold text-gray-800">Crear Nueva Tarea</h2>
 
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="title"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Título de la Tarea
         </label>
         <input
