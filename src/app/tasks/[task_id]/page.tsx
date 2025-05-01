@@ -1,4 +1,4 @@
-import TaskIntro from "@/app/tasks/components/TaskIntro";
+import TaskIntro from "../components/TaskIntro";
 
 export default function TaskPage() {
   return <TaskIntro />;
