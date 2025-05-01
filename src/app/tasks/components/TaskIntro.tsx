@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, FileText, Edit, Send } from "lucide-react";
+import { ChevronLeft, FileText, Edit } from "lucide-react";
 import React from "react";
 
 export default function TaskIntro() {

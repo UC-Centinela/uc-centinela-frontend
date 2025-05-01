@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function SignInForm() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (data: FormData) => {
