@@ -7,24 +7,24 @@ import { TaskDto } from "@/dtos/task.dto";
 
 export default function TasksList() {
   const [activeTab, setActiveTab] = useState("assigned");
-  const [userSession, setUserSession] = useState<{ isAuthenticated: boolean, role?: string, id?: string }>({ 
+  const [userSession, setUserSession] = useState<{ isAuthenticated: boolean, role?: string, id?: number }>({ 
     isAuthenticated: false 
   });
   const [tasks, setTasks] = useState<TaskDto[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const apiUrl = process.env.NEXT_PUBLIC_GRAPHQL_API_URL;
   const router = useRouter();
 
   useEffect(() => {
     // Check if we're in the browser environment
+    if (!apiUrl) {
+      console.error('GraphQL API URL is not defined');
+      return;
+    }
     if (typeof window !== "undefined") {
       // Function to fetch user data from GraphQL API
       const fetchUserData = async (email: string, token: string) => {
         try {
-          if (!apiUrl) {
-            console.error('GraphQL API URL is not defined');
-            return;
-          }
           const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
@@ -63,20 +63,16 @@ export default function TasksList() {
               role: role,
               id: result.data.getUserByEmail.id,
             });
-            setUserId(result.data.getUserByEmail.id);
-            console.log('User role:', role);
+            return parseInt(result.data.getUserByEmail.id)
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
         }
       };
 
-      const fetchTasks = async (token: string) => {
-        if (!apiUrl) {
-          console.error('GraphQL API URL is not defined');
-          return;
-        }
+      const fetchTasks = async (token: string, userId: number) => {
         try {
+          setIsLoading(true);
           const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
@@ -85,8 +81,8 @@ export default function TasksList() {
             },
             body: JSON.stringify({
               query: `
-                query FindAllTasks {
-                  findAllTasks {
+                query FindTasksByUser($userId: Int!) {
+                  findTasksByUser(userId: $userId) {
                     id
                     title
                     instruction
@@ -100,15 +96,20 @@ export default function TasksList() {
                   }
                 }
               `,
+              variables: {
+                userId: userId,
+              }
             }),
           });
-
           const result = await response.json();
-          if (result.data.findAllTasks) {
-            setTasks(result.data.findAllTasks);
+          console.log('Tasks fetched:', result);
+          if (result.data.findTasksByUser) {
+            setTasks(result.data.findTasksByUser);
           }
         } catch (error) {
           console.error('Error fetching tasks:', error);
+        } finally {
+          setIsLoading(false);
         }
       };
 
@@ -134,8 +135,10 @@ export default function TasksList() {
                 localStorage.setItem('accessToken', accessToken);
                 
                 // Fetch user data from GraphQL API
-                await fetchUserData(session.user.email, accessToken);
-                await fetchTasks(accessToken);
+                const userId = await fetchUserData(session.user.email, accessToken);
+                if (userId) {
+                  await fetchTasks(accessToken, userId);
+                }
               }
               
               setUserSession({ isAuthenticated: true });
@@ -169,9 +172,7 @@ export default function TasksList() {
   };
 
   const filteredTasks = tasks.filter( 
-    (task) =>
-      getStatesByTab(activeTab).includes(task.state) &&
-      task.creatorUserId.toString() === userId
+    (task) => getStatesByTab(activeTab).includes(task.state)
   );
 
   const getStatusName = () => {
@@ -254,7 +255,11 @@ export default function TasksList() {
         </div>
       </div>
       <div className="p-4 space-y-4">
-        {filteredTasks.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin h-12 w-12 rounded-full border-4 border-teal-600 border-t-transparent"></div>
+          </div>
+        ) : filteredTasks.length > 0 ? (
           filteredTasks.map((task) => (
             <div key={task.id} className="bg-white rounded-lg p-4 shadow-sm">
               <h2 className="text-lg font-medium text-teal-700 mb-3">
