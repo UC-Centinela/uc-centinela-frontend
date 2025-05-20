@@ -3,12 +3,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Plus, Calendar, Clock, User, LogOut, LogIn } from "lucide-react";
+import { TaskDto } from "@/dtos/task.dto";
 
 export default function TasksList() {
   const [activeTab, setActiveTab] = useState("assigned");
-  const [userSession, setUserSession] = useState<{ isAuthenticated: boolean, role?: string }>({ 
+  const [userSession, setUserSession] = useState<{ isAuthenticated: boolean, role?: string, id?: string }>({ 
     isAuthenticated: false 
   });
+  const [tasks, setTasks] = useState<TaskDto[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const apiUrl = process.env.NEXT_PUBLIC_GRAPHQL_API_URL;
   const router = useRouter();
 
   useEffect(() => {
@@ -17,7 +21,11 @@ export default function TasksList() {
       // Function to fetch user data from GraphQL API
       const fetchUserData = async (email: string, token: string) => {
         try {
-          const response = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
+          if (!apiUrl) {
+            console.error('GraphQL API URL is not defined');
+            return;
+          }
+          const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -45,18 +53,62 @@ export default function TasksList() {
           });
           
           const result = await response.json();
+          const role = result.data?.getUserByEmail?.role;
           
-          if (result.data?.getUserByEmail?.role) {
+          if (role) {
             // Store role in localStorage
-            localStorage.setItem('userRole', result.data.getUserByEmail.role);
+            localStorage.setItem('userRole', role);
             setUserSession({ 
               isAuthenticated: true, 
-              role: result.data.getUserByEmail.role 
+              role: role,
+              id: result.data.getUserByEmail.id,
             });
-            console.log('User role:', result.data.getUserByEmail.role);
+            setUserId(result.data.getUserByEmail.id);
+            console.log('User role:', role);
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
+        }
+      };
+
+      const fetchTasks = async (token: string) => {
+        if (!apiUrl) {
+          console.error('GraphQL API URL is not defined');
+          return;
+        }
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              query: `
+                query FindAllTasks {
+                  findAllTasks {
+                    id
+                    title
+                    instruction
+                    state
+                    creatorUserId
+                    revisorUserId
+                    comments
+                    changeHistory
+                    assignationDate
+                    requiredSendDate
+                  }
+                }
+              `,
+            }),
+          });
+
+          const result = await response.json();
+          if (result.data.findAllTasks) {
+            setTasks(result.data.findAllTasks);
+          }
+        } catch (error) {
+          console.error('Error fetching tasks:', error);
         }
       };
 
@@ -83,6 +135,7 @@ export default function TasksList() {
                 
                 // Fetch user data from GraphQL API
                 await fetchUserData(session.user.email, accessToken);
+                await fetchTasks(accessToken);
               }
               
               setUserSession({ isAuthenticated: true });
@@ -102,47 +155,39 @@ export default function TasksList() {
     }
   }, []);
 
-  const tasks = [
-    {
-      id: 1,
-      title:
-        "Posicionamiento de cable minero eléctrico sobre el pretil utilizando equipo de apoyo",
-      status: "assigned",
-      assignmentDate: "8/02/25",
-      requiredDate: "12/02/25",
-    },
-    {
-      id: 2,
-      title: "Depositación hidráulica de arenas (Tranque Mauro)",
-      status: "assigned",
-      assignmentDate: "8/02/25",
-      requiredDate: "12/02/25",
-    },
-    {
-      id: 3,
-      title:
-        "Operación carga, traslado y descarga de material con camión tolva (fuera de botadero de ripios)",
-      status: "review",
-      assignmentDate: "8/02/25",
-      requiredDate: "12/02/25",
-    },
-    {
-      id: 4,
-      title:
-        "Posicionamiento de cable minero eléctrico sobre el pretil utilizando equipo de apoyo",
-      status: "assigned",
-      assignmentDate: "8/02/25",
-      requiredDate: "12/02/25",
-    },
-  ];
+  const getStatesByTab = (tab: string) => {
+    switch (tab) {
+      case "assigned":
+        return ["PENDING", "IN_PROGRESS"];
+      case "review":
+        return ["COMPLETED"];
+      case "approved":
+        return ["REVIEWED"];
+      default:
+        return [];
+    }
+  };
 
-  const filteredTasks = tasks.filter((task) => task.status === activeTab);
+  const filteredTasks = tasks.filter( 
+    (task) =>
+      getStatesByTab(activeTab).includes(task.state) &&
+      task.creatorUserId.toString() === userId
+  );
 
   const getStatusName = () => {
     if (activeTab === "assigned") return "asignadas";
     if (activeTab === "review") return "en revisión";
     return "aprobadas";
   };
+
+  function formatDate(dateString: string) {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Fecha inválida';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -218,11 +263,11 @@ export default function TasksList() {
               <div className="flex flex-col gap-2 mb-3">
                 <div className="flex items-center text-sm text-gray-500">
                   <Calendar className="h-4 w-4 mr-2" />
-                  Fecha Asignación: {task.assignmentDate}
+                  Fecha Asignación: {formatDate(task.assignationDate)}
                 </div>
                 <div className="flex items-center text-sm text-gray-500">
                   <Clock className="h-4 w-4 mr-2" />
-                  Fecha Requerida Envío: {task.requiredDate}
+                  Fecha Requerida Envío: {formatDate(task.requiredSendDate)}
                 </div>
               </div>
               <div className="flex justify-end">
