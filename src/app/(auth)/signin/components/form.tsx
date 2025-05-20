@@ -87,7 +87,7 @@ export default function SignInForm() {
             {loading ? "Cargando..." : "Iniciar sesión"}
           </Button>
 
-          <div className="text-center">
+          <div className="text-center mt-4">
             <Link
               href="/forgot-password"
               className="text-[#2C5282] hover:underline text-sm"
@@ -96,6 +96,24 @@ export default function SignInForm() {
             </Link>
           </div>
         </form>
+        
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">O</span>
+          </div>
+        </div>
+        
+        <Link href="/auth/login?returnTo=/tasks" passHref>
+          <Button
+            type="button"
+            className="w-full bg-[#2C5282] hover:bg-[#1e3a5f] text-white py-2 rounded-md transition-colors"
+          >
+            Iniciar Sesión con Auth0
+          </Button>
+        </Link>
       </div>
     </div>
   );
