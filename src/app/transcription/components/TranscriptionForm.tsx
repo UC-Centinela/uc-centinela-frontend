@@ -1,187 +1,193 @@
-"use client";
+'use client'
 
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useRef } from 'react'
+import { gql, useMutation, useLazyQuery } from '@apollo/client'
+import { Buffer } from 'buffer'
+import client from '@/lib/apollo-client'
+import { Button } from '@/components/ui/button'
 
-interface TranscriptionResult {
-  text: string;
-}
+const UPLOAD_VIDEO = gql`
+  mutation UploadVideo($input: UploadVideoInput!) {
+    uploadVideo(input: $input) {
+      id
+      videoUrl
+      audioTranscription
+    }
+  }
+`
 
-// OpenAI Whisper API has a 25MB file size limit
-const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB in bytes
+const FIND_MULTIMEDIA = gql`
+  query FindMultimedia($id: Int!) {
+    findMultimedia(id: $id) {
+      id
+      audioTranscription
+    }
+  }
+`
 
 export default function TranscriptionForm() {
-  const [file, setFile] = useState<File | null>(null);
-  const [fileName, setFileName] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-  const [transcription, setTranscription] = useState<string>('');
-  const [fileSize, setFileSize] = useState<string>('');
-  const [isFileTooLarge, setIsFileTooLarge] = useState<boolean>(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null)
+  const [fileName, setFileName] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [transcription, setTranscription] = useState('')
+  const [mediaId, setMediaId] = useState<number | null>(null)
+  const [pollCount, setPollCount] = useState(0)
+  const [canRetry, setCanRetry] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const taskId = 1
+
+  const [uploadVideo] = useMutation(UPLOAD_VIDEO, { client })
+  const [fetchMultimedia] = useLazyQuery(FIND_MULTIMEDIA, {
+    client,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      const audio = data?.findMultimedia?.audioTranscription
+      if (audio) {
+        setTranscription(audio)
+        setCanRetry(false)
+      } else {
+        if (pollCount < 3) {
+          setPollCount((prev) => prev + 1)
+          setTimeout(() => {
+            fetchMultimedia({ variables: { id: mediaId } })
+          }, 5000)
+        } else {
+          setCanRetry(true)
+          setTranscription('Transcripción aún no disponible. Puedes reintentar manualmente.')
+        }
+      }
+    },
+    onError: (err) => {
+      setError(err.message || 'Error al consultar la transcripción')
+    }
+  })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      // Check if the file is a video or audio file
-      if (!selectedFile.type.startsWith('video/') && !selectedFile.type.startsWith('audio/')) {
-        setError('Por favor selecciona un archivo de video o audio');
-        setFile(null);
-        setFileName('');
-        setFileSize('');
-        setIsFileTooLarge(false);
-        return;
-      }
-      
-      // Format file size for display
-      const fileSizeMB = (selectedFile.size / (1024 * 1024)).toFixed(2);
-      setFileSize(`${fileSizeMB} MB`);
-      
-      // Check if file exceeds size limit
-      const isTooLarge = selectedFile.size > MAX_FILE_SIZE;
-      setIsFileTooLarge(isTooLarge);
-      
-      if (isTooLarge) {
-        setError(`El archivo es demasiado grande (${fileSizeMB} MB). El tamaño máximo permitido es 25 MB.`);
-      } else {
-        setError('');
-      }
-      
-      setFile(selectedFile);
-      setFileName(selectedFile.name);
+    const selectedFile = e.target.files?.[0]
+    if (!selectedFile) return
+
+    if (!selectedFile.type.startsWith('video/') && !selectedFile.type.startsWith('audio/')) {
+      setError('Selecciona un archivo de video o audio válido.')
+      return
     }
-  };
+
+    setFile(selectedFile)
+    setFileName(selectedFile.name)
+    setError('')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+    e.preventDefault()
     if (!file) {
-      setError('Por favor selecciona un archivo para transcribir');
-      return;
-    }
-    
-    if (isFileTooLarge) {
-      setError(`El archivo es demasiado grande (${fileSize}). El tamaño máximo permitido es 25 MB.`);
-      return;
+      setError('Debes seleccionar un archivo.')
+      return
     }
 
-    setIsLoading(true);
-    setError('');
-    setTranscription('');
+    setIsLoading(true)
+    setError('')
+    setTranscription('')
+    setPollCount(0)
+    setCanRetry(false)
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('language', 'es'); // Default to Spanish
+      const buffer = await file.arrayBuffer()
+      const base64 = Buffer.from(buffer).toString('base64')
 
-      const response = await fetch('/api/transcription', {
-        method: 'POST',
-        body: formData,
-      });
+      const result = await uploadVideo({
+        variables: {
+          input: {
+            taskId,
+            filename: file.name,
+            mimetype: file.type,
+            base64
+          }
+        }
+      })
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || data.details || 'Error al procesar la transcripción');
+      const id = result.data?.uploadVideo?.id
+      const immediateTranscription = result.data?.uploadVideo?.audioTranscription
+
+      setMediaId(id)
+
+      if (immediateTranscription) {
+        setTranscription(immediateTranscription)
+      } else {
+        setTranscription('Procesando transcripción...')
+        setTimeout(() => {
+          fetchMultimedia({ variables: { id } })
+        }, 5000)
       }
-
-      setTranscription(data.text);
-    } catch (err) {
-      console.error('Transcription error:', err);
-      setError(err instanceof Error ? err.message : 'Error al procesar la transcripción');
+    } catch (err: any) {
+      console.error('Error:', err)
+      if (err.graphQLErrors?.length > 0) {
+        setError(err.graphQLErrors.map((e: any) => e.message).join('\n'))
+      } else if (err.networkError) {
+        setError('Error de red: ' + err.networkError.message)
+      } else {
+        setError(err.message || 'Error desconocido al subir el video')
+      }
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  const handleBrowseClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handleRetry = () => {
+    if (!mediaId) return
+    setTranscription('Reintentando obtener transcripción...')
+    setPollCount(0)
+    setCanRetry(false)
+    fetchMultimedia({ variables: { id: mediaId } })
+  }
 
   return (
-    <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
-      <div className="mb-6 p-4 bg-blue-50 rounded-md border border-blue-200">
-        <h3 className="text-sm font-medium text-blue-800 mb-1">Información importante:</h3>
-        <ul className="text-sm text-blue-700 list-disc pl-5 space-y-1">
-          <li>El tamaño máximo de archivo permitido es <strong>25 MB</strong></li>
-          <li>Formatos soportados: MP3, MP4, WAV, M4A, WEBM, MP2, AMR, FLAC</li>
-          <li>Para archivos más grandes, considere recortar o comprimir el audio/video</li>
-        </ul>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label htmlFor="file-upload" className="block text-sm font-medium">
-            Archivo de Video o Audio
-          </label>
-          
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:bg-gray-50 transition-colors">
-            <input
-              id="file-upload"
-              type="file"
-              accept="video/*,audio/*"
-              onChange={handleFileChange}
-              className="hidden"
-              ref={fileInputRef}
-            />
-            
-            {!fileName ? (
-              <div className="text-center">
-                <p className="text-sm text-gray-500 mb-2">
-                  Arrastra y suelta un archivo o
-                </p>
-                <Button 
-                  type="button" 
-                  onClick={handleBrowseClick}
-                  variant="outline"
-                >
-                  Seleccionar Archivo
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center">
-                <p className="text-sm text-gray-900 font-medium mb-1">{fileName}</p>
-                {fileSize && (
-                  <p className={`text-xs ${isFileTooLarge ? 'text-red-500 font-medium' : 'text-gray-500'} mb-1`}>
-                    {fileSize} {isFileTooLarge && '(excede el límite de 25 MB)'}
-                  </p>
-                )}
-                <p className="text-xs text-gray-500">
-                  <Button 
-                    type="button" 
-                    onClick={handleBrowseClick} 
-                    variant="link" 
-                    className="p-0 h-auto text-xs"
-                  >
-                    Cambiar archivo
-                  </Button>
-                </p>
-              </div>
-            )}
-          </div>
-          
-          {error && (
-            <p className="text-sm text-red-600 mt-1">{error}</p>
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto">
+      <div>
+        <label className="block mb-2 text-sm font-medium">Archivo de Video o Audio</label>
+        <div className="border border-gray-300 p-4 rounded-md text-center">
+          <input
+            type="file"
+            accept="video/*,audio/*"
+            onChange={handleFileChange}
+            ref={fileInputRef}
+            hidden
+          />
+          {!fileName ? (
+            <>
+              <p className="text-sm text-gray-500 mb-2">Selecciona un archivo</p>
+              <Button type="button" onClick={() => fileInputRef.current?.click()}>
+                Buscar archivo
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-medium">{fileName}</p>
+              <Button type="button" variant="link" onClick={() => fileInputRef.current?.click()}>
+                Cambiar archivo
+              </Button>
+            </>
           )}
         </div>
+        {error && <p className="text-sm text-red-600 mt-2 whitespace-pre-wrap">{error}</p>}
+      </div>
 
-        <Button
-          type="submit"
-          disabled={isLoading || !file || isFileTooLarge}
-          className="w-full"
-        >
-          {isLoading ? 'Procesando...' : 'Transcribir'}
-        </Button>
-      </form>
+      <Button type="submit" className="w-full" disabled={isLoading || !file}>
+        {isLoading ? 'Procesando...' : 'Subir y Transcribir'}
+      </Button>
 
       {transcription && (
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Resultado de la Transcripción</h2>
-          <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-            <p className="whitespace-pre-wrap">{transcription}</p>
-          </div>
+        <div className="mt-6 bg-gray-100 p-4 rounded-md">
+          <h2 className="text-lg font-semibold mb-2">Transcripción</h2>
+          <p className="whitespace-pre-wrap">{transcription}</p>
+          {canRetry && (
+            <div className="mt-4">
+              <Button variant="outline" onClick={handleRetry}>
+                Reintentar consulta
+              </Button>
+            </div>
+          )}
         </div>
       )}
-    </div>
-  );
+    </form>
+  )
 }
