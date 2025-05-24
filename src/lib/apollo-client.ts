@@ -3,7 +3,7 @@ import { createUploadLink } from 'apollo-upload-client'
 
 const client = new ApolloClient({
   link: createUploadLink({
-    uri: process.env.NEXT_PUBLIC_APP_BASE_URL + '/graphql',
+    uri: process.env.NEXT_PUBLIC_GRAPHQL_API_URL || '/api/graphql',
     credentials: 'include',
   }),
   cache: new InMemoryCache(),
