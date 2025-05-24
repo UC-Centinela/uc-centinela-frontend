@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   const body = await request.text()
-  const resp = await fetch(`${process.env.BACKEND_URL}/graphql`, {
+  const resp = await fetch(`${process.env.BACKEND_URL}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
