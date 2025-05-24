@@ -118,9 +118,11 @@ export default function TranscriptionForm() {
           fetchMultimedia({ variables: { id } })
         }, 5000)
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Error:', err)
       if (err.graphQLErrors?.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setError(err.graphQLErrors.map((e: any) => e.message).join('\n'))
       } else if (err.networkError) {
         setError('Error de red: ' + err.networkError.message)
