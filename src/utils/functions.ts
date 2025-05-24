@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth0 } from "@/lib/auth0";
+import { cookies } from "next/headers";
 
 export async function handleUserSession(request: NextRequest) {
   const response = await auth0.middleware(request);
@@ -9,48 +10,25 @@ export async function handleUserSession(request: NextRequest) {
     try {
       const accessToken = session.tokenSet?.accessToken;
       if (accessToken) {
-        const url = new URL(`${request.nextUrl.origin}/api/auth/user`);
-        url.searchParams.set("email", session.user.email);
-        url.searchParams.set("accessToken", accessToken);
+        const newResponse = NextResponse.next();
+        const emailToStore = session.user.email;
 
-        const userResponse = await fetch(url.toString());
+        const cookieStore = await cookies();
+        cookieStore.set("userEmail", emailToStore, {
+          path: "/",
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+        });
 
-        if (userResponse.ok) {
-          const result = await userResponse.json();
+        cookieStore.set("accessToken", accessToken, {
+          path: "/",
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+        });
 
-          if (result.data?.getUserByEmail?.role) {
-            const newResponse = NextResponse.next();
-
-            const emailToStore = session.user.email;
-
-            newResponse.cookies.set("userEmail", emailToStore, {
-              path: "/",
-              httpOnly: true,
-              secure: process.env.NODE_ENV === "production",
-              sameSite: "lax",
-            });
-
-            newResponse.cookies.set(
-              "userRole",
-              result.data.getUserByEmail.role,
-              {
-                path: "/",
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
-              }
-            );
-
-            newResponse.cookies.set("accessToken", accessToken, {
-              path: "/",
-              httpOnly: true,
-              secure: process.env.NODE_ENV === "production",
-              sameSite: "lax",
-            });
-
-            return newResponse;
-          }
-        }
+        return newResponse;
       }
     } catch (error) {
       console.error("Error in handleUserSession:", error);

@@ -1,40 +1,30 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getUserProfile } from "./lib/auth";
+import { getUserProfile } from "./services/users";
 import { handleUserSession } from "./utils/functions";
 
 export async function middleware(request: NextRequest) {
   const response = await handleUserSession(request);
 
-  const emailInCookie = request.cookies.get("userEmail");
-  const accessTokenInCookie = request.cookies.get("accessToken");
+  const user = await getUserProfile();
 
-  // const publicPaths = ["/", "/signin", "/unauthorized", "/auth/login"]; // agrega aquí las rutas públicas
+  const currentPath = request.nextUrl.pathname;
 
-  // if (!accessTokenInCookie && !publicPaths.includes(request.nextUrl.pathname)) {
-  //   return NextResponse.redirect(new URL("/", request.url));
-  // }
+  const publicPaths = ["/", "/unauthorized", "/auth/login"];
 
-  if (emailInCookie && accessTokenInCookie) {
-    const userData = await getUserProfile(
-      emailInCookie.value,
-      accessTokenInCookie.value
-    );
+  if (!user && !publicPaths.includes(request.nextUrl.pathname)) {
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
+  }
 
-    const currentPath = request.nextUrl.pathname;
-
-    if (currentPath === "/menu") {
-      if (userData.data?.getUserByEmail?.role === "roleAdmin") {
-        return NextResponse.redirect(new URL("/unauthorized", request.url));
-      }
+  if (currentPath === "/") {
+    if (user?.data?.getUserByEmail?.role === "roleAdmin") {
+      return NextResponse.redirect(new URL("/tasks", request.url));
     }
+  }
 
-    if (currentPath === "/" || currentPath === "/signin") {
-      if (userData.data?.getUserByEmail?.role === "roleAdmin") {
-        return NextResponse.redirect(new URL("/tasks", request.url));
-      } else {
-        return NextResponse.redirect(new URL("/tasks", request.url));
-      }
+  if (currentPath === "/menu") {
+    if (user?.data?.getUserByEmail?.role === "roleAdmin") {
+      return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
   }
 

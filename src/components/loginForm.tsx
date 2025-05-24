@@ -38,7 +38,7 @@ export default function LoginForm() {
         Plataforma para la gestión y análisis de riesgos en operaciones mineras
       </p>
 
-      <Link href="auth/login?returnTo=/tasks" passHref>
+      <Link href="auth/login?returnTo=/" passHref>
         <button className="w-full bg-[#2C5282] hover:bg-[#1e3a5f] text-white py-3 px-4 rounded-md transition-colors text-lg font-medium">
           Iniciar Sesión
         </button>
