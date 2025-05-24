@@ -1,8 +1,34 @@
 import type { NextRequest } from "next/server";
-import { auth0 } from "./lib/auth0";
+import { NextResponse } from "next/server";
+import { getUserProfile } from "./services/users";
+import { handleUserSession } from "./utils/functions";
 
 export async function middleware(request: NextRequest) {
-  return await auth0.middleware(request);
+  const response = await handleUserSession(request);
+
+  const user = await getUserProfile();
+
+  const currentPath = request.nextUrl.pathname;
+
+  const publicPaths = ["/", "/unauthorized", "/auth/login"];
+
+  if (!user && !publicPaths.includes(request.nextUrl.pathname)) {
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
+  }
+
+  if (currentPath === "/") {
+    if (user?.data?.getUserByEmail?.role === "roleAdmin") {
+      return NextResponse.redirect(new URL("/tasks", request.url));
+    }
+  }
+
+  if (currentPath === "/menu") {
+    if (user?.data?.getUserByEmail?.role === "roleAdmin") {
+      return NextResponse.redirect(new URL("/unauthorized", request.url));
+    }
+  }
+
+  return response;
 }
 
 export const config = {

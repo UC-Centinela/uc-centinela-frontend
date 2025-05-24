@@ -17,11 +17,12 @@ export const metadata: Metadata = {
   description: "Centinela Antofagasta Minerals",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // const user = await getUserProfile();
   return (
     <html lang="en">
       <body
