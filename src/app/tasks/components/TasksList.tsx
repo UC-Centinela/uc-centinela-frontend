@@ -1,106 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Plus, Calendar, Clock, User, LogOut, LogIn } from "lucide-react";
+import { ArrowRight, Plus, Calendar, Clock, User, LogOut } from "lucide-react";
+import { handleLogout } from "@/services/users";
 
 export default function TasksList() {
   const [activeTab, setActiveTab] = useState("assigned");
-  const [userSession, setUserSession] = useState<{ isAuthenticated: boolean, role?: string }>({ 
-    isAuthenticated: false 
-  });
   const router = useRouter();
-
-  useEffect(() => {
-    // Check if we're in the browser environment
-    if (typeof window !== "undefined") {
-      // Function to fetch user data from GraphQL API
-      const fetchUserData = async (email: string, token: string) => {
-        try {
-          const response = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              query: `
-                query GetUserByEmail($email: String!) {
-                  getUserByEmail(email: $email) {
-                    id
-                    firstName
-                    lastName
-                    email
-                    customerId
-                    role
-                    idpId
-                    rut
-                  }
-                }
-              `,
-              variables: {
-                email: email
-              }
-            })
-          });
-          
-          const result = await response.json();
-          
-          if (result.data?.getUserByEmail?.role) {
-            // Store role in localStorage
-            localStorage.setItem('userRole', result.data.getUserByEmail.role);
-            setUserSession({ 
-              isAuthenticated: true, 
-              role: result.data.getUserByEmail.role 
-            });
-            console.log('User role:', result.data.getUserByEmail.role);
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-        }
-      };
-
-      // Check for Auth0 session using the server API endpoint
-      const checkAuth0Session = async () => {
-        try {
-          // Fetch session data from our API endpoint
-          const response = await fetch('/api/session');
-          
-          if (response.ok) {
-            const session = await response.json();
-            
-            if (session && session.user && session.user.email) {
-              // Store email in localStorage
-              localStorage.setItem('userEmail', session.user.email);
-              
-              // Get access token from session
-              const accessToken = session.tokenSet?.accessToken;
-              console.log('Access token:', accessToken ? 'Available' : 'Not available');
-              
-              if (accessToken) {
-                // Store access token in localStorage
-                localStorage.setItem('accessToken', accessToken);
-                
-                // Fetch user data from GraphQL API
-                await fetchUserData(session.user.email, accessToken);
-              }
-              
-              setUserSession({ isAuthenticated: true });
-            } else {
-              setUserSession({ isAuthenticated: false });
-            }
-          } else {
-            setUserSession({ isAuthenticated: false });
-          }
-        } catch (error) {
-          console.error('Error checking Auth0 session:', error);
-          setUserSession({ isAuthenticated: false });
-        }
-      };
-
-      checkAuth0Session();
-    }
-  }, []);
 
   const tasks = [
     {
@@ -154,24 +61,13 @@ export default function TasksList() {
           <button className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
             <User className="h-5 w-5 text-teal-700" />
           </button>
-          {userSession.isAuthenticated ? (
-            <a 
-              href="/auth/logout" 
-              className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center"
-              onClick={() => {
-                // Clean up localStorage before redirecting to logout
-                localStorage.removeItem('userEmail');
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('userRole');
-              }}
-            >
-              <LogOut className="h-5 w-5 text-teal-700" />
-            </a>
-          ) : (
-            <a href="/signin" className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
-              <LogIn className="h-5 w-5 text-teal-700" />
-            </a>
-          )}
+          <a
+            href="/auth/logout"
+            className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center"
+            onClick={() => handleLogout()}
+          >
+            <LogOut className="h-5 w-5 text-teal-700" />
+          </a>
         </div>
       </div>
       <div className="px-4 border-b bg-gray-100">
