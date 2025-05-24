@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { gql, useMutation, useLazyQuery } from '@apollo/client'
+import { gql, useMutation } from '@apollo/client'
 import { Buffer } from 'buffer'
 import client from '@/lib/apollo-client'
-import { Button } from '@/components/ui/button'
 
 const UPLOAD_VIDEO = gql`
   mutation UploadVideo($input: UploadVideoInput!) {
@@ -16,52 +15,26 @@ const UPLOAD_VIDEO = gql`
   }
 `
 
-const FIND_MULTIMEDIA = gql`
-  query FindMultimedia($id: Int!) {
-    findMultimedia(id: $id) {
-      id
-      audioTranscription
-    }
-  }
-`
+export interface TranscriptionResult {
+  mediaId: number | null
+  transcription: string
+  videoUrl?: string | null
+}
 
-export default function TranscriptionForm() {
+interface TranscriptionFormProps {
+  onTranscriptionComplete: (result: TranscriptionResult) => void
+  taskId?: number
+}
+
+export default function TranscriptionForm({ onTranscriptionComplete, taskId }: TranscriptionFormProps) {
   const [file, setFile] = useState<File | null>(null)
   const [fileName, setFileName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [transcription, setTranscription] = useState('')
-  const [mediaId, setMediaId] = useState<number | null>(null)
-  const [pollCount, setPollCount] = useState(0)
-  const [canRetry, setCanRetry] = useState(false)
+  const [showFileInput, setShowFileInput] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const taskId = 1
 
   const [uploadVideo] = useMutation(UPLOAD_VIDEO, { client })
-  const [fetchMultimedia] = useLazyQuery(FIND_MULTIMEDIA, {
-    client,
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      const audio = data?.findMultimedia?.audioTranscription
-      if (audio) {
-        setTranscription(audio)
-        setCanRetry(false)
-      } else {
-        if (pollCount < 3) {
-          setPollCount((prev) => prev + 1)
-          setTimeout(() => {
-            fetchMultimedia({ variables: { id: mediaId } })
-          }, 5000)
-        } else {
-          setCanRetry(true)
-          setTranscription('Transcripción aún no disponible. Puedes reintentar manualmente.')
-        }
-      }
-    },
-    onError: (err) => {
-      setError(err.message || 'Error al consultar la transcripción')
-    }
-  })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -86,9 +59,6 @@ export default function TranscriptionForm() {
 
     setIsLoading(true)
     setError('')
-    setTranscription('')
-    setPollCount(0)
-    setCanRetry(false)
 
     try {
       const buffer = await file.arrayBuffer()
@@ -105,19 +75,21 @@ export default function TranscriptionForm() {
         }
       })
 
-      const id = result.data?.uploadVideo?.id
-      const immediateTranscription = result.data?.uploadVideo?.audioTranscription
+      const uploadedVideo = result.data?.uploadVideo;
+      const id = uploadedVideo?.id;
+      const videoUrl = uploadedVideo?.videoUrl;
+      const immediateTranscription = uploadedVideo?.audioTranscription;
 
-      setMediaId(id)
-
-      if (immediateTranscription) {
-        setTranscription(immediateTranscription)
-      } else {
-        setTranscription('Procesando transcripción...')
-        setTimeout(() => {
-          fetchMultimedia({ variables: { id } })
-        }, 5000)
-      }
+      onTranscriptionComplete({
+        mediaId: id || null,
+        transcription: immediateTranscription || 'Procesando transcripción...',
+        videoUrl: videoUrl
+      })
+      
+      setShowFileInput(false);
+      setFile(null);
+      setFileName('');
+      
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Error:', err)
@@ -134,61 +106,69 @@ export default function TranscriptionForm() {
     }
   }
 
-  const handleRetry = () => {
-    if (!mediaId) return
-    setTranscription('Reintentando obtener transcripción...')
-    setPollCount(0)
-    setCanRetry(false)
-    fetchMultimedia({ variables: { id: mediaId } })
-  }
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto">
-      <div>
-        <label className="block mb-2 text-sm font-medium">Archivo de Video o Audio</label>
-        <div className="border border-gray-300 p-4 rounded-md text-center">
-          <input
-            type="file"
-            accept="video/*,audio/*"
-            onChange={handleFileChange}
-            ref={fileInputRef}
-            hidden
-          />
-          {!fileName ? (
-            <>
-              <p className="text-sm text-gray-500 mb-2">Selecciona un archivo</p>
-              <Button type="button" onClick={() => fileInputRef.current?.click()}>
-                Buscar archivo
-              </Button>
-            </>
-          ) : (
-            <>
-              <p className="text-sm font-medium">{fileName}</p>
-              <Button type="button" variant="link" onClick={() => fileInputRef.current?.click()}>
-                Cambiar archivo
-              </Button>
-            </>
-          )}
+      {showFileInput ? (
+        <div>
+          <div className="border border-gray-300 p-4 rounded-md text-center">
+            <input
+              type="file"
+              accept="video/*,audio/*"
+              onChange={handleFileChange}
+              ref={fileInputRef}
+              hidden
+            />
+            {!fileName ? (
+              <>
+                <p className="text-sm text-gray-500 mb-2">Selecciona un archivo</p>
+                <button 
+                  type="button" 
+                  className="bg-teal-700 text-white py-3 rounded-md font-medium text-base" 
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Buscar archivo
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-medium">{fileName}</p>
+                <button 
+                  type="button" 
+                  className="text-teal-700 underline" 
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Cambiar archivo
+                </button>
+              </>
+            )}
+          </div>
+          {error && <p className="text-sm text-red-600 mt-2 whitespace-pre-wrap">{error}</p>}
         </div>
-        {error && <p className="text-sm text-red-600 mt-2 whitespace-pre-wrap">{error}</p>}
-      </div>
+      ) : null}
 
-      <Button type="submit" className="w-full" disabled={isLoading || !file}>
-        {isLoading ? 'Procesando...' : 'Subir y Transcribir'}
-      </Button>
-
-      {transcription && (
-        <div className="mt-6 bg-gray-100 p-4 rounded-md">
-          <h2 className="text-lg font-semibold mb-2">Transcripción</h2>
-          <p className="whitespace-pre-wrap">{transcription}</p>
-          {canRetry && (
-            <div className="mt-4">
-              <Button variant="outline" onClick={handleRetry}>
-                Reintentar consulta
-              </Button>
-            </div>
-          )}
-        </div>
+      {file ? (
+        <button 
+          type="button" 
+          className="w-full bg-teal-700 text-white py-3 rounded-md font-medium text-base" 
+          disabled={isLoading}
+          onClick={() => handleSubmit(new Event('submit') as any)}
+        >
+          {isLoading ? 'Procesando...' : 'Subir y Transcribir'}
+        </button>
+      ) : (
+        <>
+          <button 
+            type="button" 
+            className="w-full border border-teal-700 text-teal-700 py-3 rounded-md font-medium text-base mb-3" 
+            disabled={isLoading}
+            onClick={() => {
+              setShowFileInput(true);
+              setTimeout(() => fileInputRef.current?.click(), 100);
+            }}
+          >
+            Subir video
+          </button>
+        </>
       )}
     </form>
   )

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, FileText, Edit } from "lucide-react";
 import React from "react";
 
-export default function TaskIntro() {
+export default function TaskIntro({ taskId }: { taskId?: string }) {
   const router = useRouter();
 
   const steps = [
@@ -82,7 +82,7 @@ export default function TaskIntro() {
 
         <div className="p-4 w-full mt-8 md:mt-auto pb-8">
           <Button
-            onClick={() => router.push("/tasks/id/risk_analysis")}
+            onClick={() => router.push(`/tasks/${taskId || 'id'}/risk_analysis`)}
             className="w-full md:max-w-xs md:mx-auto md:block bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg mb-4 flex items-center justify-center h-12"
           >
             Comenzar Análisis de Riesgo

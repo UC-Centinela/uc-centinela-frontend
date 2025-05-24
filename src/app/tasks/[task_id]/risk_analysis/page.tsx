@@ -1,5 +1,34 @@
 import TaskExecution from "../../components/TaskExecution";
+import { gql } from "@apollo/client";
+import client from "@/lib/apollo-client";
 
-export default function RiskAnalysis() {
-  return <TaskExecution />;
+const FIND_MULTIMEDIA_BY_TASK_ID = gql`
+  query FindMultimediaByTaskId($taskId: Int!) {
+    findMultimediaByTaskId(taskId: $taskId) {
+      id
+      taskId
+      photoUrl
+      videoUrl
+      audioTranscription
+    }
+  }
+`;
+
+async function getMultimediaData(taskId: string) {
+  try {
+    const { data } = await client.query({
+      query: FIND_MULTIMEDIA_BY_TASK_ID,
+      variables: { taskId: Number(taskId) },
+    });
+    return data.findMultimediaByTaskId;
+  } catch (error) {
+    console.error("Error fetching multimedia data:", error);
+    return [];
+  }
+}
+
+export default async function RiskAnalysis({ params }: { params: { task_id: string } }) {
+  const multimediaData = await getMultimediaData(params.task_id);
+  
+  return <TaskExecution taskId={params.task_id} multimediaData={multimediaData} />;
 }
