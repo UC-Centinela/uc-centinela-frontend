@@ -2,22 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-
-  if (isLoading) {
-    return (
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2C5282]"></div>
-        <p className="mt-4 text-gray-600">Cargando...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="text-center max-w-md w-full bg-white p-8 rounded-lg shadow-md">
       <div className="mb-8 flex justify-center">

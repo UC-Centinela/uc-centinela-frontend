@@ -23,7 +23,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getUserProfile();
+  // const user = await getUserProfile();
   return (
     <html lang="en">
       <body

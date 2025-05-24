@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
 export async function GET(request: Request) {
   // Extract any auth tokens or session data from the request if needed

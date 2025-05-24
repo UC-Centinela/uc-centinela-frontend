@@ -10,6 +10,7 @@ export const getTokenAndEmail = async () => {
     const email = cookieStore.get("userEmail")?.value;
     return { accessToken, email };
   } catch (error) {
+    console.error("Error getting token and email:", error);
     return null;
   }
 };
@@ -95,6 +96,7 @@ export async function getUserProfile(): Promise<GetUserProfileResponse | null> {
     const result = await response.json();
     return result;
   } catch (error) {
+    console.error("Error getting user profile:", error);
     return null;
   }
 }
