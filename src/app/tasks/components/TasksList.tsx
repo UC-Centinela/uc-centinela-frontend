@@ -5,51 +5,54 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Plus, Calendar, Clock, User, LogOut } from "lucide-react";
 import { handleLogout } from "@/services/users";
 
-export default function TasksList() {
+interface Task {
+  id: string;
+  title: string;
+  instruction: string;
+  state: string;
+  creatorUserId: string;
+  revisorUserId: string;
+  comments: string;
+  changeHistory: string;
+  assignationDate: string;
+  requiredSendDate: string;
+}
+
+export default function TasksList({ tasks }: { tasks: Task[] }) {
   const [activeTab, setActiveTab] = useState("assigned");
   const router = useRouter();
 
-  const tasks = [
-    {
-      id: 1,
-      title:
-        "Posicionamiento de cable minero eléctrico sobre el pretil utilizando equipo de apoyo",
-      status: "assigned",
-      assignmentDate: "8/02/25",
-      requiredDate: "12/02/25",
-    },
-    {
-      id: 2,
-      title: "Depositación hidráulica de arenas (Tranque Mauro)",
-      status: "assigned",
-      assignmentDate: "8/02/25",
-      requiredDate: "12/02/25",
-    },
-    {
-      id: 3,
-      title:
-        "Operación carga, traslado y descarga de material con camión tolva (fuera de botadero de ripios)",
-      status: "review",
-      assignmentDate: "8/02/25",
-      requiredDate: "12/02/25",
-    },
-    {
-      id: 4,
-      title:
-        "Posicionamiento de cable minero eléctrico sobre el pretil utilizando equipo de apoyo",
-      status: "assigned",
-      assignmentDate: "8/02/25",
-      requiredDate: "12/02/25",
-    },
-  ];
+  const getStatesByTab = (tab: string) => {
+    switch (tab) {
+      case "assigned":
+        return ["PENDING", "IN_PROGRESS"];
+      case "review":
+        return ["COMPLETED"];
+      case "approved":
+        return ["REVIEWED"];
+      default:
+        return [];
+    }
+  };
 
-  const filteredTasks = tasks.filter((task) => task.status === activeTab);
+  const filteredTasks = tasks.filter( 
+    (task) => getStatesByTab(activeTab).includes(task.state)
+  );
 
   const getStatusName = () => {
     if (activeTab === "assigned") return "asignadas";
     if (activeTab === "review") return "en revisión";
     return "aprobadas";
   };
+
+  function formatDate(dateString: string) {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Fecha inválida";
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -114,11 +117,11 @@ export default function TasksList() {
               <div className="flex flex-col gap-2 mb-3">
                 <div className="flex items-center text-sm text-gray-500">
                   <Calendar className="h-4 w-4 mr-2" />
-                  Fecha Asignación: {task.assignmentDate}
+                  Fecha Asignación: {formatDate(task.assignationDate)}
                 </div>
                 <div className="flex items-center text-sm text-gray-500">
                   <Clock className="h-4 w-4 mr-2" />
-                  Fecha Requerida Envío: {task.requiredDate}
+                  Fecha Requerida Envío: {formatDate(task.requiredSendDate)}
                 </div>
               </div>
               <div className="flex justify-end">

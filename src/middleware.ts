@@ -15,9 +15,9 @@ export async function middleware(request: NextRequest) {
   if (!user && !publicPaths.includes(request.nextUrl.pathname)) {
     return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
-
+  
   if (currentPath === "/") {
-    if (user?.data?.getUserByEmail?.role === "roleAdmin") {
+    if (user?.data?.getUserByEmail?.role === "roleOperator") {
       return NextResponse.redirect(new URL("/tasks", request.url));
     }
   }
