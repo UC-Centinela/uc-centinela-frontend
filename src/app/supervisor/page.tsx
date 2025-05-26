@@ -1,11 +1,18 @@
 import { SupervisorDashboard } from "./components/SupervisorDashboard"
-import { getUsers } from "@/services/users"
-import { getAllTasks } from "@/services/task"
+import { getUsers, getUserProfile } from "@/services/users"
+import { getTaskByReviewer } from "@/services/task"
 
 async function SupervisorPage() {
+  const userProfile = await getUserProfile();
+  const userId = userProfile?.data?.getUserByEmail?.id;
+
+  if (!userId) {
+    return null;
+  }
+
   const [users, tasks] = await Promise.all([
     getUsers(),
-    getAllTasks()
+    getTaskByReviewer(Number(userId))
   ])
 
   return (
