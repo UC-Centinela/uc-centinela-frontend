@@ -3,7 +3,7 @@ services:
     container_name: web-centinela
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: dev/Dockerfile
     environment:
       NODE_ENV: development
     ports:
@@ -14,7 +14,7 @@ services:
       - ./:/usr/src/app
       - /usr/src/app/node_modules
     env_file:
-      - .env
+      - .env.local
 
 networks:
   centinela-network:
