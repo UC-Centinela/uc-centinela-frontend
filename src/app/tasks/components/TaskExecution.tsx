@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { ChevronLeft, Info, AlertCircle, CheckCircle } from "lucide-react";
 import TranscriptionForm from "@/app/transcription/components/TranscriptionForm";
-import TranscriptionDisplay from "@/app/transcription/components/TranscriptionDisplay";
 import type { TranscriptionResult } from "@/app/transcription/components/TranscriptionForm";
 
 interface MultimediaData {

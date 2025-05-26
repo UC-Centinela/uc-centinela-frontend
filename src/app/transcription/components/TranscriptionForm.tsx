@@ -151,6 +151,7 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
           type="button" 
           className="w-full bg-teal-700 text-white py-3 rounded-md font-medium text-base" 
           disabled={isLoading}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onClick={() => handleSubmit(new Event('submit') as any)}
         >
           {isLoading ? 'Procesando...' : 'Subir y Transcribir'}

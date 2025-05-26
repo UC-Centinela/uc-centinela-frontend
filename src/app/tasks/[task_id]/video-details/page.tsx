@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
-import TranscriptionDisplay from '@/app/transcription/components/TranscriptionDisplay'
+import Image from 'next/image'
 import type { TranscriptionResult } from '@/app/transcription/components/TranscriptionForm'
 import { gql } from '@apollo/client'
 import client from '@/lib/apollo-client'
@@ -21,17 +21,16 @@ const FIND_MULTIMEDIA_BY_TASK_ID = gql`
   }
 `;
 
-async function getMultimediaData(taskId: string) {
-  try {
-    const { data } = await client.query({
-      query: FIND_MULTIMEDIA_BY_TASK_ID,
-      variables: { taskId: Number(taskId) },
+function getMultimediaData(taskId: string) {
+  return client.query({
+    query: FIND_MULTIMEDIA_BY_TASK_ID,
+    variables: { taskId: Number(taskId) },
+  })
+    .then(({ data }) => data.findMultimediaByTaskId)
+    .catch(error => {
+      console.error("Error fetching multimedia data:", error);
+      return [];
     });
-    return data.findMultimediaByTaskId;
-  } catch (error) {
-    console.error("Error fetching multimedia data:", error);
-    return [];
-  }
 }
 
 interface MultimediaData {
@@ -42,10 +41,31 @@ interface MultimediaData {
   audioTranscription: string | null;
 }
 
-export default async function VideoDetailsPage({ params }: { params: { task_id: string } }) {
+export default function VideoDetailsPage({ params }: { params: { task_id: string } }) {
   const taskId = params.task_id;
-  const multimediaData = await getMultimediaData(taskId);
-  const videoData = multimediaData.find(item => item.videoUrl);
+  const [videoData, setVideoData] = useState<MultimediaData | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    getMultimediaData(taskId)
+      .then(multimediaData => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const video = multimediaData.find((item: any) => item.videoUrl);
+        setVideoData(video);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false);
+      });
+  }, [taskId]);
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-700"></div>
+      </div>
+    );
+  }
   
   return <VideoDetailsClient taskId={taskId} videoData={videoData} />;
 }
@@ -126,12 +146,15 @@ function VideoDetailsClient({ taskId, videoData }: { taskId: string, videoData?:
                     <div className="w-0 h-0 border-t-8 border-t-transparent border-l-16 border-l-teal-700 border-b-8 border-b-transparent ml-1"></div>
                   </div>
                 </div>
-                <img 
+                <Image 
                   src="/video-thumbnail.jpg" 
                   alt="Video thumbnail" 
                   className="w-full h-full object-cover"
+                  width={640}
+                  height={360}
                   onError={(e) => {
-                    e.currentTarget.src = 'https://via.placeholder.com/640x360?text=Video+Preview';
+                    const imgElement = e.currentTarget as HTMLImageElement;
+                    imgElement.src = 'https://via.placeholder.com/640x360?text=Video+Preview';
                   }}
                 />
               </>
@@ -192,7 +215,7 @@ function VideoDetailsClient({ taskId, videoData }: { taskId: string, videoData?:
                     <span className="font-medium">Posible contaminación:</span> La apariencia del suelo podría sugerir la presencia de químicos o residuos, lo que implicaría riesgos para la salud.
                   </li>
                   <li>
-                    <span className="font-medium">Falta de señalización adicional:</span> Aunque hay un letrero de "Pare", no se observan más señales que indiquen riesgos específicos, lo que podría generar confusión en conductores o peatones.
+                    <span className="font-medium">Falta de señalización adicional:</span> Aunque hay un letrero de &quot;Pare&quot;, no se observan más señales que indiquen riesgos específicos, lo que podría generar confusión en conductores o peatones.
                   </li>
                 </ul>
               </div>
