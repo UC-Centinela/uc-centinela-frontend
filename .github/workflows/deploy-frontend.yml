@@ -1,0 +1,36 @@
+name: Deploy Frontend to IBM Cloud Code Engine
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install IBM Cloud CLI
+        run: |
+          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+          ibmcloud plugin install code-engine
+          ibmcloud plugin install container-registry
+
+      - name: Authenticate with IBM Cloud
+        run: |
+          ibmcloud login --apikey ${{ secrets.IBM_CLOUD_API_KEY }}
+          ibmcloud target -r us-south -g Entel-Centinela
+          ibmcloud cr login
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t us.icr.io/uc-centinela-backend/frontend-app:latest .
+          docker push us.icr.io/uc-centinela-backend/frontend-app:latest
+
+      - name: Update Code Engine Application
+        run: |
+          ibmcloud ce project select --name uc-centinela-backend-prod
+          ibmcloud ce application update --name uc-centinela-frontend-prod --build-source https://github.com/UC-Centinela/uc-centinela-frontend --build-strategy dockerfile
