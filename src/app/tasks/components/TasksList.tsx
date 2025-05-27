@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Calendar, Clock, LogOut } from "lucide-react";
+import { ArrowRight, Plus, Calendar, Clock, User, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { handleLogout } from "@/services/users";
 
 interface Task {
@@ -60,21 +61,30 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
           Tareas asignadas
         </h1>
         <div className="flex gap-2 mt-4">
-          {/* <button className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
-            <User className="h-5 w-5 text-teal-700" />
-          </button> */}
-          <a
-            href="/auth/logout"
-            className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center"
-            onClick={() => handleLogout()}
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full bg-teal-100 text-teal-700"
           >
-            <LogOut className="h-5 w-5 text-teal-700" />
-          </a>
+            <User className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full bg-teal-100 text-teal-700"
+            onClick={() => handleLogout()}
+            asChild
+          >
+            <a href="/auth/logout">
+              <LogOut className="h-5 w-5" />
+            </a>
+          </Button>
         </div>
       </div>
       <div className="px-4 border-b bg-gray-100">
         <div className="flex text-sm justify-center">
-          <button
+          <Button
+            variant="ghost"
             className={`py-3 px-4 ${
               activeTab === "assigned"
                 ? "border-b-2 border-teal-700 font-medium text-black"
@@ -83,8 +93,9 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
             onClick={() => setActiveTab("assigned")}
           >
             Asignadas
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
             className={`py-3 px-4 ${
               activeTab === "review"
                 ? "border-b-2 border-teal-700 font-medium text-black"
@@ -93,8 +104,9 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
             onClick={() => setActiveTab("review")}
           >
             En Revisión
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
             className={`py-3 px-4 ${
               activeTab === "approved"
                 ? "border-b-2 border-teal-700 font-medium text-black"
@@ -103,7 +115,7 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
             onClick={() => setActiveTab("approved")}
           >
             Aprobadas
-          </button>
+          </Button>
         </div>
       </div>
       <div className="p-4 space-y-4">
@@ -124,12 +136,13 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
                 </div>
               </div>
               <div className="flex justify-end">
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => router.push(`/tasks/${task.id}`)}
-                  className="text-sm text-red-400 flex items-center hover:text-red-600 transition"
+                  className="text-sm text-red-500"
                 >
                   Ver Detalles <ArrowRight className="h-4 w-4 ml-1" />
-                </button>
+                </Button>
               </div>
             </div>
           ))
@@ -139,14 +152,16 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
           </div>
         )}
       </div>
-      {/* <div className="fixed bottom-6 right-6">
-        <button
+      <div className="fixed bottom-6 right-6">
+        <Button
+          variant="destructive"
+          size="icon"
           onClick={() => router.push("/tasks/item")}
-          className="w-14 h-14 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg transition hover:bg-red-700"
+          className="w-14 h-14 rounded-full"
         >
           <Plus className="h-7 w-7" />
-        </button>
-      </div> */}
+        </Button>
+      </div>
     </div>
   );
 }

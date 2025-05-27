@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function TaskForm() {
   const [title, setTitle] = useState("");
@@ -42,12 +43,12 @@ export default function TaskForm() {
         {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
       </div>
 
-      <button
+      <Button
         type="submit"
-        className="w-full bg-teal-700 text-white py-2 rounded-md hover:bg-teal-800 transition"
+        className="w-full text-lg h-12"
       >
         Crear Tarea
-      </button>
+      </Button>
     </form>
   );
 }

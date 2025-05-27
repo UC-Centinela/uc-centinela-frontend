@@ -1,5 +1,6 @@
 import { ShieldAlert } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function UnauthorizedPage() {
   return (
@@ -13,9 +14,9 @@ export default function UnauthorizedPage() {
           Si crees que esto es un error, contacta al administrador.
         </p>
         <Link href="/" passHref>
-          <button className="mt-4 px-6 py-2 bg-teal-600 text-white rounded-md shadow hover:bg-teal-700 transition">
+          <Button className="mt-4">
             Volver al inicio
-          </button>
+          </Button>
         </Link>
       </div>
     </main>
