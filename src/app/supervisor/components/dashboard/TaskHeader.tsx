@@ -14,7 +14,6 @@ interface HeaderProps {
 
 export function Header({ children, onTabChange }: HeaderProps) {
   const [currentTab, setCurrentTab] = useState("all-tasks");
-  const router = useRouter();
 
   const handleTabChange = (value: string) => {
     setCurrentTab(value);
