@@ -4,7 +4,6 @@ import { useState } from "react";
 import type React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { handleLogout } from "@/services/users";
 
 interface HeaderProps {
