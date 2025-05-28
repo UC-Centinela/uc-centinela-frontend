@@ -25,11 +25,6 @@ jobs:
           ibmcloud target -r us-south -g Entel-Centinela
           ibmcloud cr login
 
-      - name: Build and Push Docker Image
-        run: |
-          docker build -t us.icr.io/uc-centinela-backend/frontend-app:latest .
-          docker push us.icr.io/uc-centinela-backend/frontend-app:latest
-
       - name: Update Code Engine Application
         run: |
           ibmcloud ce project select --name uc-centinela-backend-prod
