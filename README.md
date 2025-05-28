@@ -1,5 +1,21 @@
 # Web Centinela
 
+## Actualización
+
+Para correr el código deben hacer lo siguiente:
+
+```bash
+docker build -t centinela-frontend .
+```
+
+Y luego
+
+```bash
+docker run -p 3000:3000 centinela-frontend
+```
+
+Para ejecutar la aplicación en el puerto 3000
+
 ## Descripción General
 
 Este proyecto consta de dos servicios principales: `api` y `web`. Estos son orquestados utilizando Docker y se gestionan a través de un proxy inverso con NGINX. El servicio `api` se construye usando NestJs, mientras que `webs` usa el framework Next.js.
