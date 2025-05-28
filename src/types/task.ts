@@ -1,7 +1,45 @@
+export type TaskState = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "REVIEWED";
+
 export interface Task {
     id: string;
     title: string;
-    assignmentDate: string;
-    dueDate: string;
-    status: 'assigned' | 'review' | 'aprroved';
-};
+    assignationDate: string;
+    requiredSendDate: string;
+    state: TaskState;
+    creatorUserId: number;
+    changeHistory: TaskHistoryItem[];
+    comments: TaskComment[];
+    instruction: string;
+    revisorUserId: number;
+}
+
+export interface TaskComment {
+    id: string;
+    comment: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface TaskHistoryItem {
+    id: string;
+    action: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface TaskStatusData {
+    status: TaskState[];
+    label: string;
+    count: number;
+    color: string;
+}
+
+export interface TaskFilters {
+    state?: TaskState[];
+    assignedTo?: number;
+    createdBy?: number;
+    dateRange?: {
+        start: Date;
+        end: Date;
+    };
+} 
