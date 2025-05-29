@@ -117,7 +117,7 @@ function VideoDetailsClient({ taskId, videoData }: { taskId: string, videoData?:
     <div className="min-h-screen bg-gray-100 pb-6">
       <div className="bg-white p-4 shadow-sm">
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push(`/tasks/${taskId}/risk_analysis`)}
           className="text-base text-red-500 mb-2 flex items-center font-medium"
         >
           <ChevronLeft className="h-5 w-5 mr-1" /> Volver
