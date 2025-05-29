@@ -208,7 +208,7 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
         <>
           <button 
             type="button" 
-            className="w-full border border-teal-700 text-teal-700 py-3 rounded-md font-medium text-base mb-3" 
+            className="w-full bg-teal-700 text-white py-3 rounded-md font-medium text-base"
             disabled={isLoading}
             onClick={() => {
               setShowFileInput(true);
