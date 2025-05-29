@@ -37,9 +37,9 @@ export function Header({ children, onTabChange }: HeaderProps) {
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            <button className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
+            {/* <button className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
               <User className="h-5 w-5 text-teal-700" />
-            </button>
+            </button> */}
             <a
               href="/auth/logout"
               className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center"

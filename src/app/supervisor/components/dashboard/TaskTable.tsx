@@ -57,7 +57,7 @@ export function TaskTable({ tasks, users, onViewDetails, onExportPDF, onExportEx
             <TableHead>Estado</TableHead>
             <TableHead>Responsable</TableHead>
             <TableHead>Revisor</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
+            {/* <TableHead className="text-right">Acciones</TableHead> */}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -69,7 +69,7 @@ export function TaskTable({ tasks, users, onViewDetails, onExportPDF, onExportEx
               <TableCell>{renderStatusBadge(task.state)}</TableCell>
               <TableCell>{getUserName(task.creatorUserId)}</TableCell>
               <TableCell>{getUserName(task.revisorUserId)}</TableCell>
-              <TableCell>
+              {/* <TableCell>
                 <div className="flex justify-end gap-2">
                   <Button 
                     variant="ghost" 
@@ -96,7 +96,7 @@ export function TaskTable({ tasks, users, onViewDetails, onExportPDF, onExportEx
                     <FileSpreadsheet className="h-4 w-4" />
                   </Button>
                 </div>
-              </TableCell>
+              </TableCell> */}
             </TableRow>
           ))}
         </TableBody>

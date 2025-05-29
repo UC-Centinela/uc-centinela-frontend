@@ -106,7 +106,7 @@ export function TaskFilters({
           Filtros
         </Button>
         <div className="flex gap-2">
-          <Button
+          {/* <Button
             variant="outline"
             className="flex items-center gap-2"
             onClick={onExportExcel}
@@ -121,7 +121,7 @@ export function TaskFilters({
           >
             <FileText size={16} />
             Exportar a PDF
-          </Button>
+          </Button> */}
         </div>
       </div>
 

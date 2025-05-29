@@ -61,9 +61,9 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
           Tareas asignadas
         </h1>
         <div className="flex gap-2 mt-4">
-          <button className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
+          {/* <button className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
             <User className="h-5 w-5 text-teal-700" />
-          </button>
+          </button> */}
           <a
             href="/auth/logout"
             className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center"
