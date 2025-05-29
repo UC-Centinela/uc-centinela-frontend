@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { gql, useMutation } from '@apollo/client'
 import { Buffer } from 'buffer'
 import client from '@/lib/apollo-client'
@@ -82,22 +82,31 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
       const videoUrl = uploadedVideo?.videoUrl;
       const immediateTranscription = uploadedVideo?.audioTranscription;
 
-      if (taskId) {
-        // Force a hard redirect to completely bypass React's rendering cycle
-        document.body.style.cursor = 'wait';
-        window.location.replace(`/tasks/${taskId}/video-details`);
-        return;
-      }
-      
       onTranscriptionComplete({
         mediaId: id || null,
         transcription: immediateTranscription || 'Procesando transcripción...',
         videoUrl: videoUrl
-      })
+      });
       
       setShowFileInput(false);
       setFile(null);
       setFileName('');
+      
+      if (taskId) {
+        try {
+          document.body.style.cursor = 'wait';
+          
+          setTimeout(() => {
+            const detailsUrl = `/tasks/${taskId}/video-details`;
+            console.log('Redirecting to:', detailsUrl);
+            window.location.href = detailsUrl;
+          }, 300);
+          
+          return;
+        } catch (redirectError) {
+          console.error('Redirect error:', redirectError);
+        }
+      }
       
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -115,6 +124,22 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
       setIsLoading(false);
     }
   }
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isProcessing) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isProcessing]);
 
   if (isProcessing) {
     return (
