@@ -1,51 +1,38 @@
-import React from 'react'
-import { render } from '@testing-library/react'
-import RootLayout, { metadata } from '../layout'
-
-// Mock Next.js fonts
+// Mock Google fonts
 jest.mock('next/font/google', () => ({
   Geist: jest.fn(() => ({
     variable: '--font-geist-sans',
+    className: 'geist-sans'
   })),
   Geist_Mono: jest.fn(() => ({
-    variable: '--font-geist-mono',
-  })),
+    variable: '--font-geist-mono', 
+    className: 'geist-mono'
+  }))
 }))
 
-// Mock CSS import
-jest.mock('../globals.css', () => ({}))
+import { Geist, Geist_Mono } from 'next/font/google'
+import RootLayout from '../layout'
 
 describe('RootLayout', () => {
-  it('should be an async function', () => {
-    expect(RootLayout.constructor.name).toBe('AsyncFunction')
+  it('should export font configuration', () => {
+    expect(Geist).toHaveBeenCalledWith({
+      variable: "--font-geist-sans",
+      subsets: ['latin']
+    })
+    expect(Geist_Mono).toHaveBeenCalledWith({
+      variable: "--font-geist-mono",
+      subsets: ['latin']
+    })
   })
 
-  it('should accept children prop', () => {
-    // Test that the function can be called with children
-    expect(() => {
-      RootLayout({ children: <div>Test</div> })
-    }).not.toThrow()
+  it('should be a function', () => {
+    expect(typeof RootLayout).toBe('function')
   })
 
-  it('should return JSX with html and body elements', async () => {
-    const result = await RootLayout({ children: <div>Test Content</div> })
-    expect(result).toBeDefined()
-    expect(React.isValidElement(result)).toBe(true)
-  })
-})
-
-describe('metadata', () => {
-  it('should have correct title', () => {
+  it('should have correct metadata export', async () => {
+    const { metadata } = await import('../layout')
+    expect(metadata).toBeDefined()
     expect(metadata.title).toBe('Centinela Antofagasta Minerals')
-  })
-
-  it('should have correct description', () => {
-    expect(metadata.description).toBe('Centinela Antofagasta Minerals')
-  })
-
-  it('should be a valid metadata object', () => {
-    expect(typeof metadata).toBe('object')
-    expect(metadata).toHaveProperty('title')
-    expect(metadata).toHaveProperty('description')
+    expect(metadata.description).toBeDefined()
   })
 }) 

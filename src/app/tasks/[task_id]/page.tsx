@@ -1,5 +1,6 @@
 import TaskIntro from "@/app/tasks/components/TaskIntro";
 
-export default function TaskPage({ params }: { params: { task_id: string } }) {
-  return <TaskIntro taskId={params.task_id} />;
+export default async function TaskPage({ params }: { params: Promise<{ task_id: string }> }) {
+  const { task_id } = await params;
+  return <TaskIntro taskId={task_id} />;
 }

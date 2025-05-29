@@ -1,10 +1,18 @@
+interface MultimediaItem {
+  id: number
+  taskId: number
+  photoUrl?: string | null
+  videoUrl?: string | null
+  audioTranscription?: string | null
+}
+
 // Mock dependencies
 jest.mock('../../../components/TaskExecution', () => {
-  return function MockTaskExecution({ taskId, multimediaData }: any) {
+  return function MockTaskExecution({ taskId, multimediaData }: { taskId: string; multimediaData: MultimediaItem[] }) {
     return (
       <div data-testid="task-execution">
         TaskExecution with taskId: {taskId}, multimedia count: {multimediaData?.length || 0}
-        {multimediaData?.map((item: any) => (
+        {multimediaData?.map((item: MultimediaItem) => (
           <div key={item.id} data-testid={`multimedia-${item.id}`}>
             {item.videoUrl || item.photoUrl}
           </div>
@@ -28,9 +36,17 @@ import client from '@/lib/apollo-client'
 import RiskAnalysis from '../page'
 import '@testing-library/jest-dom'
 
+interface GraphQLResponse {
+  data: {
+    findMultimediaByTaskId: MultimediaItem[] | null
+  }
+  loading: boolean
+  networkStatus: number
+}
+
 const mockClient = client as jest.Mocked<typeof client>
 
-const mockMultimediaData = [
+const mockMultimediaData: MultimediaItem[] = [
   {
     id: 1,
     taskId: 123,
@@ -47,6 +63,9 @@ const mockMultimediaData = [
   }
 ]
 
+// Helper function to create async params for Next.js 15
+const createAsyncParams = (task_id: string) => Promise.resolve({ task_id })
+
 describe('RiskAnalysis', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -59,9 +78,9 @@ describe('RiskAnalysis', () => {
       },
       loading: false,
       networkStatus: 7
-    } as any)
+    } as GraphQLResponse)
 
-    const params = { task_id: '123' }
+    const params = createAsyncParams('123')
     const RiskAnalysisComponent = await RiskAnalysis({ params })
     render(RiskAnalysisComponent)
 
@@ -78,9 +97,9 @@ describe('RiskAnalysis', () => {
       },
       loading: false,
       networkStatus: 7
-    } as any)
+    } as GraphQLResponse)
 
-    const params = { task_id: '456' }
+    const params = createAsyncParams('456')
     const RiskAnalysisComponent = await RiskAnalysis({ params })
     render(RiskAnalysisComponent)
 
@@ -93,7 +112,7 @@ describe('RiskAnalysis', () => {
     
     mockClient.query.mockRejectedValue(new Error('GraphQL error'))
 
-    const params = { task_id: '789' }
+    const params = createAsyncParams('789')
     const RiskAnalysisComponent = await RiskAnalysis({ params })
     render(RiskAnalysisComponent)
 
@@ -111,9 +130,9 @@ describe('RiskAnalysis', () => {
       },
       loading: false,
       networkStatus: 7
-    } as any)
+    } as GraphQLResponse)
 
-    const params = { task_id: '999' }
+    const params = createAsyncParams('999')
     await RiskAnalysis({ params })
 
     expect(mockClient.query).toHaveBeenCalledWith({
@@ -129,9 +148,9 @@ describe('RiskAnalysis', () => {
       },
       loading: false,
       networkStatus: 7
-    } as any)
+    } as GraphQLResponse)
 
-    const params = { task_id: '123' }
+    const params = createAsyncParams('123')
     const RiskAnalysisComponent = await RiskAnalysis({ params })
     render(RiskAnalysisComponent)
 
@@ -140,7 +159,7 @@ describe('RiskAnalysis', () => {
   })
 
   it('should pass correct props to TaskExecution', async () => {
-    const singleMultimedia = [{
+    const singleMultimedia: MultimediaItem[] = [{
       id: 1,
       taskId: 123,
       photoUrl: 'single-photo.jpg',
@@ -154,9 +173,9 @@ describe('RiskAnalysis', () => {
       },
       loading: false,
       networkStatus: 7
-    } as any)
+    } as GraphQLResponse)
 
-    const params = { task_id: '123' }
+    const params = createAsyncParams('123')
     const RiskAnalysisComponent = await RiskAnalysis({ params })
     render(RiskAnalysisComponent)
 
@@ -171,9 +190,9 @@ describe('RiskAnalysis', () => {
       },
       loading: false,
       networkStatus: 7
-    } as any)
+    } as GraphQLResponse)
 
-    const params = { task_id: 'abc123' }
+    const params = createAsyncParams('abc123')
     await RiskAnalysis({ params })
 
     expect(mockClient.query).toHaveBeenCalledWith({
@@ -183,7 +202,7 @@ describe('RiskAnalysis', () => {
   })
 
   it('should handle multimedia data with both photo and video', async () => {
-    const mixedData = [{
+    const mixedData: MultimediaItem[] = [{
       id: 1,
       taskId: 123,
       photoUrl: 'test-photo.jpg',
@@ -197,9 +216,9 @@ describe('RiskAnalysis', () => {
       },
       loading: false,
       networkStatus: 7
-    } as any)
+    } as GraphQLResponse)
 
-    const params = { task_id: '123' }
+    const params = createAsyncParams('123')
     const RiskAnalysisComponent = await RiskAnalysis({ params })
     render(RiskAnalysisComponent)
 
