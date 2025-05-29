@@ -20,6 +20,9 @@ export async function middleware(request: NextRequest) {
     if (user?.data?.getUserByEmail?.role === "roleOperator") {
       return NextResponse.redirect(new URL("/tasks", request.url));
     }
+    if (user?.data?.getUserByEmail?.role === "roleAdmin") {
+      return NextResponse.redirect(new URL("/supervisor", request.url));
+    }
   }
 
   if (currentPath === "/menu") {

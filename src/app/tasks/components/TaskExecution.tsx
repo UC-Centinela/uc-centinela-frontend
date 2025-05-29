@@ -172,11 +172,13 @@ export default function TaskExecution({ taskId, multimediaData = [] }: TaskExecu
                 </div>
               )}
             </div>
-            {!hasExistingVideo && (
+            
+            {/* {!hasExistingVideo && (
+              // TODO: implementar grabar video
               <button className="w-full bg-teal-700 text-white py-3 rounded-md font-medium text-base">
                 Grabar video
               </button>
-            )}
+            )} */}
           </div>
         </section>
 
