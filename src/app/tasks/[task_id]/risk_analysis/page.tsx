@@ -31,8 +31,9 @@ async function getMultimediaData(taskId: string) {
   }
 }
 
-export default async function RiskAnalysis({ params }: { params: { task_id: string } }) {
-  const multimediaData = await getMultimediaData(params.task_id);
+export default async function RiskAnalysis({ params }: { params: Promise<{ task_id: string }> }) {
+  const { task_id } = await params;
+  const multimediaData = await getMultimediaData(task_id);
   
-  return <TaskExecution taskId={params.task_id} multimediaData={multimediaData} />;
+  return <TaskExecution taskId={task_id} multimediaData={multimediaData} />;
 }
