@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { gql, useMutation } from '@apollo/client'
 import { Buffer } from 'buffer'
 import client from '@/lib/apollo-client'
+import { AlertTriangle } from 'lucide-react'
 
 const UPLOAD_VIDEO = gql`
   mutation UploadVideo($input: UploadVideoInput!) {
@@ -43,6 +44,16 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
 
     if (!selectedFile.type.startsWith('video/') && !selectedFile.type.startsWith('audio/')) {
       setError('Selecciona un archivo de video o audio válido.')
+      return
+    }
+
+    // Validar tamaño del archivo (100MB máximo)
+    const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB en bytes
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      setError('El archivo es demasiado grande. Por favor, selecciona un archivo menor a 100MB.')
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
       return
     }
 
@@ -113,9 +124,18 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
       console.error('Error:', err)
       if (err.graphQLErrors?.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setError(err.graphQLErrors.map((e: any) => e.message).join('\n'))
+        const errorMessage = err.graphQLErrors.map((e: any) => e.message).join('\n')
+        if (errorMessage.includes('Request body is too large')) {
+          setError('El archivo de video es demasiado grande. Por favor, sube un video más pequeño.')
+        } else {
+          setError(errorMessage)
+        }
       } else if (err.networkError) {
-        setError('Error de red: ' + err.networkError.message)
+        if (err.networkError.message.includes('Request body is too large')) {
+          setError('El archivo de video es demasiado grande. Por favor, sube un video más pequeño.')
+        } else {
+          setError('Error de red: ' + err.networkError.message)
+        }
       } else {
         setError(err.message || 'Error desconocido al subir el video')
       }
@@ -181,6 +201,40 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-red-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3 w-full">
+              <h3 className="text-sm font-medium text-red-800">Error al subir el video</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+              </div>
+              <div className="mt-4">
+                <div className="-mx-2 -my-1.5 flex">
+                  <button
+                    type="button"
+                    className="bg-red-50 px-2 py-1.5 rounded-md text-sm font-medium text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
+                    onClick={() => {
+                      setError('')
+                      setFile(null)
+                      setFileName('')
+                      setIsProcessing(false)
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = ''
+                      }
+                    }}
+                  >
+                    Intentar de nuevo
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {showFileInput ? (
         <div>
           <div className="border border-gray-300 p-4 rounded-md text-center">
