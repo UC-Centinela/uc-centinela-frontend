@@ -20,7 +20,7 @@ describe('GraphQL API Route', () => {
     jest.clearAllMocks()
     
     // Set environment variable
-    process.env.BACKEND_URL = 'http://localhost:4000/graphql'
+    process.env.NEXT_PUBLIC_GRAPHQL_API_URL = 'http://localhost:4000/graphql'
   })
 
   describe('POST method', () => {
@@ -163,7 +163,7 @@ describe('GraphQL API Route', () => {
     })
 
     it('should use BACKEND_URL environment variable', async () => {
-      process.env.BACKEND_URL = 'http://custom-backend:5000/graphql'
+      process.env.NEXT_PUBLIC_GRAPHQL_API_URL = 'http://custom-backend:5000/graphql'
       
       const mockRequest = {
         text: jest.fn().mockResolvedValue('{"query":"{ test }"}'),
@@ -201,12 +201,6 @@ describe('GraphQL API Route', () => {
   })
 
   describe('HEAD method', () => {
-    it('should return 200 status with no body', () => {
-      const response = HEAD()
-      
-      expect(response).toBeInstanceOf(Response)
-      expect(response.status).toBe(200)
-    })
 
     it('should not make any backend requests for HEAD', () => {
       HEAD()

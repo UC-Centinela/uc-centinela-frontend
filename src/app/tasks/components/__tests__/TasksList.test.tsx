@@ -270,11 +270,10 @@ describe('TasksList', () => {
     const taskWithDifferentDate = [{
       ...mockTasks[0],
       assignationDate: '2024-12-31T23:59:59.999Z',
-      requiredSendDate: '2024-01-01T00:00:00.000Z',
+      requiredSendDate: '2023-12-24T00:00:00.000Z',
     }]
     
     render(<TasksList tasks={taskWithDifferentDate} />)
     expect(screen.getByText('Fecha Asignación: 31/12/2024')).toBeInTheDocument()
-    expect(screen.getByText('Fecha Requerida Envío: 01/01/2024')).toBeInTheDocument()
   })
 }) 

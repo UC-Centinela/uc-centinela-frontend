@@ -23,7 +23,7 @@ export interface TranscriptionResult {
 
 interface TranscriptionFormProps {
   onTranscriptionComplete: (result: TranscriptionResult) => void
-  taskId?: number
+  taskId?: number | string
 }
 
 export default function TranscriptionForm({ onTranscriptionComplete, taskId }: TranscriptionFormProps) {

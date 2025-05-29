@@ -105,13 +105,12 @@ describe('UnauthorizedPage', () => {
     expect(screen.getByRole('link')).toBeInTheDocument()
   })
 
-  it('should display complete error message', () => {
+  it('should display both parts of the error message', () => {
     render(<UnauthorizedPage />)
     
-    const fullMessage = screen.getByText((content, element) => {
-      return element?.textContent === 'Lo sentimos, no tienes permisos para acceder a esta página. Si crees que esto es un error, contacta al administrador.'
-    })
-    expect(fullMessage).toBeInTheDocument()
+    // Check for both parts of the error message separately since they're separated by a <br />
+    expect(screen.getByText(/Lo sentimos, no tienes permisos para acceder a esta página/i)).toBeInTheDocument()
+    expect(screen.getByText(/Si crees que esto es un error, contacta al administrador/i)).toBeInTheDocument()
   })
 
   it('should have proper button hover classes', () => {
