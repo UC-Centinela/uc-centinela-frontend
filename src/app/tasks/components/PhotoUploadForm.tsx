@@ -124,6 +124,7 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
                 <p className="text-sm text-gray-500 mb-2">Selecciona las fotos</p>
                 <Button 
                   type="button"
+                  className="bg-teal-700 hover:bg-teal-800 text-white"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   Buscar fotos
