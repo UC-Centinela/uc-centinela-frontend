@@ -3,8 +3,10 @@
 import { useState } from "react";
 import type React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 import { handleLogout } from "@/services/users";
+import { Button } from "@/components/ui/button";
+
 
 interface HeaderProps {
   children: React.ReactNode;
@@ -66,6 +68,13 @@ export function Header({ children, onTabChange }: HeaderProps) {
                 Aprobadas
               </TabsTrigger>
             </TabsList>
+            <Button
+              className="bg-[#176170] hover:bg-[#134b57] text-white flex items-center gap-2 mb-2"
+              onClick={() => (window.location.href = "/supervisor/item")}
+            >
+              <Plus className="h-4 w-4" />
+              Crear nueva tarea
+            </Button>
           </div>
 
           <TabsContent value="all-tasks" className="mt-4">
