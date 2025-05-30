@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Filter, CalendarIcon, FileSpreadsheet, FileText } from "lucide-react";
+import { Filter, CalendarIcon } from "lucide-react";
 import type { TaskFilters } from "@/types/filters";
 import type { User } from "@/types/user";
 import { TaskState } from "@/types/task";
@@ -38,8 +38,6 @@ export function TaskFilters({
   filters,
   setFilters,
   availableUsers,
-  onExportExcel,
-  onExportPDF,
   onApplyFilters,
 }: TaskFiltersProps) {
   const [startOpen, setStartOpen] = useState(false);

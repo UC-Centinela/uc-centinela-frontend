@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Plus, Calendar, Clock, User, LogOut } from "lucide-react";
+import { ArrowRight, Plus, Calendar, Clock, LogOut } from "lucide-react";
 import { handleLogout } from "@/services/users";
 
 interface Task {

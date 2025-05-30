@@ -1,9 +1,7 @@
 "use client"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { FileText, FileSpreadsheet, Eye } from "lucide-react"
 import type { Task } from "@/types/task"
 import type { User } from "@/types/user"
 
@@ -15,7 +13,7 @@ interface TaskTableProps {
   onExportExcel: (taskId: string) => void
 }
 
-export function TaskTable({ tasks, users, onViewDetails, onExportPDF, onExportExcel }: TaskTableProps) {
+export function TaskTable({ tasks, users }: TaskTableProps) {
   const renderStatusBadge = (state: Task["state"]) => {
     switch (state) {
       case "PENDING":
