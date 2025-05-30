@@ -5,15 +5,35 @@ import { gql, useMutation } from '@apollo/client'
 import { Buffer } from 'buffer'
 import { Button } from "@/components/ui/button"
 import client from '@/lib/apollo-client'
+import { Trash2 } from 'lucide-react'
 
-const UPLOAD_PHOTOS = gql`
-  mutation UploadPhotos($input: UploadPhotosInput!) {
-    uploadPhotos(input: $input) {
+const UPLOAD_MULTIMEDIA = gql`
+  mutation UploadMultimedia($input: UploadMultimediaInput!) {
+    uploadMultimedia(input: $input) {
       id
+      taskId
       photoUrl
+      videoUrl
+      audioTranscription
     }
   }
 `
+
+const DELETE_MULTIMEDIA = gql`
+  mutation DeleteMultimedia($deleteMultimediaId: Int!) {
+    deleteMultimedia(id: $deleteMultimediaId)
+  }
+`
+
+// Definir los tipos de archivos permitidos
+const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif'
+]
+
+const ALLOWED_IMAGE_EXTENSIONS = '.jpg,.jpeg,.png,.gif'
 
 export interface PhotoUploadResult {
   mediaId: number | null
@@ -31,23 +51,61 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [showFileInput, setShowFileInput] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [uploadPhotos] = useMutation(UPLOAD_PHOTOS, { client })
+  const [uploadMultimedia] = useMutation(UPLOAD_MULTIMEDIA, { client })
+  const [deleteMultimedia] = useMutation(DELETE_MULTIMEDIA, {
+    client,
+    onCompleted: () => {
+      setIsDeleting(false)
+      setShowDeleteConfirm(null)
+    },
+    onError: (error) => {
+      console.error('Error deleting photo:', error)
+      setIsDeleting(false)
+      setShowDeleteConfirm(null)
+    }
+  })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || [])
     if (selectedFiles.length === 0) return
 
-    const invalidFiles = selectedFiles.filter(file => !file.type.startsWith('image/'))
+    // Validar cada archivo
+    const invalidFiles = selectedFiles.filter(file => !ALLOWED_IMAGE_TYPES.includes(file.type))
     if (invalidFiles.length > 0) {
-      setError('Por favor, selecciona solo archivos de imagen.')
+      setError(`Por favor, selecciona solo archivos de imagen en los siguientes formatos: ${ALLOWED_IMAGE_EXTENSIONS}`)
+      return
+    }
+
+    // Validar tamaño de archivos (máximo 5MB por archivo)
+    const maxSize = 5 * 1024 * 1024 // 5MB en bytes
+    const oversizedFiles = selectedFiles.filter(file => file.size > maxSize)
+    if (oversizedFiles.length > 0) {
+      setError('Algunas imágenes son demasiado grandes. El tamaño máximo permitido es 5MB por imagen.')
       return
     }
 
     setFiles(selectedFiles)
     setFileNames(selectedFiles.map(file => file.name))
     setError('')
+  }
+
+  const handleDeletePhoto = async (id: number) => {
+    setIsDeleting(true)
+    try {
+      await deleteMultimedia({
+        variables: {
+          deleteMultimediaId: id
+        }
+      })
+    } catch (error) {
+      console.error('Error in delete operation:', error)
+      setIsDeleting(false)
+      setShowDeleteConfirm(null)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,13 +123,14 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
         const buffer = await file.arrayBuffer()
         const base64 = Buffer.from(buffer).toString('base64')
 
-        return uploadPhotos({
+        return uploadMultimedia({
           variables: {
             input: {
               taskId,
               filename: file.name,
               mimetype: file.type,
-              base64
+              base64,
+              type: 'PHOTO'
             }
           }
         })
@@ -79,7 +138,7 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
 
       const results = await Promise.all(uploadPromises)
       const uploadedPhotos = results.map(result => {
-        const photo = result.data?.uploadPhotos
+        const photo = result.data?.uploadMultimedia
         return {
           mediaId: photo?.id || null,
           photoUrl: photo?.photoUrl || null
@@ -113,7 +172,7 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
           <div className="border border-gray-300 p-4 rounded-md text-center">
             <input
               type="file"
-              accept="image/*"
+              accept={ALLOWED_IMAGE_EXTENSIONS}
               onChange={handleFileChange}
               ref={fileInputRef}
               multiple
@@ -121,7 +180,7 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
             />
             {fileNames.length === 0 ? (
               <>
-                <p className="text-sm text-gray-500 mb-2">Selecciona las fotos</p>
+                <p className="text-sm text-gray-500 mb-2">Selecciona las fotos (JPG, JPEG, PNG o GIF)</p>
                 <Button 
                   type="button"
                   className="bg-teal-700 hover:bg-teal-800 text-white"
@@ -174,6 +233,40 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
             Subir fotos
           </Button>
         </>
+      )}
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">¿Estás seguro que deseas eliminar esta foto?</h3>
+            <p className="text-sm text-gray-500 mb-6">Esta acción no se puede deshacer.</p>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium"
+                disabled={isDeleting}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleDeletePhoto(showDeleteConfirm)}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium flex items-center"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                    Eliminando...
+                  </>
+                ) : (
+                  <>Eliminar foto</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </form>
   )
