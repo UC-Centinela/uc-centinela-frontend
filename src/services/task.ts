@@ -142,3 +142,59 @@ export async function getTaskByReviewer(revisorId: number): Promise<Task[]> {
     return [];
   }
 }
+
+export async function createTask(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation CreateTask($input: CreateTaskInput!) {
+          createTask(input: $input) {
+            creatorUserId
+            id
+            instruction
+            revisorUserId
+            state
+            title
+            assignationDate
+            requiredSendDate
+            comments
+          }
+        }
+      `,
+      variables: {
+        input: {
+          creatorUserId: Number(rawFormData.creatorUserId),
+          revisorUserId: Number(rawFormData.revisorUserId),
+          state: rawFormData.state,
+          title: rawFormData.title,
+          instruction: rawFormData.instruction,
+          assignationDate: rawFormData.assignationDate,
+          requiredSendDate: rawFormData.requiredSendDate,
+          comments: rawFormData.comments,
+        },
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data?.createTask) {
+    return { success: true };
+  } else {
+    return { success: false };
+  }
+}

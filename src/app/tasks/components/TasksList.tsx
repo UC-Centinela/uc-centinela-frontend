@@ -35,8 +35,8 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
     }
   };
 
-  const filteredTasks = tasks.filter( 
-    (task) => getStatesByTab(activeTab).includes(task.state)
+  const filteredTasks = tasks.filter((task) =>
+    getStatesByTab(activeTab).includes(task.state)
   );
 
   const getStatusName = () => {
@@ -45,14 +45,13 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
     return "aprobadas";
   };
 
-  function formatDate(dateString: string) {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "Fecha inválida";
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    return `${day}-${month}-${year}`;
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">

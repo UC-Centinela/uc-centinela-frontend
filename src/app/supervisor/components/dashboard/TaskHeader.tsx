@@ -51,20 +51,22 @@ export function Header({ children, onTabChange }: HeaderProps) {
         </div>
 
         <Tabs value={currentTab} onValueChange={handleTabChange}>
-          <TabsList className="bg-transparent border-b w-full justify-start gap-4 h-auto p-0">
-            <TabsTrigger value="all-tasks" className={tabStyles}>
-              Todas las tareas
-            </TabsTrigger>
-            <TabsTrigger value="assigned" className={tabStyles}>
-              Asignadas
-            </TabsTrigger>
-            <TabsTrigger value="review" className={tabStyles}>
-              En Revisión
-            </TabsTrigger>
-            <TabsTrigger value="approved" className={tabStyles}>
-              Aprobadas
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex justify-between items-center border-b">
+            <TabsList className="bg-transparent w-auto justify-start gap-4 h-auto p-0">
+              <TabsTrigger value="all-tasks" className={tabStyles}>
+                Todas las tareas
+              </TabsTrigger>
+              <TabsTrigger value="assigned" className={tabStyles}>
+                Asignadas
+              </TabsTrigger>
+              <TabsTrigger value="review" className={tabStyles}>
+                En Revisión
+              </TabsTrigger>
+              <TabsTrigger value="approved" className={tabStyles}>
+                Aprobadas
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="all-tasks" className="mt-4">
             {children}
