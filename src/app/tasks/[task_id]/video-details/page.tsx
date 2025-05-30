@@ -1,6 +1,8 @@
 import { gql } from '@apollo/client'
 import client from '@/lib/apollo-client'
 import VideoDetailsClient from './VideoDetailsClient'
+import { notFound } from 'next/navigation'
+import { validateTaskAccess } from "@/services/tasks";
 
 const FIND_MULTIMEDIA_BY_TASK_ID = gql`
   query FindMultimediaByTaskId($taskId: Int!) {
@@ -43,6 +45,13 @@ interface PageProps {
 
 export default async function VideoDetailsPage({ params }: PageProps) {
   const { task_id } = await params;
+  
+  // Validate task access
+  const hasAccess = await validateTaskAccess(task_id);
+  if (!hasAccess) {
+    notFound();
+  }
+  
   const multimediaData = await getMultimediaData(task_id);
   const videoData = multimediaData.find((item) => item.videoUrl);
 

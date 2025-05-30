@@ -1,4 +1,6 @@
 import TaskExecution from "../../components/TaskExecution";
+import { notFound } from 'next/navigation';
+import { validateTaskAccess } from "@/services/tasks";
 
 async function getMultimediaData(taskId: string) {
   try {
@@ -33,6 +35,13 @@ async function getMultimediaData(taskId: string) {
 
 export default async function RiskAnalysis({ params }: { params: Promise<{ task_id: string }> }) {
   const { task_id } = await params;
+  
+  // Validate task access
+  const hasAccess = await validateTaskAccess(task_id);
+  if (!hasAccess) {
+    notFound();
+  }
+  
   const multimediaData = await getMultimediaData(task_id);
   
   return <TaskExecution taskId={task_id} multimediaData={multimediaData} />;
