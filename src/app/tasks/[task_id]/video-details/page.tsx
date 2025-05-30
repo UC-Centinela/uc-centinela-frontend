@@ -29,7 +29,9 @@ async function getMultimediaData(taskId: string): Promise<MultimediaItem[]> {
     const { data } = await client.query({
       query: FIND_MULTIMEDIA_BY_TASK_ID,
       variables: { taskId: Number(taskId) },
+      fetchPolicy: 'no-cache', // Ensure we always get fresh data
     });
+    console.log('Multimedia data received:', data.findMultimediaByTaskId);
     return data.findMultimediaByTaskId;
   } catch (error) {
     console.error("Error fetching multimedia data:", error);
@@ -53,7 +55,18 @@ export default async function VideoDetailsPage({ params }: PageProps) {
   }
   
   const multimediaData = await getMultimediaData(task_id);
-  const videoData = multimediaData.find((item) => item.videoUrl);
+  console.log('Task ID:', task_id);
+  console.log('Multimedia Data:', multimediaData);
+  
+  // Find the first multimedia item with a videoUrl
+  const videoData = multimediaData.find(item => item && item.videoUrl && item.videoUrl.length > 0);
+  console.log('Video Data found:', videoData);
+
+  // Redirect to 404 if no video is found
+  if (!videoData?.videoUrl) {
+    console.log('No video found, redirecting to 404');
+    notFound();
+  }
 
   return <VideoDetailsClient taskId={task_id} initialVideoData={videoData} />;
 }
