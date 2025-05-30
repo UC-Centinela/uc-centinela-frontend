@@ -199,8 +199,9 @@ export default function TaskExecution({ taskId, multimediaData = [], taskComment
     // Por ahora no requerimos fotos
     // const hasPhotos = hasExistingPhotos;
 
-    return hasVideo && hasStrategies;
-  }, [hasExistingVideo, selectedStrategies.length]);
+    // return hasVideo && hasStrategies;
+    return hasVideo;
+  }, [hasExistingVideo]);
 
   return (
     <div className="min-h-screen bg-gray-100 pb-6">
@@ -323,7 +324,7 @@ export default function TaskExecution({ taskId, multimediaData = [], taskComment
           </div>
         </section>
 
-        <section className="bg-white rounded-lg p-5 shadow-sm">
+        {/* <section className="bg-white rounded-lg p-5 shadow-sm">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-lg font-bold text-gray-800">
               2. Subir Fotografías
@@ -452,12 +453,12 @@ export default function TaskExecution({ taskId, multimediaData = [], taskComment
               </Button>
             </>
           )}
-        </section>
+        </section> */}
 
         <section className="bg-white rounded-lg p-5 shadow-sm">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-lg font-bold text-gray-800">
-              4. Comentarios Adicionales
+              2. Comentarios Adicionales
             </h2>
             <div className="bg-pink-200 text-pink-700 px-3 py-0.5 rounded-full text-sm font-medium">
               Opcional
@@ -539,9 +540,9 @@ export default function TaskExecution({ taskId, multimediaData = [], taskComment
               {!hasExistingVideo && (
                 <li>Debes subir un video de la tarea</li>
               )}
-              {selectedStrategies.length === 0 && (
+              {/* {selectedStrategies.length === 0 && (
                 <li>Debes seleccionar al menos una estrategia de control</li>
-              )}
+              )} */}
             </ul>
           </div>
         )}
