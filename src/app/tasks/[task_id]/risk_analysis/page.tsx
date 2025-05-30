@@ -10,7 +10,7 @@ interface Task {
   instruction: string;
   comments: string;
   state: string;
-  changeHistory: any[];
+  changeHistory: string[];
   assignationDate: string;
   requiredSendDate: string;
   creatorUserId: number;

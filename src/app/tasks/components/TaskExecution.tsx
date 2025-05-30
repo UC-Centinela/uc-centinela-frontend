@@ -69,7 +69,7 @@ export default function TaskExecution({ taskId, multimediaData = [], taskComment
   const hasExistingPhotos = existingPhotos.length > 0 || uploadedPhotos.length > 0;
 
   // Query para obtener todas las estrategias
-  const { data: strategiesData, loading: loadingStrategies, error: strategiesError } = useQuery(FIND_ALL_CONTROL_STRATEGIES, {
+  const { data: strategiesData, loading: loadingStrategies } = useQuery(FIND_ALL_CONTROL_STRATEGIES, {
     client,
     skip: !taskId,
     onError: (error) => {
