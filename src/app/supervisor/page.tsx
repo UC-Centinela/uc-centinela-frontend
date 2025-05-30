@@ -1,6 +1,6 @@
-import { SupervisorDashboard } from "./components/SupervisorDashboard"
-import { getUsers, getUserProfile } from "@/services/users"
-import { getTaskByReviewer } from "@/services/task"
+import { SupervisorDashboard } from "./components/SupervisorDashboard";
+import { getUsers, getUserProfile } from "@/services/users";
+import { getTaskByReviewer } from "@/services/task";
 
 async function SupervisorPage() {
   const userProfile = await getUserProfile();
@@ -12,17 +12,14 @@ async function SupervisorPage() {
 
   const [users, tasks] = await Promise.all([
     getUsers(),
-    getTaskByReviewer(Number(userId))
-  ])
+    getTaskByReviewer(Number(userId)),
+  ]);
 
   return (
     <main>
-      <SupervisorDashboard 
-        initialTasks={tasks}
-        users={users}
-      />
+      <SupervisorDashboard initialTasks={tasks} users={users} />
     </main>
-  )
+  );
 }
 
-export default SupervisorPage
+export default SupervisorPage;

@@ -12,7 +12,6 @@ export default function TaskForm({ users }: TaskFormProps) {
         Formulario de Tarea
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
-        {/* Fecha de asignación */}
         <div className="flex flex-col gap-2">
           <label
             htmlFor="assignationDate"

@@ -191,6 +191,10 @@ export async function createTask(formData: FormData) {
   });
 
   const result = await response.json();
-  console.log(result);
-  return result.data?.createTask || null;
+
+  if (result.data?.createTask) {
+    return { success: true };
+  } else {
+    return { success: false };
+  }
 }
