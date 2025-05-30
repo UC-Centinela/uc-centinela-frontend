@@ -180,7 +180,7 @@ export function TaskFilters({
                 </PopoverContent>
               </Popover>
             </div>
-            <div>
+            {/* <div>
               <label className="text-xs text-gray-500 mb-1 block">
                 Responsable
               </label>
@@ -217,8 +217,8 @@ export function TaskFilters({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div>
+            </div> */}
+            {/* <div>
               <label className="text-xs text-gray-500 mb-1 block">Estado</label>
               <Select
                 value={filters.state?.join(",") || ""}
@@ -244,7 +244,7 @@ export function TaskFilters({
                   <SelectItem value="REVIEWED">Aprobada</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
           </div>
           <div className="flex justify-end mt-4 gap-2">
             <Button variant="outline" onClick={clearFilters}>
