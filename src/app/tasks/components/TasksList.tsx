@@ -55,6 +55,16 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
     return `${day}/${month}/${year}`;
   }
 
+  const handleTaskClick = (task: Task) => {
+    if (task.state === "COMPLETED") {
+      router.push(`/tasks/${task.id}/send`);
+    } else if (task.state === "REVIEWED") {
+      router.push(`/tasks/${task.id}/approved`);
+    } else {
+      router.push(`/tasks/${task.id}`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="p-4 pb-2 flex justify-between items-center mb-4">
@@ -139,7 +149,7 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
               <div className="flex justify-end">
                 <Button
                   variant="ghost"
-                  onClick={() => router.push(`/tasks/${task.id}`)}
+                  onClick={() => handleTaskClick(task)}
                   className="text-sm text-red-500"
                 >
                   Ver Detalles <ArrowRight className="h-4 w-4 ml-1" />

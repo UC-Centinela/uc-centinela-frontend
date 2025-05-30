@@ -1,67 +1,148 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, ChevronLeft, X, Plus } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Search, ChevronLeft, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { gql, useMutation, useQuery } from '@apollo/client'
+import client from '@/lib/apollo-client'
+
+const FIND_ALL_CONTROL_STRATEGIES = gql`
+  query FindAllControlStrategies {
+    findAllControlStrategies {
+      id
+      taskId
+      title
+    }
+  }
+`;
+
+const UPDATE_CONTROL_STRATEGY = gql`
+  mutation UpdateControlStrategy($input: UpdateControlStrategyInput!) {
+    updateControlStrategy(input: $input) {
+      id
+      taskId
+      title
+    }
+  }
+`;
+
+const DELETE_CONTROL_STRATEGY = gql`
+  mutation DeleteControlStrategy($deleteControlStrategyId: Int!) {
+    deleteControlStrategy(id: $deleteControlStrategyId)
+  }
+`;
 
 interface ControlStrategy {
   id: string;
-  name: string;
+  taskId?: number | null;
+  title: string;
 }
 
 interface ControlStrategySelectorProps {
   onClose: () => void;
   onConfirm: (selectedStrategies: ControlStrategy[]) => void;
-  suggestedStrategies?: ControlStrategy[];
+  taskId: number;
+  existingStrategies?: ControlStrategy[];
 }
 
 export default function ControlStrategySelector({
   onClose,
   onConfirm,
-  suggestedStrategies = []
+  taskId,
+  existingStrategies = []
 }: ControlStrategySelectorProps) {
   const [selectedStrategies, setSelectedStrategies] = useState<ControlStrategy[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [removedSuggestions, setRemovedSuggestions] = useState<string[]>([]);
+  const [error, setError] = useState<string>("");
 
-  // Initialize selected strategies with suggested ones
+  // Query para obtener todas las estrategias
+  const { data: strategiesData, loading: loadingStrategies } = useQuery(FIND_ALL_CONTROL_STRATEGIES, {
+    client,
+    skip: !taskId,
+    onError: (error) => {
+      console.error('Error fetching strategies:', error);
+      setError('Error al cargar las estrategias. Por favor, intenta de nuevo.');
+    }
+  });
+
+  // Mutation para actualizar estrategias
+  const [updateStrategy] = useMutation(UPDATE_CONTROL_STRATEGY, {
+    client,
+    onError: (error) => {
+      console.error('Error updating strategy:', error);
+      setError('Error al agregar la estrategia. Por favor, intenta de nuevo.');
+    }
+  });
+
+  // Mutation para eliminar estrategias
+  const [deleteStrategy] = useMutation(DELETE_CONTROL_STRATEGY, {
+    client,
+    onError: (error) => {
+      console.error('Error deleting strategy:', error);
+      setError('Error al eliminar la estrategia. Por favor, intenta de nuevo.');
+    }
+  });
+
+  // Inicializar estrategias seleccionadas con las existentes
   useEffect(() => {
-    setSelectedStrategies(suggestedStrategies);
-  }, [suggestedStrategies]);
+    if (existingStrategies?.length > 0) {
+      setSelectedStrategies(existingStrategies);
+    }
+  }, [existingStrategies]);
 
-  // This would be replaced with actual data from your backend
-  const mockStrategies: ControlStrategy[] = [
-    { id: "1", name: "Operación de Vehículos Livianos" },
-    { id: "2", name: "Operación de Equipos Pesados" },
-    { id: "3", name: "Operaciones de Izaje" },
-    { id: "4", name: "Trabajos en Altura" },
-    { id: "5", name: "Interacción con Partes Móviles" },
-    { id: "6", name: "Operación y Mantención Correas Transportadoras" },
-    { id: "7", name: "Trabajos en Espacios Confinados" },
-    { id: "8", name: "Interacción con Energía Eléctrica" },
-    { id: "9", name: "Interacción con Energía Hidráulica" },
-    { id: "10", name: "Construcción y Operación de Taludes" },
-  ];
-
-  const handleSuggestionRemove = (strategy: ControlStrategy) => {
-    setRemovedSuggestions(prev => [...prev, strategy.id]);
-    setSelectedStrategies(prev => prev.filter(s => s.id !== strategy.id));
-  };
-
-  const handleSuggestionAdd = (strategy: ControlStrategy) => {
-    setRemovedSuggestions(prev => prev.filter(id => id !== strategy.id));
-    setSelectedStrategies(prev => [...prev, strategy]);
-  };
-
-  const handleStrategyToggle = (strategy: ControlStrategy) => {
-    setSelectedStrategies(prev => {
-      const isSelected = prev.some(s => s.id === strategy.id);
-      if (isSelected) {
-        return prev.filter(s => s.id !== strategy.id);
-      } else {
-        return [...prev, strategy];
+  // Obtener estrategias únicas (sin duplicados por título)
+  const uniqueStrategies = useMemo(() => {
+    if (!strategiesData?.findAllControlStrategies) return [];
+    
+    return strategiesData.findAllControlStrategies.reduce((acc: ControlStrategy[], current: ControlStrategy) => {
+      const exists = acc.some((strategy: ControlStrategy) => strategy.title === current.title);
+      if (!exists) {
+        acc.push(current);
       }
-    });
+      return acc;
+    }, []);
+  }, [strategiesData]);
+
+  const handleStrategyToggle = async (strategy: ControlStrategy) => {
+    setError(""); // Clear previous errors
+    const isSelected = selectedStrategies.some(s => s.title === strategy.title);
+    
+    if (isSelected) {
+      // Si ya está seleccionada, la quitamos
+      const strategyToRemove = selectedStrategies.find(s => s.title === strategy.title);
+      if (strategyToRemove?.taskId === taskId) {
+        try {
+          await deleteStrategy({
+            variables: {
+              deleteControlStrategyId: Number(strategyToRemove.id)
+            }
+          });
+          setSelectedStrategies(prev => prev.filter(s => s.title !== strategy.title));
+        } catch (error) {
+          console.error('Error in delete operation:', error);
+          setError('Error al eliminar la estrategia. Por favor, intenta de nuevo.');
+        }
+      }
+    } else {
+      // Si no está seleccionada, creamos una nueva con el taskId actual
+      try {
+        const result = await updateStrategy({
+          variables: {
+            input: {
+              taskId,
+              title: strategy.title
+            }
+          }
+        });
+        
+        if (result.data?.updateControlStrategy) {
+          setSelectedStrategies(prev => [...prev, result.data.updateControlStrategy]);
+        }
+      } catch (error) {
+        console.error('Error in update operation:', error);
+        setError('Error al agregar la estrategia. Por favor, intenta de nuevo.');
+      }
+    }
   };
 
   const handleConfirm = () => {
@@ -69,9 +150,19 @@ export default function ControlStrategySelector({
     onClose();
   };
 
-  const filteredStrategies = mockStrategies.filter(strategy => 
-    strategy.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStrategies = useMemo(() => {
+    return uniqueStrategies.filter((strategy: ControlStrategy) => 
+      strategy.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [uniqueStrategies, searchQuery]);
+
+  if (loadingStrategies) {
+    return (
+      <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-700"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-white z-50">
@@ -88,41 +179,9 @@ export default function ControlStrategySelector({
           Revisa las Estrategias de Control aplicables a la tarea
         </h1>
 
-        {suggestedStrategies.length > 0 && (
-          <div className="mb-4 flex flex-col items-center">
-            <h2 className="text-base font-semibold mb-2">Estrategias Sugeridas:</h2>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {suggestedStrategies.map(strategy => {
-                const isRemoved = removedSuggestions.includes(strategy.id);
-                return (
-                  <div
-                    key={strategy.id}
-                    className={`px-4 py-2 rounded-full text-sm flex items-center gap-2 ${
-                      isRemoved 
-                        ? 'bg-white border-2 border-teal-700 text-teal-700' 
-                        : 'bg-teal-700 text-white'
-                    }`}
-                  >
-                    {strategy.name}
-                    <button
-                      onClick={() => isRemoved 
-                        ? handleSuggestionAdd(strategy) 
-                        : handleSuggestionRemove(strategy)
-                      }
-                      className={`hover:bg-teal-800 rounded-full p-0.5 ${
-                        isRemoved ? 'hover:bg-teal-100' : ''
-                      }`}
-                    >
-                      {isRemoved ? (
-                        <Plus className="h-4 w-4" />
-                      ) : (
-                        <X className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+        {error && (
+          <div className="mb-4 text-red-600 text-sm">
+            {error}
           </div>
         )}
 
@@ -140,7 +199,7 @@ export default function ControlStrategySelector({
         <div className="border border-gray-200 rounded-lg">
           <div className="max-h-[calc(100vh-430px)] overflow-y-auto">
             {filteredStrategies.length > 0 ? (
-              filteredStrategies.map(strategy => (
+              filteredStrategies.map((strategy: ControlStrategy) => (
                 <label
                   key={strategy.id}
                   className="flex items-center space-x-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-200 last:border-b-0"
@@ -148,12 +207,12 @@ export default function ControlStrategySelector({
                   <div className="relative">
                     <input
                       type="checkbox"
-                      checked={selectedStrategies.some(s => s.id === strategy.id)}
+                      checked={selectedStrategies.some(s => s.title === strategy.title)}
                       onChange={() => handleStrategyToggle(strategy)}
                       className="h-5 w-5 rounded border-gray-300 text-black focus:ring-teal-700 checked:bg-black checked:hover:bg-black"
                     />
                   </div>
-                  <span className="text-gray-700">{strategy.name}</span>
+                  <span className="text-gray-700">{strategy.title}</span>
                 </label>
               ))
             ) : (

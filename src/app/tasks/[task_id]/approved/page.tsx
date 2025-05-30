@@ -2,42 +2,30 @@
 
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, CheckCircle } from "lucide-react";
-import { useRouter, notFound } from "next/navigation";
-import { use, useEffect } from "react";
-import { validateTaskAccess } from "@/services/tasks";
+import { useRouter } from "next/navigation";
+import { use } from "react";
 
 interface PageProps {
   params: Promise<{ task_id: string }>;
 }
 
-export default function ARTPResultPage({ params }: PageProps) {
+export default function ApprovedPage({ params }: PageProps) {
   const router = useRouter();
   const { task_id } = use(params);
-
-  useEffect(() => {
-    const checkAccess = async () => {
-      const hasAccess = await validateTaskAccess(task_id);
-      if (!hasAccess) {
-        notFound();
-      }
-    };
-
-    checkAccess();
-  }, [task_id, router]);
 
   return (
     <div className="min-h-screen bg-gray-100 pb-6">
       <div className="bg-white p-4 shadow-sm">
         <Button
           variant="ghost"
-          onClick={() => router.push(`/tasks/${task_id}/risk_analysis`)}
+          onClick={() => router.push('/tasks')}
           className="text-red-500 mb-2"
         >
-          <ChevronLeft className="h-5 w-5 mr-1" /> Volver
+          <ChevronLeft className="h-5 w-5 mr-1" /> Volver a tareas
         </Button>
 
         <h1 className="text-2xl font-bold text-teal-800 mb-6 mt-4">
-          Resultado ARTP
+          Estado ARTP
         </h1>
 
         <div className="flex items-center justify-between mb-2 text-sm px-4">
@@ -52,18 +40,18 @@ export default function ARTPResultPage({ params }: PageProps) {
           </div>
           <div className="flex flex-col items-center">
             <div className="w-8 h-8 rounded-full bg-teal-700 text-white flex items-center justify-center mb-1">
-              2
+              <CheckCircle className="h-5 w-5" />
             </div>
             <span className="text-teal-800 font-semibold">Resultado ARTP</span>
           </div>
-          <div className="flex-1 h-1 mx-2 bg-gray-200">
-            <div className="w-0 h-full bg-teal-700"></div>
+          <div className="flex-1 h-1 mx-2 bg-teal-700">
+            <div className="w-full h-full bg-teal-700"></div>
           </div>
           <div className="flex flex-col items-center">
-            <div className="w-8 h-8 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mb-1">
-              3
+            <div className="w-8 h-8 rounded-full bg-teal-700 text-white flex items-center justify-center mb-1">
+              <CheckCircle className="h-5 w-5" />
             </div>
-            <span className="text-gray-500">Envío</span>
+            <span className="text-teal-800 font-semibold">Envío</span>
           </div>
         </div>
       </div>
@@ -76,13 +64,13 @@ export default function ARTPResultPage({ params }: PageProps) {
             </div>
           </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-8">
-            El ARTP ha sido generado con éxito
+            Tu propuesta de ARTP ha sido aprobada
           </h2>
           <Button 
-            onClick={() => router.push(`/tasks/${task_id}/send`)}
+            onClick={() => router.push('/tasks')}
             className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg h-12"
           >
-            Enviar ARTP
+            Volver a tareas
           </Button>
         </div>
       </div>
