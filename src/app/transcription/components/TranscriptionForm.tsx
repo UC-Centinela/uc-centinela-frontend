@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { gql, useMutation } from '@apollo/client'
 import { Buffer } from 'buffer'
+import { Button } from "@/components/ui/button"
 import client from '@/lib/apollo-client'
 
 const UPLOAD_VIDEO = gql`
@@ -41,8 +42,8 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
     const selectedFile = e.target.files?.[0]
     if (!selectedFile) return
 
-    if (!selectedFile.type.startsWith('video/') && !selectedFile.type.startsWith('audio/')) {
-      setError('Selecciona un archivo de video o audio válido.')
+    if (selectedFile.type !== 'video/mp4') {
+      setError('Por favor, selecciona un archivo de video en formato MP4.')
       return
     }
 
@@ -193,7 +194,7 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
           <div className="border border-gray-300 p-4 rounded-md text-center">
             <input
               type="file"
-              accept="video/*,audio/*"
+              accept="video/mp4"
               onChange={handleFileChange}
               ref={fileInputRef}
               hidden
@@ -201,24 +202,25 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
             {!fileName ? (
               <>
                 <p className="text-sm text-gray-500 mb-2">Selecciona un archivo</p>
-                <button 
-                  type="button" 
-                  className="bg-teal-700 text-white py-3 rounded-md font-medium text-base" 
+                <Button 
+                  type="button"
+                  className="bg-teal-700 hover:bg-teal-800 text-white"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   Buscar archivo
-                </button>
+                </Button>
               </>
             ) : (
               <>
                 <p className="text-sm font-medium">{fileName}</p>
-                <button 
-                  type="button" 
-                  className="text-teal-700 underline" 
+                <Button 
+                  type="button"
+                  variant="link"
+                  className="text-teal-700"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   Cambiar archivo
-                </button>
+                </Button>
               </>
             )}
           </div>
@@ -227,20 +229,20 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
       ) : null}
 
       {file ? (
-        <button 
-          type="button" 
-          className="w-full bg-teal-700 text-white py-3 rounded-md font-medium text-base" 
+        <Button 
+          type="button"
+          className="w-full text-lg h-12 bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg mb-4 flex items-center justify-center h-12"
           disabled={isLoading}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          onClick={() => handleSubmit(new Event('submit') as any)}
+          onClick={() => handleSubmit(new Event('submit') as unknown as React.FormEvent)}
         >
           {isLoading ? 'Procesando...' : 'Subir y Transcribir'}
-        </button>
+        </Button>
       ) : (
         <>
-          <button 
-            type="button" 
-            className="w-full bg-teal-700 text-white py-3 rounded-md font-medium text-base"
+          <Button 
+            type="button"
+            variant="outline"
+            className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg mb-4 flex items-center justify-center h-12"
             disabled={isLoading}
             onClick={() => {
               setShowFileInput(true);
@@ -248,7 +250,7 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
             }}
           >
             Subir video
-          </button>
+          </Button>
         </>
       )}
     </form>

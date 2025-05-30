@@ -89,8 +89,8 @@ describe('TaskExecution', () => {
     render(<TaskExecution taskId="123" />)
     
     expect(screen.getByText('Ejecución Análisis de Riesgo')).toBeInTheDocument()
-    expect(screen.getByText('1. Tomar Video')).toBeInTheDocument()
-    expect(screen.getByText('2. Tomar Fotografías')).toBeInTheDocument()
+    expect(screen.getByText('1. Subir Video')).toBeInTheDocument()
+    expect(screen.getByText('2. Subir Fotografías')).toBeInTheDocument()
     expect(screen.getByText('3. Seleccionar Estrategias de Control')).toBeInTheDocument()
     expect(screen.getByText('4. Comentarios Adicionales')).toBeInTheDocument()
   })
@@ -237,8 +237,8 @@ describe('TaskExecution', () => {
   it('should display all action buttons', () => {
     render(<TaskExecution taskId="123" multimediaData={[]} />)
     
-    expect(screen.getByText('Grabar video')).toBeInTheDocument()
-    expect(screen.getByText('Tomar fotos')).toBeInTheDocument()
+    expect(screen.getByText('Subir video')).toBeInTheDocument()
+    expect(screen.getByText('Subir fotos')).toBeInTheDocument()
     expect(screen.getByText('Seleccionar Estrategias')).toBeInTheDocument()
     expect(screen.getByText('Generar ARTP')).toBeInTheDocument()
   })
