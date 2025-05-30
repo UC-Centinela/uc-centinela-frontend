@@ -16,17 +16,30 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
   
+  // Restrict access based on user role
+  const userRole = user?.data?.getUserByEmail?.role;
+  
+  // Prevent administrators from accessing /tasks routes
+  if (userRole === "roleAdmin" && currentPath.startsWith("/tasks")) {
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
+  }
+  
+  // Prevent operators from accessing /supervisor routes
+  if (userRole === "roleOperator" && currentPath.startsWith("/supervisor")) {
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
+  }
+
   if (currentPath === "/") {
-    if (user?.data?.getUserByEmail?.role === "roleOperator") {
+    if (userRole === "roleOperator") {
       return NextResponse.redirect(new URL("/tasks", request.url));
     }
-    if (user?.data?.getUserByEmail?.role === "roleAdmin") {
+    if (userRole === "roleAdmin") {
       return NextResponse.redirect(new URL("/supervisor", request.url));
     }
   }
 
   if (currentPath === "/menu") {
-    if (user?.data?.getUserByEmail?.role === "roleAdmin") {
+    if (userRole === "roleAdmin") {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
   }
