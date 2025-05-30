@@ -42,8 +42,8 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
     const selectedFile = e.target.files?.[0]
     if (!selectedFile) return
 
-    if (!selectedFile.type.startsWith('video/') && !selectedFile.type.startsWith('audio/')) {
-      setError('Selecciona un archivo de video o audio válido.')
+    if (selectedFile.type !== 'video/mp4') {
+      setError('Por favor, selecciona un archivo de video en formato MP4.')
       return
     }
 
@@ -194,7 +194,7 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
           <div className="border border-gray-300 p-4 rounded-md text-center">
             <input
               type="file"
-              accept="video/*,audio/*"
+              accept="video/mp4"
               onChange={handleFileChange}
               ref={fileInputRef}
               hidden
