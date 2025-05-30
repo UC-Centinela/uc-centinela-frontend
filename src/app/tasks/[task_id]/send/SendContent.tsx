@@ -3,23 +3,60 @@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { gql, useMutation } from "@apollo/client";
+import client from "@/lib/apollo-client";
 
-interface ApprovedContentProps {
+const UPDATE_TASK_STATE = gql`
+    mutation UpdateTaskState($input: UpdateTaskInput!) {
+        updateTask(input: $input) {
+            id
+            state
+        }
+    }
+`;
+
+interface SendContentProps {
   taskId: string;
 }
 
-export default function ApprovedContent({ taskId }: ApprovedContentProps) {
+export default function SendContent({ taskId }: SendContentProps) {
   const router = useRouter();
-  console.log("taskId", taskId);
+
+  const [updateTaskState] = useMutation(UPDATE_TASK_STATE, {
+    client: client,
+    onCompleted: (data) => {
+        console.log("Task state updated", data);
+    },
+    onError: (error) => {
+        console.error("Error updating task state:", error);
+    }
+  });
+
+  useEffect(() => {
+    const updateTaskStateMutation = async () => {
+        try {
+            await updateTaskState({
+                variables: {
+                    input: { id: Number(taskId), state: "COMPLETED" }
+                }
+            });
+        } catch (error) {
+            console.error("Error updating task state:", error);
+        }
+    };
+    updateTaskStateMutation();
+  }, [taskId, updateTaskState]);
+
   return (
     <div className="min-h-screen bg-gray-100 pb-6">
       <div className="bg-white p-4 shadow-sm">
         <Button
           variant="ghost"
-          onClick={() => router.push('/tasks')}
+          onClick={() => router.push(`/tasks/${taskId}/artp-result`)}
           className="text-red-500 mb-2"
         >
-          <ChevronLeft className="h-5 w-5 mr-1" /> Volver a tareas
+          <ChevronLeft className="h-5 w-5 mr-1" /> Volver
         </Button>
 
         <h1 className="text-2xl font-bold text-teal-800 mb-6 mt-4">
@@ -62,7 +99,7 @@ export default function ApprovedContent({ taskId }: ApprovedContentProps) {
             </div>
           </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-8">
-            Tu propuesta de ARTP ha sido aprobada
+            Tu propuesta de ARTP ha sido enviada con éxito y se encuentra en revisión
           </h2>
           <Button 
             onClick={() => router.push('/tasks')}

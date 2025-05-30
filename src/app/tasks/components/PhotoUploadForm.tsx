@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { gql, useMutation } from '@apollo/client'
+import { ApolloError, gql, useMutation } from '@apollo/client'
 import { Buffer } from 'buffer'
 import { Button } from "@/components/ui/button"
 import client from '@/lib/apollo-client'
-import { Trash2 } from 'lucide-react'
 
 const UPLOAD_MULTIMEDIA = gql`
   mutation UploadMultimedia($input: UploadMultimediaInput!) {
@@ -151,14 +150,16 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
       setFiles([])
       setFileNames([])
       
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error:', err)
-      if (err.graphQLErrors?.length > 0) {
-        setError(err.graphQLErrors.map((e: any) => e.message).join('\n'))
-      } else if (err.networkError) {
-        setError('Error de red: ' + err.networkError.message)
-      } else {
-        setError(err.message || 'Error desconocido al subir las fotos')
+      if (err instanceof ApolloError) {
+        if (err.graphQLErrors?.length > 0) {
+          setError(err.graphQLErrors.map((e) => e.message).join('\n'))
+        } else if (err.networkError) {
+          setError('Error de red: ' + err.networkError.message)
+        } else {
+          setError(err.message || 'Error desconocido al subir las fotos')
+        }
       }
     } finally {
       setIsLoading(false)
@@ -216,7 +217,7 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
         <Button 
           className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg mb-4 flex items-center justify-center h-12 mt-6"
           disabled={isLoading}
-          onClick={() => handleSubmit(new Event('submit') as any)}
+          onClick={() => handleSubmit(new Event('submit') as unknown as React.FormEvent)}
         >
           {isLoading ? 'Subiendo...' : 'Subir fotos'}
         </Button>

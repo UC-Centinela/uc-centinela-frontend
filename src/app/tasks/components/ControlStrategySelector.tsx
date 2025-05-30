@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, ChevronLeft, X } from "lucide-react";
+import { Search, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { gql, useMutation, useQuery } from '@apollo/client'
 import client from '@/lib/apollo-client'
