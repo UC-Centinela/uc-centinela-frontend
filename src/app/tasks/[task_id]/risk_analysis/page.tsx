@@ -1,34 +1,48 @@
 import TaskExecution from "../../components/TaskExecution";
-import { gql } from "@apollo/client";
-import client from "@/lib/apollo-client";
-
-const FIND_MULTIMEDIA_BY_TASK_ID = gql`
-  query FindMultimediaByTaskId($taskId: Int!) {
-    findMultimediaByTaskId(taskId: $taskId) {
-      id
-      taskId
-      photoUrl
-      videoUrl
-      audioTranscription
-    }
-  }
-`;
+import { notFound } from 'next/navigation';
+import { validateTaskAccess } from "@/services/tasks";
 
 async function getMultimediaData(taskId: string) {
   try {
-    const { data } = await client.query({
-      query: FIND_MULTIMEDIA_BY_TASK_ID,
-      variables: { taskId: Number(taskId) },
+    const response = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL || '/api/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `
+          query FindMultimediaByTaskId($taskId: Int!) {
+            findMultimediaByTaskId(taskId: $taskId) {
+              id
+              taskId
+              photoUrl
+              videoUrl
+              audioTranscription
+            }
+          }
+        `,
+        variables: { taskId: Number(taskId) },
+      }),
     });
-    return data.findMultimediaByTaskId;
+    
+    const data = await response.json();
+    return data.data.findMultimediaByTaskId;
   } catch (error) {
     console.error("Error fetching multimedia data:", error);
     return [];
   }
 }
 
-export default async function RiskAnalysis({ params }: { params: { task_id: string } }) {
-  const multimediaData = await getMultimediaData(params.task_id);
+export default async function RiskAnalysis({ params }: { params: Promise<{ task_id: string }> }) {
+  const { task_id } = await params;
   
-  return <TaskExecution taskId={params.task_id} multimediaData={multimediaData} />;
+  // Validate task access
+  const hasAccess = await validateTaskAccess(task_id);
+  if (!hasAccess) {
+    notFound();
+  }
+  
+  const multimediaData = await getMultimediaData(task_id);
+  
+  return <TaskExecution taskId={task_id} multimediaData={multimediaData} />;
 }
