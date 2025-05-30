@@ -164,7 +164,7 @@ export default function TaskExecution({ taskId, multimediaData = [] }: TaskExecu
               </div>
 
               <p className="text-gray-600 mb-6 text-base">
-                Graba un video de la tarea, actividades, y peligros describiendo de
+                Sube un video de la tarea, actividades, y peligros describiendo de
                 manera exhaustiva. Solo se permiten archivos .mp4.
               </p>
             </>
@@ -243,7 +243,7 @@ export default function TaskExecution({ taskId, multimediaData = [] }: TaskExecu
               </div>
 
               <p className="text-gray-600 mb-6 text-base">
-                Toma fotos de la zona, herramientas y materiales a utilizar, asegura
+                Sube fotos de la zona, herramientas y materiales a utilizar, asegura
                 de tener una buena fuente de luz.
               </p>
             </>

@@ -204,6 +204,7 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
                 <p className="text-sm text-gray-500 mb-2">Selecciona un archivo</p>
                 <Button 
                   type="button"
+                  className="bg-teal-700 hover:bg-teal-800 text-white"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   Buscar archivo
@@ -241,7 +242,7 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
           <Button 
             type="button"
             variant="outline"
-            className="w-full text-lg h-12"
+            className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg mb-4 flex items-center justify-center h-12"
             disabled={isLoading}
             onClick={() => {
               setShowFileInput(true);
