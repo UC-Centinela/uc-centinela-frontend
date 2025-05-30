@@ -1,9 +1,7 @@
 "use client"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { FileText, FileSpreadsheet, Eye } from "lucide-react"
 import type { Task } from "@/types/task"
 import type { User } from "@/types/user"
 
@@ -15,7 +13,7 @@ interface TaskTableProps {
   onExportExcel: (taskId: string) => void
 }
 
-export function TaskTable({ tasks, users, onViewDetails, onExportPDF, onExportExcel }: TaskTableProps) {
+export function TaskTable({ tasks, users }: TaskTableProps) {
   const renderStatusBadge = (state: Task["state"]) => {
     switch (state) {
       case "PENDING":
@@ -57,7 +55,7 @@ export function TaskTable({ tasks, users, onViewDetails, onExportPDF, onExportEx
             <TableHead>Estado</TableHead>
             <TableHead>Responsable</TableHead>
             <TableHead>Revisor</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
+            {/* <TableHead className="text-right">Acciones</TableHead> */}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -69,7 +67,7 @@ export function TaskTable({ tasks, users, onViewDetails, onExportPDF, onExportEx
               <TableCell>{renderStatusBadge(task.state)}</TableCell>
               <TableCell>{getUserName(task.creatorUserId)}</TableCell>
               <TableCell>{getUserName(task.revisorUserId)}</TableCell>
-              <TableCell>
+              {/* <TableCell>
                 <div className="flex justify-end gap-2">
                   <Button 
                     variant="ghost" 
@@ -96,7 +94,7 @@ export function TaskTable({ tasks, users, onViewDetails, onExportPDF, onExportEx
                     <FileSpreadsheet className="h-4 w-4" />
                   </Button>
                 </div>
-              </TableCell>
+              </TableCell> */}
             </TableRow>
           ))}
         </TableBody>
