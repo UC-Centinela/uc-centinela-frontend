@@ -46,6 +46,13 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
       return
     }
 
+    // Validación de tamaño máximo (100MB)
+    const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB en bytes
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      setError('El archivo es demasiado grande. El tamaño máximo permitido es 100MB.')
+      return
+    }
+
     setFile(selectedFile)
     setFileName(selectedFile.name)
     setError('')
