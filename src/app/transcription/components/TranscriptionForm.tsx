@@ -231,7 +231,7 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
       {file ? (
         <Button 
           type="button"
-          className="w-full text-lg h-12"
+          className="w-full text-lg h-12 bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg mb-4 flex items-center justify-center h-12"
           disabled={isLoading}
           onClick={() => handleSubmit(new Event('submit') as any)}
         >

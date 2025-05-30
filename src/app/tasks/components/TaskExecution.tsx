@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, Info, AlertCircle, CheckCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TranscriptionForm from "@/app/transcription/components/TranscriptionForm";
@@ -9,6 +9,27 @@ import PhotoUploadForm from "@/app/tasks/components/PhotoUploadForm";
 import type { TranscriptionResult } from "@/app/transcription/components/TranscriptionForm";
 import type { PhotoUploadResult } from "@/app/tasks/components/PhotoUploadForm";
 import ControlStrategySelector from "@/app/tasks/components/ControlStrategySelector";
+import { gql, useQuery, useMutation } from '@apollo/client'
+import client from '@/lib/apollo-client'
+
+const FIND_ALL_CONTROL_STRATEGIES = gql`
+  query FindAllControlStrategies {
+    findAllControlStrategies {
+      id
+      taskId
+      title
+    }
+  }
+`;
+
+const UPDATE_TASK = gql`
+  mutation UpdateTask($input: UpdateTaskInput!) {
+    updateTask(input: $input) {
+      id
+      comments
+    }
+  }
+`;
 
 interface MultimediaData {
   id: number;
@@ -20,26 +41,59 @@ interface MultimediaData {
 
 interface ControlStrategy {
   id: string;
-  name: string;
+  taskId?: number | null;
+  title: string;
 }
 
 interface TaskExecutionProps {
   taskId?: string;
   multimediaData?: MultimediaData[];
+  taskComments?: string | null;
 }
 
-export default function TaskExecution({ taskId, multimediaData = [] }: TaskExecutionProps) {
+export default function TaskExecution({ taskId, multimediaData = [], taskComments = null }: TaskExecutionProps) {
   const router = useRouter();
   const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null);
   const [uploadedVideo, setUploadedVideo] = useState<MultimediaData | null>(null);
   const [uploadedPhotos, setUploadedPhotos] = useState<MultimediaData[]>([]);
   const [showStrategySelector, setShowStrategySelector] = useState(false);
   const [selectedStrategies, setSelectedStrategies] = useState<ControlStrategy[]>([]);
+  const [comments, setComments] = useState(taskComments || '');
+  const [isEditingComments, setIsEditingComments] = useState(false);
+  const [isSavingComments, setIsSavingComments] = useState(false);
+  const [error, setError] = useState<string>('');
   
   const existingVideo = multimediaData.find(item => item.videoUrl);
   const existingPhotos = multimediaData.filter(item => item.photoUrl);
   const hasExistingVideo = !!existingVideo || !!uploadedVideo;
   const hasExistingPhotos = existingPhotos.length > 0 || uploadedPhotos.length > 0;
+
+  // Query para obtener todas las estrategias
+  const { data: strategiesData, loading: loadingStrategies, error: strategiesError } = useQuery(FIND_ALL_CONTROL_STRATEGIES, {
+    client,
+    skip: !taskId,
+    onError: (error) => {
+      console.error('Error fetching strategies:', error);
+    }
+  });
+
+  const [updateTask] = useMutation(UPDATE_TASK, {
+    client,
+    onCompleted: (data) => {
+      console.log('Mutation completed successfully:', data);
+      if (data?.updateTask?.comments !== undefined) {
+        setComments(data.updateTask.comments || '');
+        setIsSavingComments(false);
+        setIsEditingComments(false);
+        setError('');
+      }
+    },
+    onError: (error: Error) => {
+      console.error('Error updating comments:', error);
+      setIsSavingComments(false);
+      setError('Error al guardar los comentarios. Por favor, intenta de nuevo.');
+    }
+  });
 
   useEffect(() => {
     if (existingVideo) {
@@ -54,6 +108,23 @@ export default function TaskExecution({ taskId, multimediaData = [] }: TaskExecu
       }
     }
   }, [taskId, existingVideo]);
+
+  // Efecto para cargar las estrategias de la tarea actual
+  useEffect(() => {
+    if (strategiesData?.findAllControlStrategies && taskId) {
+      // Filtrar estrategias por taskId
+      const taskStrategies = strategiesData.findAllControlStrategies
+        .filter((strategy: ControlStrategy) => strategy.taskId === Number(taskId));
+      
+      setSelectedStrategies(taskStrategies);
+    }
+  }, [strategiesData, taskId]);
+
+  // Update comments when taskComments prop changes
+  useEffect(() => {
+    setComments(taskComments || '');
+    setIsEditingComments(false);
+  }, [taskComments]);
 
   const handleTranscriptionComplete = (result: TranscriptionResult) => {
     setTranscriptionResult(result);
@@ -93,6 +164,43 @@ export default function TaskExecution({ taskId, multimediaData = [] }: TaskExecu
     setSelectedStrategies(strategies);
     setShowStrategySelector(false);
   };
+
+  const handleSaveComments = async () => {
+    if (!comments.trim() || !taskId) return;
+
+    setIsSavingComments(true);
+    setError('');
+    
+    const variables = {
+      input: {
+        id: Number(taskId),
+        comments: comments.trim()
+      }
+    };
+
+    console.log('Sending mutation with variables:', variables);
+    
+    try {
+      const result = await updateTask({
+        variables
+      });
+      console.log('Mutation result:', result);
+    } catch (error) {
+      console.error('Error saving comments:', error);
+      setError('Error al guardar los comentarios. Por favor, intenta de nuevo.');
+      setIsSavingComments(false);
+    }
+  };
+
+  // Validación para el botón de Generar ARTP
+  const canGenerateARTP = useMemo(() => {
+    const hasVideo = hasExistingVideo;
+    const hasStrategies = selectedStrategies.length > 0;
+    // Por ahora no requerimos fotos
+    // const hasPhotos = hasExistingPhotos;
+
+    return hasVideo && hasStrategies;
+  }, [hasExistingVideo, selectedStrategies.length]);
 
   return (
     <div className="min-h-screen bg-gray-100 pb-6">
@@ -140,7 +248,7 @@ export default function TaskExecution({ taskId, multimediaData = [] }: TaskExecu
       <div className="max-w-lg mx-auto px-4 mt-4 space-y-4">
         <section className="bg-white rounded-lg p-5 shadow-sm">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-bold text-gray-800">1. Tomar Video</h2>
+            <h2 className="text-lg font-bold text-gray-800">1. Subir Video</h2>
             {hasExistingVideo ? (
               <div className="bg-green-200 text-green-700 px-3 py-0.5 rounded-full text-sm font-medium flex items-center">
                 Listo <CheckCircle className="h-4 w-4 ml-1" />
@@ -218,7 +326,7 @@ export default function TaskExecution({ taskId, multimediaData = [] }: TaskExecu
         <section className="bg-white rounded-lg p-5 shadow-sm">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-lg font-bold text-gray-800">
-              2. Tomar Fotografías
+              2. Subir Fotografías
             </h2>
             {hasExistingPhotos ? (
               <div className="bg-green-200 text-green-700 px-3 py-0.5 rounded-full text-sm font-medium flex items-center">
@@ -280,7 +388,11 @@ export default function TaskExecution({ taskId, multimediaData = [] }: TaskExecu
             <h2 className="text-lg font-bold text-gray-800">
               3. Seleccionar Estrategias de Control
             </h2>
-            {selectedStrategies.length > 0 ? (
+            {loadingStrategies ? (
+              <div className="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-sm font-medium flex items-center">
+                Cargando...
+              </div>
+            ) : selectedStrategies.length > 0 ? (
               <div className="bg-green-200 text-green-700 px-3 py-0.5 rounded-full text-sm font-medium flex items-center">
                 Listo <CheckCircle className="h-4 w-4 ml-1" />
               </div>
@@ -299,7 +411,7 @@ export default function TaskExecution({ taskId, multimediaData = [] }: TaskExecu
                     key={strategy.id}
                     className="bg-teal-700 text-white px-4 py-2 rounded-full text-sm flex items-center gap-2"
                   >
-                    {strategy.name}
+                    {strategy.title}
                     <button
                       onClick={() => setSelectedStrategies(prev => prev.filter(s => s.id !== strategy.id))}
                       className="hover:bg-teal-800 rounded-full p-0.5"
@@ -365,28 +477,82 @@ export default function TaskExecution({ taskId, multimediaData = [] }: TaskExecu
             Añade información que sea útil para el Análisis de Riesgo.
           </p>
 
-          <textarea
-            className="w-full border border-gray-300 rounded-md p-3 text-base"
-            placeholder="Añade comentarios"
-            rows={4}
-          ></textarea>
+          {error && (
+            <div className="mb-4 text-red-600 text-sm">
+              {error}
+            </div>
+          )}
+
+          {isEditingComments ? (
+            <>
+              <textarea
+                className="w-full border border-gray-300 rounded-md p-3 text-base mb-4"
+                placeholder="Añade comentarios"
+                rows={4}
+                value={comments}
+                onChange={(e) => setComments(e.target.value)}
+              />
+              <Button
+                onClick={handleSaveComments}
+                disabled={!comments.trim() || isSavingComments}
+                className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg h-12"
+              >
+                {isSavingComments ? 'Guardando...' : 'Guardar comentarios'}
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="w-full bg-gray-50 rounded-md p-3 text-base mb-4 min-h-[100px]">
+                {comments || 'No hay comentarios'}
+              </div>
+              <Button
+                onClick={() => setIsEditingComments(true)}
+                className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg h-12"
+              >
+                {comments ? 'Editar comentarios' : 'Agregar comentarios'}
+              </Button>
+            </>
+          )}
         </section>
 
         <Button 
-          className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg mb-4 flex items-center justify-center h-12 mt-6"
+          onClick={() => router.push(`/tasks/${taskId}/artp-result`)}
+          disabled={!canGenerateARTP}
+          className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg mb-4 flex items-center justify-center h-12 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Generar ARTP
+          {!canGenerateARTP ? (
+            <>
+              Completa los requisitos para generar ARTP
+              <AlertCircle className="ml-2 h-5 w-5" />
+            </>
+          ) : (
+            'Generar ARTP'
+          )}
         </Button>
+
+        {!canGenerateARTP && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mt-2">
+            <h3 className="text-sm font-medium text-yellow-800 mb-2">
+              Requisitos pendientes:
+            </h3>
+            <ul className="list-disc pl-5 text-sm text-yellow-700">
+              {!hasExistingVideo && (
+                <li>Debes subir un video de la tarea</li>
+              )}
+              {selectedStrategies.length === 0 && (
+                <li>Debes seleccionar al menos una estrategia de control</li>
+              )}
+            </ul>
+          </div>
+        )}
       </div>
 
       {showStrategySelector && (
         <ControlStrategySelector
           onClose={() => setShowStrategySelector(false)}
           onConfirm={handleStrategySelection}
-          suggestedStrategies={[
-            { id: "8", name: "Interacción con Energía Eléctrica" },
-            { id: "9", name: "Interacción con Energía Hidráulica" },
-          ]}
+          taskId={Number(taskId)}
+          existingStrategies={selectedStrategies}
         />
       )}
     </div>
