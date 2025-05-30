@@ -2,12 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, Info, AlertCircle, CheckCircle, X } from "lucide-react";
+import { ChevronLeft, Info, AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TranscriptionForm from "@/app/transcription/components/TranscriptionForm";
-import PhotoUploadForm from "@/app/tasks/components/PhotoUploadForm";
+// import PhotoUploadForm from "@/app/tasks/components/PhotoUploadForm";
 import type { TranscriptionResult } from "@/app/transcription/components/TranscriptionForm";
-import type { PhotoUploadResult } from "@/app/tasks/components/PhotoUploadForm";
+// import type { PhotoUploadResult } from "@/app/tasks/components/PhotoUploadForm";
 import ControlStrategySelector from "@/app/tasks/components/ControlStrategySelector";
 import { gql, useQuery, useMutation } from '@apollo/client'
 import client from '@/lib/apollo-client'
@@ -55,7 +55,7 @@ export default function TaskExecution({ taskId, multimediaData = [], taskComment
   const router = useRouter();
   const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null);
   const [uploadedVideo, setUploadedVideo] = useState<MultimediaData | null>(null);
-  const [uploadedPhotos, setUploadedPhotos] = useState<MultimediaData[]>([]);
+  // const [uploadedPhotos, setUploadedPhotos] = useState<MultimediaData[]>([]);
   const [showStrategySelector, setShowStrategySelector] = useState(false);
   const [selectedStrategies, setSelectedStrategies] = useState<ControlStrategy[]>([]);
   const [comments, setComments] = useState(taskComments || '');
@@ -64,12 +64,12 @@ export default function TaskExecution({ taskId, multimediaData = [], taskComment
   const [error, setError] = useState<string>('');
   
   const existingVideo = multimediaData.find(item => item.videoUrl);
-  const existingPhotos = multimediaData.filter(item => item.photoUrl);
+  // const existingPhotos = multimediaData.filter(item => item.photoUrl);
   const hasExistingVideo = !!existingVideo || !!uploadedVideo;
-  const hasExistingPhotos = existingPhotos.length > 0 || uploadedPhotos.length > 0;
+  // const hasExistingPhotos = existingPhotos.length > 0 || uploadedPhotos.length > 0;
 
   // Query para obtener todas las estrategias
-  const { data: strategiesData, loading: loadingStrategies } = useQuery(FIND_ALL_CONTROL_STRATEGIES, {
+  const { data: strategiesData } = useQuery(FIND_ALL_CONTROL_STRATEGIES, {
     client,
     skip: !taskId,
     onError: (error) => {
@@ -148,17 +148,17 @@ export default function TaskExecution({ taskId, multimediaData = [], taskComment
     }
   };
 
-  const handlePhotosComplete = (results: PhotoUploadResult[]) => {
-    const newPhotos = results.map(result => ({
-      id: result.mediaId || 0,
-      taskId: taskId ? Number(taskId) : 0,
-      photoUrl: result.photoUrl,
-      videoUrl: null,
-      audioTranscription: null
-    }));
+  // const handlePhotosComplete = (results: PhotoUploadResult[]) => {
+  //   const newPhotos = results.map(result => ({
+  //     id: result.mediaId || 0,
+  //     taskId: taskId ? Number(taskId) : 0,
+  //     photoUrl: result.photoUrl,
+  //     videoUrl: null,
+  //     audioTranscription: null
+  //   }));
     
-    setUploadedPhotos(prev => [...prev, ...newPhotos]);
-  };
+  //   setUploadedPhotos(prev => [...prev, ...newPhotos]);
+  // };
 
   const handleStrategySelection = (strategies: ControlStrategy[]) => {
     setSelectedStrategies(strategies);
@@ -195,7 +195,7 @@ export default function TaskExecution({ taskId, multimediaData = [], taskComment
   // Validación para el botón de Generar ARTP
   const canGenerateARTP = useMemo(() => {
     const hasVideo = hasExistingVideo;
-    const hasStrategies = selectedStrategies.length > 0;
+    // const hasStrategies = selectedStrategies.length > 0;
     // Por ahora no requerimos fotos
     // const hasPhotos = hasExistingPhotos;
 
