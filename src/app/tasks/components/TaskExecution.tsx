@@ -1,3 +1,4 @@
+// src/app/tasks/components/TaskExecution.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -9,6 +10,7 @@ import PhotoUploadForm, { PhotoUploadResult } from "@/app/tasks/components/Photo
 import ControlStrategySelector from "@/app/tasks/components/ControlStrategySelector";
 import { gql, useQuery, useMutation } from "@apollo/client";
 import client from "@/lib/apollo-client";
+import Image from "next/image";
 
 const FIND_ALL_CONTROL_STRATEGIES = gql`
   query FindAllControlStrategies {
@@ -29,11 +31,12 @@ const UPDATE_TASK = gql`
   }
 `;
 
-const DELETE_MULTIMEDIA = gql`
-  mutation DeleteMultimedia($deleteMultimediaId: Int!) {
-    deleteMultimedia(id: $deleteMultimediaId)
-  }
-`;
+// Se elimina DELETE_MULTIMEDIA, pues no se está usando en este componente.
+// const DELETE_MULTIMEDIA = gql`
+//   mutation DeleteMultimedia($deleteMultimediaId: Int!) {
+//     deleteMultimedia(id: $deleteMultimediaId)
+//   }
+// `;
 
 interface MultimediaData {
   id: number;
@@ -70,8 +73,6 @@ export default function TaskExecution({
   const [isEditingComments, setIsEditingComments] = useState(false);
   const [isSavingComments, setIsSavingComments] = useState(false);
   const [error, setError] = useState<string>("");
-  // Ya no necesitamos isDeletingPhoto aquí, la eliminación queda solo en PhotoDetailsClient
-  // const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
 
   // Extraer video existente y fotos existentes de los datos pasados por props
   const existingVideo = multimediaData.find((item) => item.videoUrl);
@@ -108,10 +109,6 @@ export default function TaskExecution({
     },
   });
 
-  // Ya no hacemos mutación de deleteMultimedia aquí, pues la eliminación de fotos
-  // debe ocurrir solo en PhotoDetailsClient.tsx
-  // const [deleteMultimedia] = useMutation(DELETE_MULTIMEDIA, { ... });
-
   // Inicializar transcriptionResult con los datos almacenados o con los existentes en BD
   useEffect(() => {
     if (existingVideo) {
@@ -144,11 +141,7 @@ export default function TaskExecution({
     setIsEditingComments(false);
   }, [taskComments]);
 
-  // ---------------------------------------
-  // HANDLERS
-  // ---------------------------------------
-
-  // Handler para cuando TranscriptionForm completa la transcripción
+  // Handler para TranscriptionForm
   const handleTranscriptionComplete = (result: TranscriptionResult) => {
     setTranscriptionResult(result);
 
@@ -170,8 +163,7 @@ export default function TaskExecution({
     }
   };
 
-  // Handler para cuando PhotoUploadForm completa la subida de fotos
-  // (Se eliminó el router.push que llevaba automáticamente a /photo-details)
+  // Handler para PhotoUploadForm (sin redirección automática)
   const handlePhotosComplete = (results: PhotoUploadResult[]) => {
     const nuevasFotos: MultimediaData[] = results.map((result) => ({
       id: result.mediaId || 0,
@@ -182,20 +174,13 @@ export default function TaskExecution({
     }));
 
     setUploadedPhotos((prev) => [...prev, ...nuevasFotos]);
-
-    // ← **Se eliminó este bloque** para que NO redirija automáticamente:
-    // if (taskId) {
-    //   router.push(`/tasks/${taskId}/photo-details`);
-    // }
   };
 
-  // Handler para confirmar o descartar estrategias seleccionadas
   const handleStrategySelection = (strategies: ControlStrategy[]) => {
     setSelectedStrategies(strategies);
     setShowStrategySelector(false);
   };
 
-  // Guardar comentarios en la tarea
   const handleSaveComments = async () => {
     if (!comments.trim() || !taskId) return;
 
@@ -218,19 +203,11 @@ export default function TaskExecution({
     }
   };
 
-  // ---------------------------------------
-  // ENABLE ‘GENERAR ARTP’
-  // ---------------------------------------
-
   const canGenerateARTP = useMemo(() => {
     const hasVideo = hasExistingVideo;
     const hasStrategies = selectedStrategies.length > 0;
     return hasVideo && hasStrategies;
   }, [hasExistingVideo, selectedStrategies.length]);
-
-  // ---------------------------------------
-  // RENDERIZADO
-  // ---------------------------------------
 
   return (
     <div className="min-h-screen bg-gray-100 pb-6">
@@ -389,20 +366,14 @@ export default function TaskExecution({
                     key={index}
                     className="relative aspect-square bg-gray-100 rounded-md overflow-hidden"
                   >
-                    <img
+                    {/* ← Aquí reemplazamos <img> por <Image> */}
+                    <Image
                       src={photo.photoUrl || ""}
                       alt={`Foto ${index + 1}`}
                       className="w-full h-full object-cover"
+                      width={300}
+                      height={300}
                     />
-                    {/* Se quitan los botones de eliminar aquí, para que la única forma de borrar esté en /photo-details */}
-                    {/* <button
-                      onClick={() => photo.id && handleDeletePhoto(photo.id)}
-                      disabled={isDeletingPhoto}
-                      className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-md transition-colors"
-                      title="Eliminar foto"
-                    >
-                      <X className="h-5 w-5" />
-                    </button> */}
                   </div>
                 ))}
               </div>
