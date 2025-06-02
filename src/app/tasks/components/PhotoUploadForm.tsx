@@ -135,7 +135,7 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
 
       const results = await Promise.all(uploadPromises)
       const uploadedPhotos = results.map(result => {
-        const photo = result.data?.uploadMultimedia
+        const photo = result.data?.uploadPhoto
         return {
           mediaId: photo?.id || null,
           photoUrl: photo?.photoUrl || null
