@@ -6,17 +6,16 @@ import { Buffer } from 'buffer'
 import { Button } from "@/components/ui/button"
 import client from '@/lib/apollo-client'
 
-const UPLOAD_MULTIMEDIA = gql`
-  mutation UploadMultimedia($input: UploadMultimediaInput!) {
-    uploadMultimedia(input: $input) {
+const UPLOAD_PHOTO = gql`
+  mutation UploadPhoto($input: UploadPhotoInput!) {
+    uploadPhoto(input: $input) {
       id
       taskId
       photoUrl
-      videoUrl
-      audioTranscription
     }
   }
 `
+
 
 const DELETE_MULTIMEDIA = gql`
   mutation DeleteMultimedia($deleteMultimediaId: Int!) {
@@ -54,7 +53,7 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
   const [isDeleting, setIsDeleting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [uploadMultimedia] = useMutation(UPLOAD_MULTIMEDIA, { client })
+  const [uploadPhoto] = useMutation(UPLOAD_PHOTO, { client })
   const [deleteMultimedia] = useMutation(DELETE_MULTIMEDIA, {
     client,
     onCompleted: () => {
@@ -122,14 +121,13 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
         const buffer = await file.arrayBuffer()
         const base64 = Buffer.from(buffer).toString('base64')
 
-        return uploadMultimedia({
+        return uploadPhoto({
           variables: {
             input: {
               taskId,
               filename: file.name,
               mimetype: file.type,
-              base64,
-              type: 'PHOTO'
+              base64
             }
           }
         })
@@ -137,7 +135,7 @@ export default function PhotoUploadForm({ onPhotosComplete, taskId }: PhotoUploa
 
       const results = await Promise.all(uploadPromises)
       const uploadedPhotos = results.map(result => {
-        const photo = result.data?.uploadMultimedia
+        const photo = result.data?.uploadPhoto
         return {
           mediaId: photo?.id || null,
           photoUrl: photo?.photoUrl || null
