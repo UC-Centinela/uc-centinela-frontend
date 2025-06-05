@@ -1,13 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
@@ -17,9 +17,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Filter, CalendarIcon } from "lucide-react";
 import type { TaskFilters } from "@/types/filters";
 import type { User } from "@/types/user";
-import { TaskState } from "@/types/task";
+// import { TaskState } from "@/types/task";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+// import { cn } from "@/lib/utils";
 
 interface TaskFiltersProps {
   showFilters: boolean;
@@ -37,26 +37,26 @@ export function TaskFilters({
   setShowFilters,
   filters,
   setFilters,
-  availableUsers,
+  // availableUsers,
   onApplyFilters,
 }: TaskFiltersProps) {
   const [startOpen, setStartOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
 
-  const getStatusLabel = (states: TaskState[] | undefined) => {
-    if (!states) return "Seleccionar";
-    const stateStr = states.join(",");
-    switch (stateStr) {
-      case "PENDING,IN_PROGRESS":
-        return "Asignadas";
-      case "COMPLETED":
-        return "En revisión";
-      case "REVIEWED":
-        return "Aprobada";
-      default:
-        return "Seleccionar";
-    }
-  };
+  // const getStatusLabel = (states: TaskState[] | undefined) => {
+  //   if (!states) return "Seleccionar";
+  //   const stateStr = states.join(",");
+  //   switch (stateStr) {
+  //     case "PENDING,IN_PROGRESS":
+  //       return "Asignadas";
+  //     case "COMPLETED":
+  //       return "En revisión";
+  //     case "REVIEWED":
+  //       return "Aprobada";
+  //     default:
+  //       return "Seleccionar";
+  //   }
+  // };
 
   const clearFilters = () => {
     const emptyFilters: TaskFilters = {
@@ -180,7 +180,7 @@ export function TaskFilters({
                 </PopoverContent>
               </Popover>
             </div>
-            <div>
+            {/* <div>
               <label className="text-xs text-gray-500 mb-1 block">
                 Responsable
               </label>
@@ -217,8 +217,8 @@ export function TaskFilters({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div>
+            </div> */}
+            {/* <div>
               <label className="text-xs text-gray-500 mb-1 block">Estado</label>
               <Select
                 value={filters.state?.join(",") || ""}
@@ -244,7 +244,7 @@ export function TaskFilters({
                   <SelectItem value="REVIEWED">Aprobada</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
           </div>
           <div className="flex justify-end mt-4 gap-2">
             <Button variant="outline" onClick={clearFilters}>

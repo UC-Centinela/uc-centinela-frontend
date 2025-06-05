@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, FileText, Edit } from "lucide-react";
 import React from "react";
 
-export default function TaskIntro({ taskId }: { taskId?: string }) {
+export default function TaskIntro({ taskId, taskTitle }: { taskId?: string, taskTitle?: string }) {
   const router = useRouter();
 
   const steps = [
@@ -40,8 +40,7 @@ export default function TaskIntro({ taskId }: { taskId?: string }) {
             </Button>
 
             <h1 className="text-2xl md:text-4xl font-bold text-teal-800 mb-8">
-              Posicionamiento de cable minero eléctrico sobre el pretil
-              utilizando equipo de apoyo
+              {taskTitle}
             </h1>
           </div>
 

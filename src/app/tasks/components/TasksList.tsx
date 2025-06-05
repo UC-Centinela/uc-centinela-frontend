@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Plus, Calendar, Clock, LogOut, User } from "lucide-react";
+import { ArrowRight, Plus, Calendar, Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { handleLogout } from "@/services/users";
 
@@ -71,13 +71,13 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
           Tareas asignadas
         </h1>
         <div className="flex gap-2 mt-4">
-          <Button
+          {/* <Button
             variant="outline"
             size="icon"
             className="rounded-full bg-teal-100 text-teal-700"
           >
             <User className="h-5 w-5" />
-          </Button>
+          </Button> */}
           <Button
             variant="outline"
             size="icon"

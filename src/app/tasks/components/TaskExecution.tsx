@@ -1,4 +1,3 @@
-// src/app/tasks/components/TaskExecution.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -30,13 +29,6 @@ const UPDATE_TASK = gql`
     }
   }
 `;
-
-// Se elimina DELETE_MULTIMEDIA, pues no se está usando en este componente.
-// const DELETE_MULTIMEDIA = gql`
-//   mutation DeleteMultimedia($deleteMultimediaId: Int!) {
-//     deleteMultimedia(id: $deleteMultimediaId)
-//   }
-// `;
 
 interface MultimediaData {
   id: number;
@@ -211,6 +203,7 @@ export default function TaskExecution({
 
   return (
     <div className="min-h-screen bg-gray-100 pb-6">
+      {/* Encabezado y navegación */}
       <div className="bg-white p-4 shadow-sm">
         <Button
           variant="ghost"
@@ -366,7 +359,6 @@ export default function TaskExecution({
                     key={index}
                     className="relative aspect-square bg-gray-100 rounded-md overflow-hidden"
                   >
-                    {/* ← Aquí reemplazamos <img> por <Image> */}
                     <Image
                       src={photo.photoUrl || ""}
                       alt={`Foto ${index + 1}`}
