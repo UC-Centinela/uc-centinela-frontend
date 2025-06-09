@@ -1,4 +1,4 @@
-import { validateTaskAccess } from "@/services/tasks";
+import { validateTaskAccess } from "@/services/task";
 import { notFound } from "next/navigation";
 import ARTPResultContent from "./ARTPResultContent";
 

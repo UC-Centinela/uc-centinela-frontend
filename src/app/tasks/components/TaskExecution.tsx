@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import TranscriptionForm, { TranscriptionResult } from "@/app/transcription/components/TranscriptionForm";
 import PhotoUploadForm, { PhotoUploadResult } from "@/app/tasks/components/PhotoUploadForm";
 import ControlStrategySelector from "@/app/tasks/components/ControlStrategySelector";
-import { gql, useQuery, useMutation } from "@apollo/client";
+import { gql, useQuery, useMutation, fromPromise } from "@apollo/client";
 import client from "@/lib/apollo-client";
 import Image from "next/image";
+import { MultimediaItem } from "@/types/multimedia";
+import { updateTask } from "@/services/task";
 
 const FIND_ALL_CONTROL_STRATEGIES = gql`
   query FindAllControlStrategies {
@@ -21,23 +23,6 @@ const FIND_ALL_CONTROL_STRATEGIES = gql`
   }
 `;
 
-const UPDATE_TASK = gql`
-  mutation UpdateTask($input: UpdateTaskInput!) {
-    updateTask(input: $input) {
-      id
-      comments
-    }
-  }
-`;
-
-interface MultimediaData {
-  id: number;
-  taskId: number;
-  photoUrl: string | null;
-  videoUrl: string | null;
-  audioTranscription: string | null;
-}
-
 interface ControlStrategy {
   id: string;
   taskId?: number | null;
@@ -46,7 +31,7 @@ interface ControlStrategy {
 
 interface TaskExecutionProps {
   taskId?: string;
-  multimediaData?: MultimediaData[];
+  multimediaData?: MultimediaItem[];
   taskComments?: string | null;
 }
 
@@ -57,8 +42,8 @@ export default function TaskExecution({
 }: TaskExecutionProps) {
   const router = useRouter();
   const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null);
-  const [uploadedVideo, setUploadedVideo] = useState<MultimediaData | null>(null);
-  const [uploadedPhotos, setUploadedPhotos] = useState<MultimediaData[]>([]);
+  const [uploadedVideo, setUploadedVideo] = useState<MultimediaItem | null>(null);
+  const [uploadedPhotos, setUploadedPhotos] = useState<MultimediaItem[]>([]);
   const [showStrategySelector, setShowStrategySelector] = useState(false);
   const [selectedStrategies, setSelectedStrategies] = useState<ControlStrategy[]>([]);
   const [comments, setComments] = useState(taskComments || "");
@@ -84,22 +69,34 @@ export default function TaskExecution({
     },
   });
 
-  const [updateTask] = useMutation(UPDATE_TASK, {
-    client,
-    onCompleted: (data) => {
-      if (data?.updateTask?.comments !== undefined) {
-        setComments(data.updateTask.comments || "");
+  const handleUpdateTask = async (taskId: string, newComments: string) => {
+    setIsSavingComments(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("id", taskId);
+      formData.append("comments", newComments.trim());
+
+      const result = await updateTask(formData)
+      if (result?.success) {
+        if (result.data?.comments !== undefined) {
+          setComments(result.data.comments || "");
+          setIsEditingComments(false);
+          setIsSavingComments(false);
+          setError("");
+        }
+      } else {
+        console.error("Error updating task:", result?.error || "Unknown error");
         setIsSavingComments(false);
-        setIsEditingComments(false);
-        setError("");
+        setError("Error al guardar los comentarios. Por favor, intente de nuevo.");
       }
-    },
-    onError: (error: Error) => {
-      console.error("Error updating comments:", error);
+    } catch (error) {
+      console.error("Error updating task:", error);
       setIsSavingComments(false);
       setError("Error al guardar los comentarios. Por favor, intente de nuevo.");
-    },
-  });
+    }
+  }
 
   // Inicializar transcriptionResult con los datos almacenados o con los existentes en BD
   useEffect(() => {
@@ -141,7 +138,7 @@ export default function TaskExecution({
       localStorage.setItem(`transcription-${taskId}`, JSON.stringify(result));
 
       if (result.videoUrl) {
-        const newVideo: MultimediaData = {
+        const newVideo: MultimediaItem = {
           id: result.mediaId || 0,
           taskId: taskId ? Number(taskId) : 0,
           photoUrl: null,
@@ -157,7 +154,7 @@ export default function TaskExecution({
 
   // Handler para PhotoUploadForm (sin redirección automática)
   const handlePhotosComplete = (results: PhotoUploadResult[]) => {
-    const nuevasFotos: MultimediaData[] = results.map((result) => ({
+    const nuevasFotos: MultimediaItem[] = results.map((result) => ({
       id: result.mediaId || 0,
       taskId: taskId ? Number(taskId) : 0,
       photoUrl: result.photoUrl || null,
@@ -175,24 +172,7 @@ export default function TaskExecution({
 
   const handleSaveComments = async () => {
     if (!comments.trim() || !taskId) return;
-
-    setIsSavingComments(true);
-    setError("");
-
-    const variables = {
-      input: {
-        id: Number(taskId),
-        comments: comments.trim(),
-      },
-    };
-
-    try {
-      await updateTask({ variables });
-    } catch (error) {
-      console.error("Error saving comments:", error);
-      setError("Error al guardar los comentarios. Por favor, intente de nuevo.");
-      setIsSavingComments(false);
-    }
+    await handleUpdateTask(taskId, comments.trim());
   };
 
   const canGenerateARTP = useMemo(() => {
@@ -568,3 +548,5 @@ export default function TaskExecution({
     </div>
   );
 }
+
+

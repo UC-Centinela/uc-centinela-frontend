@@ -11,6 +11,8 @@ import { Calendar, Clock, FileText, FileSpreadsheet, History, MessageSquare, X }
 import { cn } from "@/lib/utils"
 import type { Task } from "@/types/task"
 import type { User as TaskUser } from "@/types/user"
+import { updateTask } from "@/services/task"
+import { useRouter } from "next/navigation"
 
 interface TaskDetailsDialogProps {
   task: Task | null
@@ -35,6 +37,7 @@ export function TaskDetailsDialog({
   onReassignResponsible,
   onAddComment,
 }: TaskDetailsDialogProps) {
+  const router = useRouter()
   if (!task) return null
 
   const renderStatusBadge = (state: Task["state"]) => {
@@ -94,13 +97,10 @@ export function TaskDetailsDialog({
         <div className="flex justify-end mt-4 mb-2">
           <Button
             variant="outline"
-            className="flex items-center gap-2"
-            onClick={() => {
-              // Aquí puedes agregar la lógica para ver ARTP
-              console.log("Ver ARTP para tarea:", task.id)
-            }}
+            className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+            onClick={() => router.push(`/supervisor/${task.id}/register`)}
           >
-            <FileText size={16} className="text-blue-600" />
+            <FileText size={16} className="text-blue-600 group-hover:text-blue-700 transition-colors duration-200" />
             Ver ARTP
           </Button>
         </div>
@@ -196,7 +196,6 @@ export function TaskDetailsDialog({
                     <p className="text-sm font-medium">
                       {taskResponsible.firstName} {taskResponsible.lastName}
                     </p>
-                    <p className="text-xs text-muted-foreground">{taskResponsible.role}</p>
                   </div>
                 </div>
               )}
@@ -273,9 +272,6 @@ export function TaskDetailsDialog({
                     }}
                   />
                   <div className="flex justify-between items-center mt-2">
-                    <p className="text-xs text-muted-foreground">
-                      Presiona Enter para enviar, Shift+Enter para nueva línea
-                    </p>
                     <Button
                       size="sm"
                       onClick={(e) => {

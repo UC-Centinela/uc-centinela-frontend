@@ -1,22 +1,10 @@
 // src/app/tasks/[task_id]/risk_analysis/page.tsx
 import TaskExecution from "@/app/tasks/components/TaskExecution";
 import { notFound } from "next/navigation";
-import { validateTaskAccess } from "@/services/tasks";
+import { validateTaskAccess, getTasksByUser } from "@/services/task";
 import { cookies } from "next/headers";
 import { getUserProfile } from "@/services/users";
-
-interface Task {
-  id: string;
-  title: string;
-  instruction: string;
-  comments: string;
-  state: string;
-  changeHistory: string[];
-  assignationDate: string;
-  requiredSendDate: string;
-  creatorUserId: number;
-  revisorUserId: number;
-}
+import { Task } from "@/types/task";
 
 async function getTaskData(taskId: string) {
   try {
@@ -32,44 +20,11 @@ async function getTaskData(taskId: string) {
     if (!user?.data?.getUserByEmail?.id) {
       return null;
     }
-
+    
     const userId = parseInt(user.data.getUserByEmail.id);
     console.log("Getting tasks for user:", userId);
-
-    const response = await fetch(
-      process.env.NEXT_PUBLIC_GRAPHQL_API_URL || "/api/graphql",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          query: `
-            query FindTasksByUser($userId: Int!) {
-              findTasksByUser(userId: $userId) {
-                id
-                title
-                instruction
-                comments
-                state
-                changeHistory
-                assignationDate
-                requiredSendDate
-                creatorUserId
-                revisorUserId
-              }
-            }
-          `,
-          variables: {
-            userId,
-          },
-        }),
-      }
-    );
-
-    const data = await response.json();
-    const tasks = data.data?.findTasksByUser || [];
+    
+    const tasks = await getTasksByUser(userId)
     console.log("All tasks received:", tasks);
     console.log("Task ID:", taskId);
 
