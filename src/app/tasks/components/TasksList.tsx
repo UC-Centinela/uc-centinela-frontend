@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Plus, Calendar, Clock, LogOut } from "lucide-react";
+import { ArrowRight, Calendar, Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { handleLogout } from "@/services/users";
 
@@ -161,16 +161,6 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
             No tienes tareas {getStatusName()}
           </div>
         )}
-      </div>
-      <div className="fixed bottom-6 right-6">
-        <Button
-          variant="destructive"
-          size="icon"
-          onClick={() => router.push("/tasks/item")}
-          className="w-14 h-14 rounded-full"
-        >
-          <Plus className="h-7 w-7" />
-        </Button>
       </div>
     </div>
   );
