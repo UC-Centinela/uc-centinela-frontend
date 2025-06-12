@@ -10,12 +10,12 @@ import ControlStrategySelector from "@/app/tasks/components/ControlStrategySelec
 import { gql, useQuery, useMutation } from "@apollo/client";
 import client from "@/lib/apollo-client";
 import Image from "next/image";
+import { useControlStrategies } from "./TaskExecutionClientWrapper";
 
-const FIND_ALL_CONTROL_STRATEGIES = gql`
-  query FindAllControlStrategies {
-    findAllControlStrategies {
+const FIND_CONTROL_STRATEGIES_BY_TASK = gql`
+  query FindControlStrategiesByTask($taskId: Int!) {
+    findControlStrategiesByTask(taskId: $taskId) {
       id
-      taskId
       title
     }
   }
@@ -26,6 +26,16 @@ const UPDATE_TASK = gql`
     updateTask(input: $input) {
       id
       comments
+    }
+  }
+`;
+
+const UNASSIGN_CONTROL_STRATEGY = gql`
+  mutation unassignControlStrategy($input: UnassignControlStrategyInput!) {
+    unassignControlStrategy(input: $input) {
+      id
+      title
+      controlStrategyIds
     }
   }
 `;
@@ -60,7 +70,7 @@ export default function TaskExecution({
   const [uploadedVideo, setUploadedVideo] = useState<MultimediaData | null>(null);
   const [uploadedPhotos, setUploadedPhotos] = useState<MultimediaData[]>([]);
   const [showStrategySelector, setShowStrategySelector] = useState(false);
-  const [selectedStrategies, setSelectedStrategies] = useState<ControlStrategy[]>([]);
+  const { selectedStrategies, setSelectedStrategies } = useControlStrategies();
   const [comments, setComments] = useState(taskComments || "");
   const [isEditingComments, setIsEditingComments] = useState(false);
   const [isSavingComments, setIsSavingComments] = useState(false);
@@ -76,12 +86,18 @@ export default function TaskExecution({
   const hasExistingPhotos = totalPhotos > 0;
 
   // Obtener todas las estrategias de control
-  const { data: strategiesData, loading: loadingStrategies } = useQuery(FIND_ALL_CONTROL_STRATEGIES, {
+  const { loading: loadingStrategies } = useQuery(FIND_CONTROL_STRATEGIES_BY_TASK, {
     client,
+    variables: { taskId: taskId ? Number(taskId) : 0 },
     skip: !taskId,
     onError: (error) => {
       console.error("Error fetching strategies:", error);
     },
+    onCompleted: (data) => {
+      if (data?.findControlStrategiesByTask) {
+        setSelectedStrategies(data.findControlStrategiesByTask);
+      }
+    }
   });
 
   const [updateTask] = useMutation(UPDATE_TASK, {
@@ -101,6 +117,14 @@ export default function TaskExecution({
     },
   });
 
+  const [unassignControlStrategy] = useMutation(UNASSIGN_CONTROL_STRATEGY, {
+    client,
+    onError: (error) => {
+      console.error("Error unassigning control strategy:", error);
+      setError("Error al eliminar la estrategia. Por favor, intente de nuevo.");
+    },
+  });
+
   // Inicializar transcriptionResult con los datos almacenados o con los existentes en BD
   useEffect(() => {
     if (existingVideo) {
@@ -116,16 +140,6 @@ export default function TaskExecution({
       }
     }
   }, [taskId, existingVideo]);
-
-  // Filtrar estrategias por taskId
-  useEffect(() => {
-    if (strategiesData?.findAllControlStrategies && taskId) {
-      const taskStrategies = strategiesData.findAllControlStrategies.filter(
-        (strategy: ControlStrategy) => strategy.taskId === Number(taskId)
-      );
-      setSelectedStrategies(taskStrategies);
-    }
-  }, [strategiesData, taskId]);
 
   // Sincronizar comentarios si cambian desde props
   useEffect(() => {
@@ -171,6 +185,26 @@ export default function TaskExecution({
   const handleStrategySelection = (strategies: ControlStrategy[]) => {
     setSelectedStrategies(strategies);
     setShowStrategySelector(false);
+  };
+
+  const handleStrategyRemoval = async (strategy: ControlStrategy) => {
+    try {
+      // If the strategy has a taskId matching the current task, unassign it via API
+      await unassignControlStrategy({
+        variables: {
+          input: {
+            taskId: Number(taskId),
+            controlStrategyId: Number(strategy.id)
+          }
+        }
+      });
+      
+      // Remove from UI regardless of API call
+      setSelectedStrategies((prev) => prev.filter((s) => s.id !== strategy.id));
+    } catch (error) {
+      console.error("Error removing strategy:", error);
+      setError("Error al eliminar la estrategia. Por favor, intente de nuevo.");
+    }
   };
 
   const handleSaveComments = async () => {
@@ -435,11 +469,7 @@ export default function TaskExecution({
                   >
                     {strategy.title}
                     <button
-                      onClick={() =>
-                        setSelectedStrategies((prev) =>
-                          prev.filter((s) => s.id !== strategy.id)
-                        )
-                      }
+                      onClick={() => handleStrategyRemoval(strategy)}
                       className="hover:bg-teal-800 rounded-full p-0.5"
                     >
                       <X className="h-4 w-4" />

@@ -5,30 +5,34 @@ import { Search, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { gql, useMutation, useQuery } from '@apollo/client'
 import client from '@/lib/apollo-client'
+import { useControlStrategies } from "./TaskExecutionClientWrapper";
 
 const FIND_ALL_CONTROL_STRATEGIES = gql`
   query FindAllControlStrategies {
     findAllControlStrategies {
       id
-      taskId
       title
     }
   }
 `;
 
-const UPDATE_CONTROL_STRATEGY = gql`
-  mutation UpdateControlStrategy($input: UpdateControlStrategyInput!) {
-    updateControlStrategy(input: $input) {
+const ASSIGN_CONTROL_STRATEGY = gql`
+  mutation assignControlStrategy($input: AssignControlStrategyInput!) {
+    assignControlStrategy(input: $input) {
       id
-      taskId
       title
+      controlStrategyIds
     }
   }
 `;
 
-const DELETE_CONTROL_STRATEGY = gql`
-  mutation DeleteControlStrategy($deleteControlStrategyId: Int!) {
-    deleteControlStrategy(id: $deleteControlStrategyId)
+const UNASSIGN_CONTROL_STRATEGY = gql`
+  mutation unassignControlStrategy($input: UnassignControlStrategyInput!) {
+    unassignControlStrategy(input: $input) {
+      id
+      title
+      controlStrategyIds
+    }
   }
 `;
 
@@ -51,7 +55,7 @@ export default function ControlStrategySelector({
   taskId,
   existingStrategies = []
 }: ControlStrategySelectorProps) {
-  const [selectedStrategies, setSelectedStrategies] = useState<ControlStrategy[]>([]);
+  const { selectedStrategies, setSelectedStrategies } = useControlStrategies();
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string>("");
 
@@ -66,19 +70,19 @@ export default function ControlStrategySelector({
   });
 
   // Mutation para actualizar estrategias
-  const [updateStrategy] = useMutation(UPDATE_CONTROL_STRATEGY, {
+  const [assignControlStrategy] = useMutation(ASSIGN_CONTROL_STRATEGY, {
     client,
     onError: (error) => {
-      console.error('Error updating strategy:', error);
+      console.error('Error assigning strategy:', error);
       setError('Error al agregar la estrategia. Por favor, intenta de nuevo.');
     }
   });
 
   // Mutation para eliminar estrategias
-  const [deleteStrategy] = useMutation(DELETE_CONTROL_STRATEGY, {
+  const [unassignControlStrategy] = useMutation(UNASSIGN_CONTROL_STRATEGY, {
     client,
     onError: (error) => {
-      console.error('Error deleting strategy:', error);
+      console.error('Error unassigning strategy:', error);
       setError('Error al eliminar la estrategia. Por favor, intenta de nuevo.');
     }
   });
@@ -88,7 +92,7 @@ export default function ControlStrategySelector({
     if (existingStrategies?.length > 0) {
       setSelectedStrategies(existingStrategies);
     }
-  }, [existingStrategies]);
+  }, [existingStrategies, setSelectedStrategies]);
 
   // Obtener estrategias únicas (sin duplicados por título)
   const uniqueStrategies = useMemo(() => {
@@ -110,36 +114,41 @@ export default function ControlStrategySelector({
     if (isSelected) {
       // Si ya está seleccionada, la quitamos
       const strategyToRemove = selectedStrategies.find(s => s.title === strategy.title);
-      if (strategyToRemove?.taskId === taskId) {
+      
         try {
-          await deleteStrategy({
+          await unassignControlStrategy({
             variables: {
-              deleteControlStrategyId: Number(strategyToRemove.id)
+              input: {
+                taskId: Number(taskId),
+                controlStrategyId: Number(strategyToRemove.id)
+              }
             }
           });
-          setSelectedStrategies(prev => prev.filter(s => s.title !== strategy.title));
         } catch (error) {
-          console.error('Error in delete operation:', error);
+          console.error('Error in unassign operation:', error);
           setError('Error al eliminar la estrategia. Por favor, intenta de nuevo.');
         }
-      }
+      setSelectedStrategies(prev => prev.filter(s => s.title !== strategy.title));
     } else {
-      // Si no está seleccionada, creamos una nueva con el taskId actual
       try {
-        const result = await updateStrategy({
+        const result = await assignControlStrategy({
           variables: {
             input: {
               taskId,
-              title: strategy.title
+              controlStrategyId: Number(strategy.id)
             }
           }
         });
         
-        if (result.data?.updateControlStrategy) {
-          setSelectedStrategies(prev => [...prev, result.data.updateControlStrategy]);
+        if (result.data?.assignControlStrategy) {
+          setSelectedStrategies(prev => [...prev, {
+            id: strategy.id,
+            title: strategy.title,
+            taskId: taskId
+          }]);
         }
       } catch (error) {
-        console.error('Error in update operation:', error);
+        console.error('Error in assign operation:', error);
         setError('Error al agregar la estrategia. Por favor, intenta de nuevo.');
       }
     }
