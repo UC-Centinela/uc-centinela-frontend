@@ -120,7 +120,7 @@ export default function ControlStrategySelector({
             variables: {
               input: {
                 taskId: Number(taskId),
-                controlStrategyId: Number(strategyToRemove.id)
+                controlStrategyId: Number(strategyToRemove?.id)
               }
             }
           });
@@ -128,24 +128,26 @@ export default function ControlStrategySelector({
           console.error('Error in unassign operation:', error);
           setError('Error al eliminar la estrategia. Por favor, intenta de nuevo.');
         }
-      setSelectedStrategies(prev => prev.filter(s => s.title !== strategy.title));
+      setSelectedStrategies(selectedStrategies.filter(s => s.title !== strategy.title));
     } else {
       try {
         const result = await assignControlStrategy({
           variables: {
             input: {
-              taskId,
+              taskId: Number(taskId),
               controlStrategyId: Number(strategy.id)
             }
           }
         });
         
         if (result.data?.assignControlStrategy) {
-          setSelectedStrategies(prev => [...prev, {
+          const newStrategy: ControlStrategy = {
             id: strategy.id,
             title: strategy.title,
             taskId: taskId
-          }]);
+          };
+          
+          setSelectedStrategies([...selectedStrategies, newStrategy]);
         }
       } catch (error) {
         console.error('Error in assign operation:', error);

@@ -2,12 +2,9 @@ import { validateTaskAccess } from "@/services/tasks";
 import { notFound } from "next/navigation";
 import ApprovedContent from "./ApprovedContent";
 
-interface PageProps {
-  params: { task_id: string };
-}
-
-export default async function ApprovedPage({ params }: PageProps) {
-  const { task_id } = params;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default async function ApprovedPage({ params }: any) {
+  const task_id = params.task_id;
 
   const hasAccess = await validateTaskAccess(task_id);
   if (!hasAccess) {
@@ -15,4 +12,4 @@ export default async function ApprovedPage({ params }: PageProps) {
   }
 
   return <ApprovedContent taskId={task_id} />;
-} 
+}

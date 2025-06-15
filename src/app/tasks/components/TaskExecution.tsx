@@ -200,7 +200,7 @@ export default function TaskExecution({
       });
       
       // Remove from UI regardless of API call
-      setSelectedStrategies((prev) => prev.filter((s) => s.id !== strategy.id));
+      setSelectedStrategies(selectedStrategies.filter((s) => s.id !== strategy.id));
     } catch (error) {
       console.error("Error removing strategy:", error);
       setError("Error al eliminar la estrategia. Por favor, intente de nuevo.");
