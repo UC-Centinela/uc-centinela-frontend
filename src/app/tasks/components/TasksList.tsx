@@ -5,19 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Calendar, Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { handleLogout } from "@/services/users";
-
-interface Task {
-  id: string;
-  title: string;
-  instruction: string;
-  state: string;
-  creatorUserId: string;
-  revisorUserId: string;
-  comments: string;
-  changeHistory: string;
-  assignationDate: string;
-  requiredSendDate: string;
-}
+import type { Task } from "@/types/task";
 
 export default function TasksList({ tasks }: { tasks: Task[] }) {
   const [activeTab, setActiveTab] = useState("assigned");

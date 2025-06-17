@@ -1,6 +1,6 @@
 import TaskIntro from "@/app/tasks/components/TaskIntro";
 import { notFound } from 'next/navigation';
-import { validateTaskAccess } from "@/services/tasks";
+import { validateTaskAccess } from "@/services/task";
 import { getAllTasks } from "@/services/task";
 
 async function fetchTaskTitle(task_id: string) {

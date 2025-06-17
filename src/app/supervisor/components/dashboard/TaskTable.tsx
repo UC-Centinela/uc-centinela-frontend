@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -8,24 +9,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-// import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 // import { FileText, FileSpreadsheet, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import type { Task } from "@/types/task";
 import type { User } from "@/types/user";
+import { TaskDetailsDialog } from "./TaskDetails";
 
 interface TaskTableProps {
   tasks: Task[];
   users: User[];
   onViewDetails: (task: Task) => void;
-  onExportPDF: (taskId: string) => void;
-  onExportExcel: (taskId: string) => void;
+  onSaveChanges: (taskId: string, comment: string, newResponsibleId: number) => void
 }
 
 export function TaskTable({
-  tasks,
+  tasks: initialTasks,
   users,
+  onSaveChanges
 }: TaskTableProps) {
+  // Estados para controlar el diálogo
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const renderStatusBadge = (state: Task["state"]) => {
     switch (state) {
       case "PENDING":
@@ -68,61 +76,135 @@ export function TaskTable({
     return `${day}-${month}-${year}`;
   };
 
+  const onViewDetails = (task: Task) => {
+    setSelectedTask(task);
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedTask(null);
+  };
+
+  // Función para obtener el responsable de la tarea
+  const getTaskResponsible = (task: Task) => {
+    return users.find(user => String(user.id) === String(task.creatorUserId)) || null;
+  };
+
+  const handleSaveChanges = (taskId: string, comment: string, newResponsibleId: number) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              comments: comment, // Actualiza el comentario
+              creatorUserId: newResponsibleId, // Actualiza el responsable
+            }
+          : task
+      )
+    );
+    // Actualizar selectedTask si está abierto
+    if (selectedTask && selectedTask.id === taskId) {
+      setSelectedTask({
+        ...selectedTask,
+        comments: comment, // Actualiza el comentario
+        creatorUserId: newResponsibleId, // Actualiza el responsable
+      });
+    }
+    // Llamar callback externo si quieres persistir en backend
+    onSaveChanges(taskId, comment, newResponsibleId);
+    handleCloseDialog();
+  }
+
+  // const handleReassignResponsible = (taskId: string, newResponsibleId: number) => {
+  //   setTasks((prevTasks) =>
+  //     prevTasks.map((task) =>
+  //       task.id === taskId
+  //         ? { ...task, creatorUserId: newResponsibleId } // Actualiza el responsable
+  //         : task
+  //     )
+  //   );
+
+  //   // Actualizar selectedTask si está abierto
+  //   if (selectedTask && selectedTask.id === taskId) {
+  //     setSelectedTask({ ...selectedTask, creatorUserId: newResponsibleId });
+  //   }
+
+  //   // Llamar callback externo si quieres persistir en backend
+  //   const id = Number(taskId);
+  //   onReassignResponsible(id, newResponsibleId);
+  // };
+
+  // const handleAddComment = (taskId: string, comment: string) => {
+  //   setTasks((prevTasks) =>
+  //     prevTasks.map((task) =>
+  //       task.id === taskId
+  //         ? { ...task, comments: comment } // O concatena si es array
+  //         : task
+  //     )
+  //   );
+
+  //   // Actualizar selectedTask si está abierto
+  //   if (selectedTask && selectedTask.id === taskId) {
+  //     setSelectedTask({ ...selectedTask, comments: comment });
+  //   }
+
+  //   // Llamar callback externo si quieres persistir en backend
+  //   const id = Number(taskId);
+  //   onAddComment(id, comment);
+  // };
+
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[300px]">Título</TableHead>
-            <TableHead>Fecha Asignación</TableHead>
-            <TableHead>Fecha Requerida</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Responsable</TableHead>
-            <TableHead>Revisor</TableHead>
-            {/* <TableHead className="text-right">Acciones</TableHead> */}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tasks.map((task) => (
-            <TableRow key={task.id}>
-              <TableCell className="font-medium">{task.title}</TableCell>
-              <TableCell>{formatDate(task.assignationDate)}</TableCell>
-              <TableCell>{formatDate(task.requiredSendDate)}</TableCell>
-              <TableCell>{renderStatusBadge(task.state)}</TableCell>
-              <TableCell>{getUserName(task.creatorUserId)}</TableCell>
-              <TableCell>{getUserName(task.revisorUserId)}</TableCell>
-              {/* <TableCell>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onViewDetails(task)}
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onExportPDF(task.id)}
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  >
-                    <FileText className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onExportExcel(task.id)}
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  >
-                    <FileSpreadsheet className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell> */}
+    <>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[300px]">Título</TableHead>
+              <TableHead>Fecha Asignación</TableHead>
+              <TableHead>Fecha Requerida</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Responsable</TableHead>
+              <TableHead>Revisor</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {tasks.map((task) => (
+              <TableRow key={task.id}>
+                <TableCell className="font-medium">{task.title}</TableCell>
+                <TableCell>{formatDate(task.assignationDate)}</TableCell>
+                <TableCell>{formatDate(task.requiredSendDate)}</TableCell>
+                <TableCell>{renderStatusBadge(task.state)}</TableCell>
+                <TableCell>{getUserName(task.creatorUserId)}</TableCell>
+                <TableCell>{getUserName(task.revisorUserId)}</TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onViewDetails(task)}
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Diálogo de detalles de tarea */}
+      <TaskDetailsDialog
+        task={selectedTask}
+        taskResponsible={selectedTask ? getTaskResponsible(selectedTask) : null}
+        availableUsers={users}
+        isOpen={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSaveChanges={handleSaveChanges}
+      />
+    </>
   );
 }

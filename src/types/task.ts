@@ -8,7 +8,7 @@ export interface Task {
     state: TaskState;
     creatorUserId: number;
     changeHistory: TaskHistoryItem[];
-    comments: TaskComment[];
+    comments: string;
     instruction: string;
     revisorUserId: number;
 }

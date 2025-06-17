@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import client from "@/lib/apollo-client";
 import { gql } from "@apollo/client";
 import PhotoDetailsClient from "./PhotoDetailsClient";
-import { validateTaskAccess } from "@/services/tasks";
+import { validateTaskAccess } from "@/services/task";
 
 const FIND_MULTIMEDIA_BY_TASK_ID = gql`
   query FindMultimediaByTaskId($taskId: Int!) {

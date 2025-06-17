@@ -4,10 +4,10 @@ import { useState } from "react"
 import { TaskSummaryCards } from "./dashboard/TaskSummaryCards"
 import { TaskFilters } from "./dashboard/TaskFilters"
 import { TaskTable } from "./dashboard/TaskTable"
-import { TaskDetailsDialog } from "./dashboard/TaskDetails"
 import { Header } from "./dashboard/TaskHeader"
 import type { Task, TaskState, TaskStatusData, TaskFilters as TaskFiltersType } from "@/types/task"
 import type { User } from "@/types/user"
+import { editTask } from "../page"
 
 interface SupervisorDashboardProps {
   initialTasks: Task[]
@@ -19,7 +19,6 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [showFilters, setShowFilters] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [currentTab, setCurrentTab] = useState("all-tasks")
   const [filters, setFilters] = useState<TaskFiltersType>({
     state: undefined,
@@ -53,30 +52,6 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
   // Handlers
   const handleViewDetails = (task: Task) => {
     setSelectedTask(task)
-    setIsDetailsOpen(true)
-  }
-
-  const handleCloseDetails = () => {
-    setIsDetailsOpen(false)
-    setSelectedTask(null)
-  }
-
-  const handleExportPDF = async (taskId: string) => {
-    try {
-      // Implementar lógica de exportación a PDF
-      console.log("Exportando a PDF:", taskId)
-    } catch (error) {
-      console.error("Error al exportar a PDF:", error)
-    }
-  }
-
-  const handleExportExcel = async (taskId: string) => {
-    try {
-      // Implementar lógica de exportación a Excel
-      console.log("Exportando a Excel:", taskId)
-    } catch (error) {
-      console.error("Error al exportar a Excel:", error)
-    }
   }
 
   const handleApplyFilters = (newFilters: TaskFiltersType) => {
@@ -121,21 +96,26 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
     setFilters(newFilters)
   }
 
-  const handleReassignResponsible = async (taskId: string, newResponsible: number) => {
+  const handleTaskChanges = async (taskId: string, comment: string, newResponsibleId: number) => {
     try {
-      // Implementar lógica de reasignación
-      console.log("Reasignando tarea:", taskId, "a:", newResponsible)
-    } catch (error) {
-      console.error("Error al reasignar tarea:", error)
-    }
-  }
-
-  const handleAddComment = async (taskId: string, comment: string) => {
-    try {
-      // Implementar lógica de agregar comentario
-      console.log("Agregando comentario a tarea:", taskId, "comentario:", comment)
-    } catch (error) {
-      console.error("Error al agregar comentario:", error)
+      const formData = new FormData();
+      formData.append("id", taskId.toString());
+      formData.append("creatorUserId", newResponsibleId.toString());
+      formData.append("comments", comment);
+      const result = await editTask(formData);
+      if (result.success && result.task) {
+        setTasks(prev =>
+          prev.map(task => (task.id === result.task!.id ? result.task! : task))
+        );
+        if (selectedTask && selectedTask.id === result.task.id) {
+          setSelectedTask(result.task);
+        }
+        console.log("Tarea actualizada exitosamente:", result.task);
+      } else {
+        console.error("Error al actualizar tarea:", result.error);
+      }
+    } catch (error) { 
+      console.error("Error al actualizar tarea:", error)
     }
   }
 
@@ -174,8 +154,6 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
         filters={filters}
         setFilters={setFilters}
         availableUsers={users}
-        onExportExcel={() => handleExportExcel("all")}
-        onExportPDF={() => handleExportPDF("all")}
         onApplyFilters={handleApplyFilters}
       />
 
@@ -184,21 +162,7 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
         tasks={tasks}
         users={users}
         onViewDetails={handleViewDetails}
-        onExportPDF={handleExportPDF}
-        onExportExcel={handleExportExcel}
-      />
-
-      {/* Modal de Detalles */}
-      <TaskDetailsDialog
-        task={selectedTask}
-        taskResponsible={selectedTask ? users.find(u => u.id === selectedTask.creatorUserId) || null : null}
-        availableUsers={users}
-        isOpen={isDetailsOpen}
-        onClose={handleCloseDetails}
-        onExportPDF={handleExportPDF}
-        onExportExcel={handleExportExcel}
-        onReassignResponsible={handleReassignResponsible}
-        onAddComment={handleAddComment}
+        onSaveChanges={handleTaskChanges}
       />
     </div>
   )

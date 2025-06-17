@@ -27,8 +27,6 @@ interface TaskFiltersProps {
   filters: TaskFilters;
   setFilters: (filters: TaskFilters) => void;
   availableUsers: User[];
-  onExportExcel: () => void;
-  onExportPDF: () => void;
   onApplyFilters: (filters: TaskFilters) => void;
 }
 

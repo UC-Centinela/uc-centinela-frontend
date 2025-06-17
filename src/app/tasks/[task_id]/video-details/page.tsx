@@ -2,7 +2,8 @@ import { gql } from '@apollo/client'
 import client from '@/lib/apollo-client'
 import VideoDetailsClient from './VideoDetailsClient'
 import { notFound } from 'next/navigation'
-import { validateTaskAccess } from "@/services/tasks";
+import { validateTaskAccess } from "@/services/task";
+import { MultimediaItem } from '@/types/multimedia';
 
 const FIND_MULTIMEDIA_BY_TASK_ID = gql`
   query FindMultimediaByTaskId($taskId: Int!) {
@@ -15,14 +16,6 @@ const FIND_MULTIMEDIA_BY_TASK_ID = gql`
     }
   }
 `
-
-interface MultimediaItem {
-  id: number;
-  taskId: number;
-  photoUrl: string | null;
-  videoUrl: string | null;
-  audioTranscription: string | null;
-}
 
 async function getMultimediaData(taskId: string): Promise<MultimediaItem[]> {
   try {
