@@ -1,17 +1,15 @@
 "use client"
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar, Clock, FileText, FileSpreadsheet, History, MessageSquare, X } from "lucide-react"
+import { Calendar, Clock, FileText, X, MessageSquare, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Task } from "@/types/task"
 import type { User as TaskUser } from "@/types/user"
-import { updateTask } from "@/services/task"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 interface TaskDetailsDialogProps {
@@ -20,10 +18,7 @@ interface TaskDetailsDialogProps {
   availableUsers: TaskUser[]
   isOpen: boolean
   onClose: () => void
-  onExportPDF: (taskId: string) => void
-  onExportExcel: (taskId: string) => void
-  onReassignResponsible: (taskId: string, newResponsible: number) => void
-  onAddComment: (taskId: string, comment: string) => void
+  onSaveChanges: (taskId: string, comment: string, newResponsibleId: number) => void
 }
 
 export function TaskDetailsDialog({
@@ -32,13 +27,33 @@ export function TaskDetailsDialog({
   availableUsers,
   isOpen,
   onClose,
-  onExportPDF,
-  onExportExcel,
-  onReassignResponsible,
-  onAddComment,
+  onSaveChanges,
 }: TaskDetailsDialogProps) {
+  const [comment, setComment] = useState(task?.comments || "")
+  const [selectedResponsibleId, setSelectedResponsibleId] = useState<number | null>(null)
+  const [selectedResponsibleName, setSelectedResponsibleName] = useState<string | null>(null)
+  const [isReassigning, setIsReassigning] = useState(false)
+
+  useEffect(() => {
+    setComment(task?.comments || "")
+    setSelectedResponsibleId(null)
+  }, [task])
+
   const router = useRouter()
   if (!task) return null
+
+  const handleReassign = (userId: string) => {
+    if (userId) {
+      const selectedUser = availableUsers.find((user) => user.id.toString() === userId)
+
+      // Verificar que el usuario seleccionado sea un operador
+      if (selectedUser && selectedUser.role === "roleOperator") {
+        setSelectedResponsibleName(selectedUser.firstName + " " + selectedUser.lastName)
+        setSelectedResponsibleId(Number(userId))
+        setIsReassigning(false)
+      }
+    }
+  }
 
   const renderStatusBadge = (state: Task["state"]) => {
     const statusConfig = {
@@ -77,226 +92,237 @@ export function TaskDetailsDialog({
     })
   }
 
+  const getDisplayedResponsible = () => {
+    if (selectedResponsibleId) {
+      return availableUsers.find((user) => user.id === selectedResponsibleId)
+    }
+    return taskResponsible
+  }
+
+  const displayedResponsible = getDisplayedResponsible()
+
+  const isResponsibleNew = selectedResponsibleId && selectedResponsibleId.toString() !== taskResponsible?.id.toString()
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[90vw] max-h-[80vh] overflow-y-auto m-2 p-4">
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground z-10"
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only">Cerrar</span>
-        </button>
-
-        <DialogHeader className="space-y-1 pr-8">
-          <DialogTitle className="text-lg font-bold">{task.title}</DialogTitle>
-          <DialogDescription className="text-sm leading-relaxed">{task.instruction}</DialogDescription>
-        </DialogHeader>
-
-        {/* Botón Ver ARTP */}
-        <div className="flex justify-end mt-4 mb-2">
-          <Button
-            variant="outline"
-            className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-            onClick={() => router.push(`/supervisor/${task.id}/register`)}
-          >
-            <FileText size={16} className="text-blue-600 group-hover:text-blue-700 transition-colors duration-200" />
-            Ver ARTP
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 pb-2">
-          {/* Información de la tarea */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-start space-x-3">
-                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">Fecha Creación</p>
-                  <p className="text-sm font-medium">{formatDate(task.assignationDate)}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-3">
-                <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">Fecha Requerida</p>
-                  <p className="text-sm font-medium">{formatDate(task.requiredSendDate)}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="h-5 w-5 flex items-center justify-center">
-                  <div className="h-3 w-3 rounded-full bg-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1.5">Estado</p>
-                  {renderStatusBadge(task.state)}
-                </div>
-              </div>
-            </div>
-
-            {/* Responsable con opción de reasignar */}
-            <div className="border rounded-lg p-3 bg-muted/30">
-              <div className="flex justify-between items-center mb-3">
-                <div className="flex items-center space-x-2">
-                  <svg
-                    className="h-4 w-4 text-muted-foreground"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                  <p className="text-sm font-medium">Responsable</p>
-                </div>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 text-xs">
-                      Reasignar
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-4">
-                    <div className="space-y-4">
-                      <h4 className="font-medium text-sm">Reasignar responsable</h4>
-                      <Select onValueChange={(value) => onReassignResponsible(task.id, Number(value))}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Seleccionar nuevo responsable" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableUsers.map((user) => (
-                            <SelectItem key={user.id} value={user.id.toString()}>
-                              {user.firstName} {user.lastName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <div className="flex justify-end">
-                        <Button size="sm" className="mt-2">
-                          Confirmar
-                        </Button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-              {taskResponsible && (
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10 border">
-                    <div className="h-full w-full flex items-center justify-center bg-primary text-primary-foreground font-medium">
-                      {taskResponsible.firstName[0]}
-                      {taskResponsible.lastName[0]}
-                    </div>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {taskResponsible.firstName} {taskResponsible.lastName}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Exportar reportes */}
-            <div className="border-t pt-3">
-              <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Exportar Reportes
-              </h4>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2 flex-1"
-                  onClick={() => onExportPDF(task.id)}
-                >
-                  <FileText size={16} className="text-rose-500" />
-                  PDF
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2 flex-1"
-                  onClick={() => onExportExcel(task.id)}
-                >
-                  <FileSpreadsheet size={16} className="text-emerald-600" />
-                  Excel
-                </Button>
-              </div>
-            </div>
+      <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto p-0">
+        <div className="p-6 space-y-6">
+          {/* Header */}
+          <div className="flex items-start justify-between pb-4 border-b">
+            <DialogHeader className="flex-1 pr-8">
+              <DialogTitle className="text-2xl font-bold text-gray-900">{task.title}</DialogTitle>
+              <DialogDescription className="text-base leading-relaxed mt-3 text-gray-600">
+                {task.instruction}
+              </DialogDescription>
+            </DialogHeader>
+            <button onClick={onClose} className="rounded-full p-2 hover:bg-gray-100 transition-colors flex-shrink-0">
+              <X className="h-5 w-5 text-gray-500" />
+              <span className="sr-only">Cerrar</span>
+            </button>
           </div>
 
-          {/* Comentarios e Historial */}
-          <div className="border rounded-lg p-3">
-            <Tabs defaultValue="comments" className="w-full">
-              <TabsList className="w-full mb-2 grid grid-cols-2">
-                <TabsTrigger value="comments" className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Comentarios
-                </TabsTrigger>
-                <TabsTrigger value="history" className="flex items-center gap-2">
-                  <History className="h-4 w-4" />
-                  Historial
-                </TabsTrigger>
-              </TabsList>
+          {/* Action Button */}
+          <div className="flex justify-end gap-4">
+            <Button
+              size="lg"
+              onClick={() => {
+                const responsibleId = selectedResponsibleId || taskResponsible?.id || 0
+                onSaveChanges(task.id, comment.trim(), responsibleId)
+                setSelectedResponsibleId(null)
+              }}
+              disabled={comment.trim() === task.comments && !isResponsibleNew && !selectedResponsibleId}
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 transition-all duration-200"
+            >
+              Guardar Cambios
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex items-center gap-3 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all duration-200 px-6 py-3"
+              onClick={() => router.push(`/supervisor/${task.id}/register`)}
+            >
+              <FileText size={18} className="text-blue-600" />
+              Ver ARTP
+            </Button>
+          </div>
 
-              {/* Comentarios */}
-              <TabsContent value="comments" className="space-y-3 mt-2">
-                <div className="max-h-[180px] overflow-y-auto pr-2 space-y-3">
-                  {task.comments && task.comments.trim() ? (
-                    <div className="bg-muted/50 p-3 rounded-lg">
-                      <p className="text-sm whitespace-pre-wrap">{task.comments}</p>
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            {/* Left Column - Task Info */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Basic Info Card */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                <h3 className="font-semibold text-lg text-gray-900 mb-4 flex items-center gap-2">
+                  <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                  Información de la Tarea
+                </h3>
+
+                <div className="space-y-5">
+                  <div className="flex items-start space-x-4">
+                    <div className="p-2 bg-blue-50 rounded-lg flex-shrink-0">
+                      <Calendar className="h-5 w-5 text-blue-600" />
                     </div>
-                  ) : (
-                    <div className="bg-muted/50 p-3 rounded-lg">
-                      <p className="text-sm italic text-center text-muted-foreground">
-                        No hay comentarios para mostrar
-                      </p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-500 mb-1">Fecha Creación</p>
+                      <p className="text-base font-semibold text-gray-900">{formatDate(task.assignationDate)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4">
+                    <div className="p-2 bg-amber-50 rounded-lg flex-shrink-0">
+                      <Clock className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-500 mb-1">Fecha Requerida</p>
+                      <p className="text-base font-semibold text-gray-900">{formatDate(task.requiredSendDate)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4">
+                    <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
+                      <div className="h-5 w-5 flex items-center justify-center">
+                        <div className="h-3 w-3 rounded-full bg-gray-400" />
+                      </div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Estado</p>
+                      {renderStatusBadge(task.state)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Responsible Person Card */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                <h3 className="font-semibold text-lg text-gray-900 mb-4 flex items-center gap-2">
+                  <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                  Responsable
+                </h3>
+
+                <div className="space-y-4">
+                  {taskResponsible && (
+                    <div className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50/50">
+                      <Avatar className="h-12 w-12 border-2 border-white shadow-sm flex-shrink-0">
+                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold text-sm">
+                          {taskResponsible.firstName[0]}
+                          {taskResponsible.lastName[0]}
+                        </div>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-semibold text-gray-900 truncate">
+                          {taskResponsible.firstName} {taskResponsible.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500">Responsable actual</p>
+                      </div>
                     </div>
                   )}
+
+                  {selectedResponsibleId && isResponsibleNew && (
+                    <div className="flex items-center gap-4 p-4 border border-green-300 rounded-lg bg-green-50/50">
+                      <Avatar className="h-12 w-12 border-2 border-white shadow-sm flex-shrink-0">
+                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-green-500 to-green-600 text-white font-semibold text-sm">
+                          {availableUsers.find((user) => user.id === selectedResponsibleId)?.firstName[0]}
+                          {availableUsers.find((user) => user.id === selectedResponsibleId)?.lastName[0]}
+                        </div>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-semibold text-gray-900 truncate">
+                          {availableUsers.find((user) => user.id === selectedResponsibleId)?.firstName}{" "}
+                          {availableUsers.find((user) => user.id === selectedResponsibleId)?.lastName}
+                        </p>
+                        <p className="text-sm text-green-600 font-medium">
+                          Nuevo Responsable: {selectedResponsibleName}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reassign Section */}
+                  <div className="space-y-3">
+                    {!isReassigning ? (
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => setIsReassigning(true)}
+                        className="w-full flex items-center gap-3 py-3 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-200"
+                      >
+                        <User className="h-4 w-4" />
+                        Reasignar Responsable
+                      </Button>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 border border-blue-200 rounded-lg bg-blue-50/50">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-blue-600" />
+                            <p className="text-sm font-medium text-blue-900">Seleccionar nuevo responsable</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIsReassigning(false)}
+                            className="hover:bg-blue-100"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        <div className="relative">
+                          <Select onValueChange={handleReassign}>
+                            <SelectTrigger className="w-full h-12 text-left">
+                              <SelectValue placeholder="Seleccionar responsable" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[250px] overflow-y-auto z-[9999] w-full mr-4">
+                              {availableUsers
+                                .filter((user) => user.role === "roleOperator")
+                                .map((user) => (
+                                  <SelectItem key={user.id} value={user.id.toString()} className="py-3">
+                                    <div className="flex items-center gap-3">
+                                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center text-xs font-semibold">
+                                        {user.firstName[0]}
+                                        {user.lastName[0]}
+                                      </div>
+                                      <span className="font-medium">
+                                        {user.firstName} {user.lastName}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Comments */}
+            <div className="lg:col-span-3">
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm h-full">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-purple-50 rounded-lg">
+                    <MessageSquare className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold text-lg text-gray-900">Comentarios</h3>
                 </div>
 
-                {/* Agregar comentario */}
-                <div className="pt-3 border-t">
+                <div className="space-y-4">
                   <textarea
-                    placeholder="Escribe un comentario..."
-                    className="w-full min-h-[80px] max-h-[120px] p-3 text-sm border border-input bg-background rounded-md resize-y focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Escribe un comentario sobre esta tarea..."
+                    className="w-full h-[350px] max-h-[350px] p-4 text-base border border-gray-300 bg-white rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 overflow-y-auto"
                     onKeyDown={(e) => {
+                      // Solo permitir Enter para nuevas líneas, no para guardar
                       if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault()
-                        onAddComment(task.id, e.currentTarget.value)
-                        e.currentTarget.value = ""
+                        // No hacer nada, permitir el comportamiento normal de nueva línea
                       }
                     }}
                   />
-                  <div className="flex justify-between items-center mt-2">
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        const textarea = e.currentTarget.parentElement?.previousElementSibling as HTMLTextAreaElement
-                        if (textarea && textarea.value.trim()) {
-                          onAddComment(task.id, textarea.value)
-                          textarea.value = ""
-                        }
-                      }}
-                    >
-                      Enviar
-                    </Button>
-                  </div>
                 </div>
-              </TabsContent>
-
-              {/* Historial */}
-              <TabsContent value="history" className="space-y-3 mt-2 max-h-[200px] overflow-y-auto">
-                <div className="bg-muted/50 p-3 rounded-lg">
-                  <p className="text-sm italic text-center text-muted-foreground">
-                    No hay registros de historial disponibles
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           </div>
         </div>
       </DialogContent>

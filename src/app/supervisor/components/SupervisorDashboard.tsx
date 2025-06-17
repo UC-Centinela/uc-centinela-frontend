@@ -8,6 +8,7 @@ import { TaskDetailsDialog } from "./dashboard/TaskDetails"
 import { Header } from "./dashboard/TaskHeader"
 import type { Task, TaskState, TaskStatusData, TaskFilters as TaskFiltersType } from "@/types/task"
 import type { User } from "@/types/user"
+import { editTask } from "../page"
 
 interface SupervisorDashboardProps {
   initialTasks: Task[]
@@ -61,24 +62,6 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
     setSelectedTask(null)
   }
 
-  const handleExportPDF = async (taskId: string) => {
-    try {
-      // Implementar lógica de exportación a PDF
-      console.log("Exportando a PDF:", taskId)
-    } catch (error) {
-      console.error("Error al exportar a PDF:", error)
-    }
-  }
-
-  const handleExportExcel = async (taskId: string) => {
-    try {
-      // Implementar lógica de exportación a Excel
-      console.log("Exportando a Excel:", taskId)
-    } catch (error) {
-      console.error("Error al exportar a Excel:", error)
-    }
-  }
-
   const handleApplyFilters = (newFilters: TaskFiltersType) => {
     let filteredTasks = [...initialTasks]
 
@@ -121,23 +104,96 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
     setFilters(newFilters)
   }
 
-  const handleReassignResponsible = async (taskId: string, newResponsible: number) => {
+  // const handleTaskChanges = async (taskId: Number, newResponsibleId: Number, comment: string) => {
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("id", taskId.toString());
+  //     formData.append("creatorUserId", newResponsibleId.toString());
+  //     formData.append("comments", comment);
+  //     const result = await editTask(formData);
+  //     if (result.success && result.task) {
+  //       setTasks(prev =>
+  //         prev.map(task => (task.id === result.task!.id ? result.task! : task))
+  //       );
+  //       if (selectedTask && selectedTask.id === result.task.id) {
+  //         setSelectedTask(result.task);
+  //       }
+  //       console.log("Tarea actualizada exitosamente:", result.task);
+  //     } else {
+  //       console.error("Error al actualizar tarea:", result.error);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error al actualizar tarea:", error)
+  //   }
+  // }
+
+  const handleTaskChanges = async (taskId: string, comment: string, newResponsibleId: Number) => {
     try {
-      // Implementar lógica de reasignación
-      console.log("Reasignando tarea:", taskId, "a:", newResponsible)
-    } catch (error) {
-      console.error("Error al reasignar tarea:", error)
+      const formData = new FormData();
+      formData.append("id", taskId.toString());
+      formData.append("creatorUserId", newResponsibleId.toString());
+      formData.append("comments", comment);
+      const result = await editTask(formData);
+      if (result.success && result.task) {
+        setTasks(prev =>
+          prev.map(task => (task.id === result.task!.id ? result.task! : task))
+        );
+        if (selectedTask && selectedTask.id === result.task.id) {
+          setSelectedTask(result.task);
+        }
+        console.log("Tarea actualizada exitosamente:", result.task);
+      } else {
+        console.error("Error al actualizar tarea:", result.error);
+      }
+    } catch (error) { 
+      console.error("Error al actualizar tarea:", error)
     }
   }
 
-  const handleAddComment = async (taskId: string, comment: string) => {
-    try {
-      // Implementar lógica de agregar comentario
-      console.log("Agregando comentario a tarea:", taskId, "comentario:", comment)
-    } catch (error) {
-      console.error("Error al agregar comentario:", error)
-    }
-  }
+  // const handleReassignResponsible = async (taskId: Number, newResponsibleId: Number) => {
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("id", taskId.toString());
+  //     formData.append("creatorUserId", newResponsibleId.toString());
+  //     const result = await editTask(formData);
+  //     if (result.success && result.task) {
+  //       setTasks(prev =>
+  //         prev.map(task => (task.id === result.task!.id ? result.task! : task))
+  //       );
+  //       if (selectedTask && selectedTask.id === result.task.id) {
+  //         setSelectedTask(result.task);
+  //       }
+  //       console.log("Tarea reasignada exitosamente:", result.task);
+  //     } else {
+  //       console.error("Error al reasignar tarea:", result.error);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error al reasignar tarea:", error)
+  //   }
+  // }
+
+  // const handleAddComment = async (taskId: Number, comment: string) => {
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("id", taskId.toString());
+  //     formData.append("comments", comment);
+  //     const result = await editTask(formData);
+  //     if (result.success && result.task) {
+  //       setTasks(prev =>
+  //         prev.map(task => (task.id === result.task!.id ? result.task! : task))
+  //       );
+  //       if (selectedTask && selectedTask.id === result.task.id) {
+  //         setSelectedTask(result.task);
+  //       }
+  //       console.log("Comentario agregado exitosamente:", result.task);
+  //     } else {
+  //       console.error("Error al agregar comentario:", result.error);
+  //     }
+
+  //   } catch (error) {
+  //     console.error("Error al agregar comentario:", error)
+  //   }
+  // }
 
   const handleTabChange = (value: string) => {
     setCurrentTab(value)
@@ -174,8 +230,6 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
         filters={filters}
         setFilters={setFilters}
         availableUsers={users}
-        onExportExcel={() => handleExportExcel("all")}
-        onExportPDF={() => handleExportPDF("all")}
         onApplyFilters={handleApplyFilters}
       />
 
@@ -184,21 +238,7 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
         tasks={tasks}
         users={users}
         onViewDetails={handleViewDetails}
-        onExportPDF={handleExportPDF}
-        onExportExcel={handleExportExcel}
-      />
-
-      {/* Modal de Detalles */}
-      <TaskDetailsDialog
-        task={selectedTask}
-        taskResponsible={selectedTask ? users.find(u => u.id === selectedTask.creatorUserId) || null : null}
-        availableUsers={users}
-        isOpen={isDetailsOpen}
-        onClose={handleCloseDetails}
-        onExportPDF={handleExportPDF}
-        onExportExcel={handleExportExcel}
-        onReassignResponsible={handleReassignResponsible}
-        onAddComment={handleAddComment}
+        onSaveChanges={handleTaskChanges}
       />
     </div>
   )

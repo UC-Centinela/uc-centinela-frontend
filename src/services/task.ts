@@ -263,9 +263,7 @@ export async function updateTask(formData: FormData) {
       },
     }),
   });
-
   const result = await response.json();
-
   if (result.data?.updateTask) {
     return { success: true, data: result.data.updateTask };
   } else {

@@ -21,15 +21,16 @@ interface TaskTableProps {
   tasks: Task[];
   users: User[];
   onViewDetails: (task: Task) => void;
-  onExportPDF: (taskId: string) => void;
-  onExportExcel: (taskId: string) => void;
+  onSaveChanges: (taskId: string, comment: string, newResponsibleId: number) => void
 }
 
 export function TaskTable({
-  tasks,
+  tasks: initialTasks,
   users,
+  onSaveChanges
 }: TaskTableProps) {
   // Estados para controlar el diálogo
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -90,26 +91,68 @@ export function TaskTable({
     return users.find(user => String(user.id) === String(task.creatorUserId)) || null;
   };
 
-  // Funciones placeholder para las acciones del diálogo
-  const handleExportPDF = (taskId: string) => {
-    console.log('Exportar PDF:', taskId);
-    // Implementar lógica de exportación PDF
-  };
+  const handleSaveChanges = (taskId: string, comment: string, newResponsibleId: number) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              comments: comment, // Actualiza el comentario
+              creatorUserId: newResponsibleId, // Actualiza el responsable
+            }
+          : task
+      )
+    );
+    // Actualizar selectedTask si está abierto
+    if (selectedTask && selectedTask.id === taskId) {
+      setSelectedTask({
+        ...selectedTask,
+        comments: comment, // Actualiza el comentario
+        creatorUserId: newResponsibleId, // Actualiza el responsable
+      });
+    }
+    // Llamar callback externo si quieres persistir en backend
+    onSaveChanges(taskId, comment, newResponsibleId);
+    handleCloseDialog();
+  }
 
-  const handleExportExcel = (taskId: string) => {
-    console.log('Exportar Excel:', taskId);
-    // Implementar lógica de exportación Excel
-  };
+  // const handleReassignResponsible = (taskId: string, newResponsibleId: number) => {
+  //   setTasks((prevTasks) =>
+  //     prevTasks.map((task) =>
+  //       task.id === taskId
+  //         ? { ...task, creatorUserId: newResponsibleId } // Actualiza el responsable
+  //         : task
+  //     )
+  //   );
 
-  const handleReassignResponsible = (taskId: string, newResponsibleId: number) => {
-    console.log('Reasignar responsable:', taskId, newResponsibleId);
-    // Implementar lógica de reasignación
-  };
+  //   // Actualizar selectedTask si está abierto
+  //   if (selectedTask && selectedTask.id === taskId) {
+  //     setSelectedTask({ ...selectedTask, creatorUserId: newResponsibleId });
+  //   }
 
-  const handleAddComment = (taskId: string, comment: string) => {
-    console.log('Agregar comentario:', taskId, comment);
-    // Implementar lógica para agregar comentario
-  };
+  //   // Llamar callback externo si quieres persistir en backend
+  //   const id = Number(taskId);
+  //   onReassignResponsible(id, newResponsibleId);
+  // };
+
+  // const handleAddComment = (taskId: string, comment: string) => {
+  //   setTasks((prevTasks) =>
+  //     prevTasks.map((task) =>
+  //       task.id === taskId
+  //         ? { ...task, comments: comment } // O concatena si es array
+  //         : task
+  //     )
+  //   );
+
+  //   // Actualizar selectedTask si está abierto
+  //   if (selectedTask && selectedTask.id === taskId) {
+  //     setSelectedTask({ ...selectedTask, comments: comment });
+  //   }
+
+  //   // Llamar callback externo si quieres persistir en backend
+  //   const id = Number(taskId);
+  //   onAddComment(id, comment);
+  // };
 
   return (
     <>
@@ -145,22 +188,6 @@ export function TaskTable({
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    {/* <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onExportPDF(task.id)}
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    >
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onExportExcel(task.id)}
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    >
-                      <FileSpreadsheet className="h-4 w-4" />
-                    </Button> */}
                   </div>
                 </TableCell>
               </TableRow>
@@ -176,10 +203,7 @@ export function TaskTable({
         availableUsers={users}
         isOpen={isDialogOpen}
         onClose={handleCloseDialog}
-        onExportPDF={handleExportPDF}
-        onExportExcel={handleExportExcel}
-        onReassignResponsible={handleReassignResponsible}
-        onAddComment={handleAddComment}
+        onSaveChanges={handleSaveChanges}
       />
     </>
   );
