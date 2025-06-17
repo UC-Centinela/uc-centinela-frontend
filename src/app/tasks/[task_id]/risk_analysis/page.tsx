@@ -1,5 +1,4 @@
-// src/app/tasks/[task_id]/risk_analysis/page.tsx
-import TaskExecution from "@/app/tasks/components/TaskExecution";
+import TaskExecutionClientWrapper from "@/app/tasks/components/TaskExecutionClientWrapper";
 import { notFound } from "next/navigation";
 import { validateTaskAccess, getTasksByUser } from "@/services/task";
 import { cookies } from "next/headers";
@@ -97,7 +96,7 @@ export default async function RiskAnalysisPage({
   console.log("Task comments to be passed:", taskData?.comments);
 
   return (
-    <TaskExecution
+    <TaskExecutionClientWrapper
       taskId={task_id}
       multimediaData={multimediaData}
       taskComments={taskData?.comments || null}
