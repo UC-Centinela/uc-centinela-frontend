@@ -92,15 +92,6 @@ export function TaskDetailsDialog({
     })
   }
 
-  const getDisplayedResponsible = () => {
-    if (selectedResponsibleId) {
-      return availableUsers.find((user) => user.id === selectedResponsibleId)
-    }
-    return taskResponsible
-  }
-
-  const displayedResponsible = getDisplayedResponsible()
-
   const isResponsibleNew = selectedResponsibleId && selectedResponsibleId.toString() !== taskResponsible?.id.toString()
 
   return (

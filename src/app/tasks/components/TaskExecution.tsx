@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import TranscriptionForm, { TranscriptionResult } from "@/app/transcription/components/TranscriptionForm";
 import PhotoUploadForm, { PhotoUploadResult } from "@/app/tasks/components/PhotoUploadForm";
 import ControlStrategySelector from "@/app/tasks/components/ControlStrategySelector";
-import { gql, useQuery, useMutation, fromPromise } from "@apollo/client";
+import { gql, useQuery } from "@apollo/client";
 import client from "@/lib/apollo-client";
 import Image from "next/image";
 import { MultimediaItem } from "@/types/multimedia";

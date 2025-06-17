@@ -4,7 +4,6 @@ import { useState } from "react"
 import { TaskSummaryCards } from "./dashboard/TaskSummaryCards"
 import { TaskFilters } from "./dashboard/TaskFilters"
 import { TaskTable } from "./dashboard/TaskTable"
-import { TaskDetailsDialog } from "./dashboard/TaskDetails"
 import { Header } from "./dashboard/TaskHeader"
 import type { Task, TaskState, TaskStatusData, TaskFilters as TaskFiltersType } from "@/types/task"
 import type { User } from "@/types/user"
@@ -20,7 +19,6 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [showFilters, setShowFilters] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [currentTab, setCurrentTab] = useState("all-tasks")
   const [filters, setFilters] = useState<TaskFiltersType>({
     state: undefined,
@@ -54,12 +52,6 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
   // Handlers
   const handleViewDetails = (task: Task) => {
     setSelectedTask(task)
-    setIsDetailsOpen(true)
-  }
-
-  const handleCloseDetails = () => {
-    setIsDetailsOpen(false)
-    setSelectedTask(null)
   }
 
   const handleApplyFilters = (newFilters: TaskFiltersType) => {
@@ -104,30 +96,7 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
     setFilters(newFilters)
   }
 
-  // const handleTaskChanges = async (taskId: Number, newResponsibleId: Number, comment: string) => {
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append("id", taskId.toString());
-  //     formData.append("creatorUserId", newResponsibleId.toString());
-  //     formData.append("comments", comment);
-  //     const result = await editTask(formData);
-  //     if (result.success && result.task) {
-  //       setTasks(prev =>
-  //         prev.map(task => (task.id === result.task!.id ? result.task! : task))
-  //       );
-  //       if (selectedTask && selectedTask.id === result.task.id) {
-  //         setSelectedTask(result.task);
-  //       }
-  //       console.log("Tarea actualizada exitosamente:", result.task);
-  //     } else {
-  //       console.error("Error al actualizar tarea:", result.error);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error al actualizar tarea:", error)
-  //   }
-  // }
-
-  const handleTaskChanges = async (taskId: string, comment: string, newResponsibleId: Number) => {
+  const handleTaskChanges = async (taskId: string, comment: string, newResponsibleId: number) => {
     try {
       const formData = new FormData();
       formData.append("id", taskId.toString());
@@ -149,51 +118,6 @@ export function SupervisorDashboard({ initialTasks, users }: SupervisorDashboard
       console.error("Error al actualizar tarea:", error)
     }
   }
-
-  // const handleReassignResponsible = async (taskId: Number, newResponsibleId: Number) => {
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append("id", taskId.toString());
-  //     formData.append("creatorUserId", newResponsibleId.toString());
-  //     const result = await editTask(formData);
-  //     if (result.success && result.task) {
-  //       setTasks(prev =>
-  //         prev.map(task => (task.id === result.task!.id ? result.task! : task))
-  //       );
-  //       if (selectedTask && selectedTask.id === result.task.id) {
-  //         setSelectedTask(result.task);
-  //       }
-  //       console.log("Tarea reasignada exitosamente:", result.task);
-  //     } else {
-  //       console.error("Error al reasignar tarea:", result.error);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error al reasignar tarea:", error)
-  //   }
-  // }
-
-  // const handleAddComment = async (taskId: Number, comment: string) => {
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append("id", taskId.toString());
-  //     formData.append("comments", comment);
-  //     const result = await editTask(formData);
-  //     if (result.success && result.task) {
-  //       setTasks(prev =>
-  //         prev.map(task => (task.id === result.task!.id ? result.task! : task))
-  //       );
-  //       if (selectedTask && selectedTask.id === result.task.id) {
-  //         setSelectedTask(result.task);
-  //       }
-  //       console.log("Comentario agregado exitosamente:", result.task);
-  //     } else {
-  //       console.error("Error al agregar comentario:", result.error);
-  //     }
-
-  //   } catch (error) {
-  //     console.error("Error al agregar comentario:", error)
-  //   }
-  // }
 
   const handleTabChange = (value: string) => {
     setCurrentTab(value)

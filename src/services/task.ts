@@ -199,6 +199,33 @@ export async function createTask(formData: FormData) {
   }
 }
 
+// Types for form data and field transforms
+type FormDataValue = FormDataEntryValue | null | undefined;
+
+type FieldTransforms = {
+  id: (value: FormDataValue) => number;
+  creatorUserId: (value: FormDataValue) => number;
+  revisorUserId: (value: FormDataValue) => number;
+  state: (value: FormDataValue) => string;
+  title: (value: FormDataValue) => string;
+  instruction: (value: FormDataValue) => string;
+  assignationDate: (value: FormDataValue) => string;
+  requiredSendDate: (value: FormDataValue) => string;
+  comments: (value: FormDataValue) => string;
+};
+
+type UpdateTaskInput = {
+  id: number;
+  creatorUserId?: number;
+  revisorUserId?: number;
+  state?: string;
+  title?: string;
+  instruction?: string;
+  assignationDate?: string;
+  requiredSendDate?: string;
+  comments?: string;
+};
+
 export async function updateTask(formData: FormData) {
   const rawFormData = Object.fromEntries(formData);
   const data = await getTokenAndEmail();
@@ -213,27 +240,27 @@ export async function updateTask(formData: FormData) {
     return { success: false, error: "Task ID is required" };
   }
 
-  const fieldTransforms = {
-    id: (value: any) => Number(value),
-    creatorUserId: (value: any) => Number(value),
-    revisorUserId: (value: any) => Number(value),
-    state: (value: any) => value,
-    title: (value: any) => value,
-    instruction: (value: any) => value,
-    assignationDate: (value: any) => value,
-    requiredSendDate: (value: any) => value,
-    comments: (value: any) => value,
+  const fieldTransforms: FieldTransforms = {
+    id: (value: FormDataValue) => Number(value),
+    creatorUserId: (value: FormDataValue) => Number(value),
+    revisorUserId: (value: FormDataValue) => Number(value),
+    state: (value: FormDataValue) => value instanceof File ? value.name : String(value),
+    title: (value: FormDataValue) => value instanceof File ? value.name : String(value),
+    instruction: (value: FormDataValue) => value instanceof File ? value.name : String(value),
+    assignationDate: (value: FormDataValue) => value instanceof File ? value.name : String(value),
+    requiredSendDate: (value: FormDataValue) => value instanceof File ? value.name : String(value),
+    comments: (value: FormDataValue) => value instanceof File ? value.name : String(value),
   }
 
   const input = Object.entries(fieldTransforms).reduce((acc, [key, transform]) => {
     const value = rawFormData[key];
     if (key === 'id') {
-      acc[key] = transform(value);
+      (acc as Record<string, unknown>)[key] = transform(value);
     } else if (value !== undefined && value !== null && value !== '') {
-      acc[key] = transform(value);
+      (acc as Record<string, unknown>)[key] = transform(value);
     }
     return acc;
-  }, {} as any)
+  }, {} as UpdateTaskInput)
 
   const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
     method: "POST",
@@ -313,4 +340,3 @@ export async function validateTaskAccess(taskId: string): Promise<boolean> {
     return false;
   }
 }
-
