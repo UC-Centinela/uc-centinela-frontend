@@ -13,7 +13,6 @@ import type {
 } from "@/types/task";
 import type { User } from "@/types/user";
 import { updateTask, deleteTask } from "@/services/task";
-import { useRouter } from "next/navigation";
 
 interface SupervisorDashboardProps {
   initialTasks: Task[];
@@ -24,7 +23,6 @@ export function SupervisorDashboard({
   initialTasks,
   users,
 }: SupervisorDashboardProps) {
-  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
