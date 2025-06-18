@@ -7,7 +7,6 @@ import { LogOut, Plus } from "lucide-react";
 import { handleLogout } from "@/services/users";
 import { Button } from "@/components/ui/button";
 
-
 interface HeaderProps {
   children: React.ReactNode;
   onTabChange?: (value: string) => void;

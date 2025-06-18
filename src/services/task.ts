@@ -1,3 +1,5 @@
+"use server";
+
 import { getTokenAndEmail } from "./users";
 import { Task } from "@/types/task";
 import { gql } from "@apollo/client";
@@ -228,6 +230,7 @@ type UpdateTaskInput = {
 
 export async function updateTask(formData: FormData) {
   const rawFormData = Object.fromEntries(formData);
+  console.log(rawFormData);
   const data = await getTokenAndEmail();
 
   if (!data?.accessToken) {
@@ -244,23 +247,32 @@ export async function updateTask(formData: FormData) {
     id: (value: FormDataValue) => Number(value),
     creatorUserId: (value: FormDataValue) => Number(value),
     revisorUserId: (value: FormDataValue) => Number(value),
-    state: (value: FormDataValue) => value instanceof File ? value.name : String(value),
-    title: (value: FormDataValue) => value instanceof File ? value.name : String(value),
-    instruction: (value: FormDataValue) => value instanceof File ? value.name : String(value),
-    assignationDate: (value: FormDataValue) => value instanceof File ? value.name : String(value),
-    requiredSendDate: (value: FormDataValue) => value instanceof File ? value.name : String(value),
-    comments: (value: FormDataValue) => value instanceof File ? value.name : String(value),
-  }
+    state: (value: FormDataValue) =>
+      value instanceof File ? value.name : String(value),
+    title: (value: FormDataValue) =>
+      value instanceof File ? value.name : String(value),
+    instruction: (value: FormDataValue) =>
+      value instanceof File ? value.name : String(value),
+    assignationDate: (value: FormDataValue) =>
+      value instanceof File ? value.name : String(value),
+    requiredSendDate: (value: FormDataValue) =>
+      value instanceof File ? value.name : String(value),
+    comments: (value: FormDataValue) =>
+      value instanceof File ? value.name : String(value),
+  };
 
-  const input = Object.entries(fieldTransforms).reduce((acc, [key, transform]) => {
-    const value = rawFormData[key];
-    if (key === 'id') {
-      (acc as Record<string, unknown>)[key] = transform(value);
-    } else if (value !== undefined && value !== null && value !== '') {
-      (acc as Record<string, unknown>)[key] = transform(value);
-    }
-    return acc;
-  }, {} as UpdateTaskInput)
+  const input = Object.entries(fieldTransforms).reduce(
+    (acc, [key, transform]) => {
+      const value = rawFormData[key];
+      if (key === "id") {
+        (acc as Record<string, unknown>)[key] = transform(value);
+      } else if (value !== undefined && value !== null && value !== "") {
+        (acc as Record<string, unknown>)[key] = transform(value);
+      }
+      return acc;
+    },
+    {} as UpdateTaskInput
+  );
 
   const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
     method: "POST",
@@ -294,7 +306,10 @@ export async function updateTask(formData: FormData) {
   if (result.data?.updateTask) {
     return { success: true, data: result.data.updateTask };
   } else {
-    return { success: false, error: result.errors?.[0]?.message || "Unknown error" };
+    return {
+      success: false,
+      error: result.errors?.[0]?.message || "Unknown error",
+    };
   }
 }
 
@@ -322,11 +337,11 @@ export async function validateTaskAccess(taskId: string): Promise<boolean> {
     // Query the API to check if the user has access to this task
     const { data, errors } = await client.query({
       query: CHECK_TASK_ACCESS,
-      variables: { 
-        findTaskId: Number(taskId), 
-        userEmail: auth.email 
+      variables: {
+        findTaskId: Number(taskId),
+        userEmail: auth.email,
       },
-      fetchPolicy: 'network-only' // Don't use cache for this security check
+      fetchPolicy: "network-only", // Don't use cache for this security check
     });
 
     // If there are errors or no data, the user doesn't have access
@@ -338,5 +353,47 @@ export async function validateTaskAccess(taskId: string): Promise<boolean> {
   } catch (error) {
     console.error("Error validating task access:", error);
     return false;
+  }
+}
+
+export async function deleteTask(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteTask($deleteTaskId: Int!) {
+          deleteTask(id: $deleteTaskId)
+        }
+      `,
+      variables: {
+        deleteTaskId: Number(rawFormData.id),
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.deleteTask === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
   }
 }
