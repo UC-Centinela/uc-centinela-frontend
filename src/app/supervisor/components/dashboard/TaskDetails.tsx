@@ -1,24 +1,56 @@
-"use client"
+"use client";
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Avatar } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, FileText, X, MessageSquare, User } from "lucide-react"
-import { cn } from "@/lib/utils"
-import type { Task } from "@/types/task"
-import type { User as TaskUser } from "@/types/user"
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Calendar,
+  Clock,
+  FileText,
+  X,
+  MessageSquare,
+  User,
+  Edit,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Task, TaskState } from "@/types/task";
+import type { User as TaskUser } from "@/types/user";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface TaskDetailsDialogProps {
-  task: Task | null
-  taskResponsible: TaskUser | null
-  availableUsers: TaskUser[]
-  isOpen: boolean
-  onClose: () => void
-  onSaveChanges: (taskId: string, comment: string, newResponsibleId: number) => void
+  task: Task | null;
+  taskResponsible: TaskUser | null;
+  availableUsers: TaskUser[];
+  isOpen: boolean;
+  onClose: () => void;
+  onSaveChanges: (
+    taskId: string,
+    data: {
+      creatorUserId: number;
+      comments: string;
+      title: string;
+      instruction: string;
+      state: TaskState;
+      assignationDate: string;
+      requiredSendDate: string;
+    }
+  ) => void;
 }
 
 export function TaskDetailsDialog({
@@ -29,31 +61,59 @@ export function TaskDetailsDialog({
   onClose,
   onSaveChanges,
 }: TaskDetailsDialogProps) {
-  const [comment, setComment] = useState(task?.comments || "")
-  const [selectedResponsibleId, setSelectedResponsibleId] = useState<number | null>(null)
-  const [selectedResponsibleName, setSelectedResponsibleName] = useState<string | null>(null)
-  const [isReassigning, setIsReassigning] = useState(false)
+  const [comment, setComment] = useState(task?.comments || "");
+  const [selectedResponsibleId, setSelectedResponsibleId] = useState<
+    number | null
+  >(null);
+  const [selectedResponsibleName, setSelectedResponsibleName] = useState<
+    string | null
+  >(null);
+  const [isReassigning, setIsReassigning] = useState(false);
+  const [title, setTitle] = useState(task?.title || "");
+  const [instruction, setInstruction] = useState(task?.instruction || "");
+  const [state, setState] = useState(task?.state || "PENDING");
+  const [assignationDate, setAssignationDate] = useState(
+    task?.assignationDate || ""
+  );
+  const [requiredSendDate, setRequiredSendDate] = useState(
+    task?.requiredSendDate || ""
+  );
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isEditingInstruction, setIsEditingInstruction] = useState(false);
+  const [isEditingDate, setIsEditingDate] = useState(false);
 
   useEffect(() => {
-    setComment(task?.comments || "")
-    setSelectedResponsibleId(null)
-  }, [task])
+    setComment(task?.comments || "");
+    setSelectedResponsibleId(null);
+    setTitle(task?.title || "");
+    setInstruction(task?.instruction || "");
+    setState(task?.state || "PENDING");
+    setAssignationDate(task?.assignationDate || "");
+    setRequiredSendDate(task?.requiredSendDate || "");
+    setIsEditingTitle(false);
+    setIsEditingInstruction(false);
+    setIsEditingDate(false);
+  }, [task]);
 
-  const router = useRouter()
-  if (!task) return null
+  const router = useRouter();
+  if (!task) return null;
 
   const handleReassign = (userId: string) => {
     if (userId) {
-      const selectedUser = availableUsers.find((user) => user.id.toString() === userId)
+      const selectedUser = availableUsers.find(
+        (user) => user.id.toString() === userId
+      );
 
       // Verificar que el usuario seleccionado sea un operador
       if (selectedUser && selectedUser.role === "roleOperator") {
-        setSelectedResponsibleName(selectedUser.firstName + " " + selectedUser.lastName)
-        setSelectedResponsibleId(Number(userId))
-        setIsReassigning(false)
+        setSelectedResponsibleName(
+          selectedUser.firstName + " " + selectedUser.lastName
+        );
+        setSelectedResponsibleId(Number(userId));
+        setIsReassigning(false);
       }
     }
-  }
+  };
 
   const renderStatusBadge = (state: Task["state"]) => {
     const statusConfig = {
@@ -77,51 +137,155 @@ export function TaskDetailsDialog({
         label: state,
         className: "bg-gray-500 hover:bg-gray-600 text-white",
       },
-    }
+    };
 
-    const config = statusConfig[state as keyof typeof statusConfig] || statusConfig.default
+    const config =
+      statusConfig[state as keyof typeof statusConfig] || statusConfig.default;
 
-    return <Badge className={cn("font-medium", config.className)}>{config.label}</Badge>
-  }
+    return (
+      <Badge className={cn("font-medium", config.className)}>
+        {config.label}
+      </Badge>
+    );
+  };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-  }
+    if (!dateString) return "";
+    const [year, month, day] = dateString.split("T")[0].split("-");
+    return `${day}/${month}/${year}`;
+  };
 
-  const isResponsibleNew = selectedResponsibleId && selectedResponsibleId.toString() !== taskResponsible?.id.toString()
+  const formatDateForInput = (dateString: string) => {
+    if (!dateString) return "";
+    return dateString.split("T")[0];
+  };
+
+  const isResponsibleNew =
+    selectedResponsibleId &&
+    selectedResponsibleId.toString() !== taskResponsible?.id.toString();
+
+  const hasChanges =
+    comment.trim() !== task.comments ||
+    isResponsibleNew ||
+    title !== task.title ||
+    instruction !== task.instruction ||
+    requiredSendDate !== task.requiredSendDate;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto p-0">
-        <div className="p-6 space-y-6">
-          {/* Header */}
+      <DialogContent className="max-w-4xl w-full">
+        <div className="bg-white h-[80vh] overflow-y-auto p-6 space-y-6">
           <div className="flex items-start justify-between pb-4 border-b">
             <DialogHeader className="flex-1 pr-8">
-              <DialogTitle className="text-2xl font-bold text-gray-900">{task.title}</DialogTitle>
-              <DialogDescription className="text-base leading-relaxed mt-3 text-gray-600">
-                {task.instruction}
-              </DialogDescription>
+              {isEditingTitle ? (
+                <div className="space-y-2">
+                  <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="text-2xl font-bold text-gray-900 border-2 border-blue-300 focus:border-blue-500"
+                    placeholder="Título de la tarea"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => setIsEditingTitle(false)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Guardar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setTitle(task.title || "");
+                        setIsEditingTitle(false);
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <DialogTitle className="text-2xl font-bold text-gray-900">
+                    {title}
+                  </DialogTitle>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsEditingTitle(true)}
+                    className="p-1 hover:bg-gray-100"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+
+              {isEditingInstruction ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={instruction}
+                    onChange={(e) => setInstruction(e.target.value)}
+                    className="w-full p-3 text-base border-2 border-blue-300 focus:border-blue-500 rounded-lg resize-none"
+                    placeholder="Instrucciones de la tarea"
+                    rows={3}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => setIsEditingInstruction(false)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Guardar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setInstruction(task.instruction || "");
+                        setIsEditingInstruction(false);
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2">
+                  <DialogDescription className="text-base leading-relaxed mt-3 text-gray-600 flex-1">
+                    {instruction}
+                  </DialogDescription>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsEditingInstruction(true)}
+                    className="p-1 hover:bg-gray-100 mt-3"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </DialogHeader>
-            <button onClick={onClose} className="rounded-full p-2 hover:bg-gray-100 transition-colors flex-shrink-0">
-              <X className="h-5 w-5 text-gray-500" />
-              <span className="sr-only">Cerrar</span>
-            </button>
           </div>
 
-          {/* Action Button */}
           <div className="flex justify-end gap-4">
             <Button
               size="lg"
               onClick={() => {
-                const responsibleId = selectedResponsibleId || taskResponsible?.id || 0
-                onSaveChanges(task.id, comment.trim(), responsibleId)
-                setSelectedResponsibleId(null)
+                const responsibleId =
+                  selectedResponsibleId || taskResponsible?.id || 0;
+                onSaveChanges(task.id, {
+                  creatorUserId: responsibleId,
+                  comments: comment.trim(),
+                  title: title,
+                  instruction: instruction,
+                  state: state,
+                  assignationDate: assignationDate,
+                  requiredSendDate: requiredSendDate,
+                });
+                setSelectedResponsibleId(null);
               }}
-              disabled={comment.trim() === task.comments && !isResponsibleNew && !selectedResponsibleId}
+              disabled={!hasChanges}
               className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 transition-all duration-200"
             >
               Guardar Cambios
@@ -138,9 +302,9 @@ export function TaskDetailsDialog({
           </div>
 
           {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-3xl mx-auto">
             {/* Left Column - Task Info */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-6">
               {/* Basic Info Card */}
               <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                 <h3 className="font-semibold text-lg text-gray-900 mb-4 flex items-center gap-2">
@@ -154,8 +318,12 @@ export function TaskDetailsDialog({
                       <Calendar className="h-5 w-5 text-blue-600" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-500 mb-1">Fecha Creación</p>
-                      <p className="text-base font-semibold text-gray-900">{formatDate(task.assignationDate)}</p>
+                      <p className="text-sm font-medium text-gray-500 mb-1">
+                        Fecha Creación
+                      </p>
+                      <p className="text-base font-semibold text-gray-900">
+                        {formatDate(task.assignationDate)}
+                      </p>
                     </div>
                   </div>
 
@@ -164,8 +332,56 @@ export function TaskDetailsDialog({
                       <Clock className="h-5 w-5 text-amber-600" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-500 mb-1">Fecha Requerida</p>
-                      <p className="text-base font-semibold text-gray-900">{formatDate(task.requiredSendDate)}</p>
+                      <p className="text-sm font-medium text-gray-500 mb-1">
+                        Fecha Requerida
+                      </p>
+                      {isEditingDate ? (
+                        <div className="space-y-2">
+                          <Input
+                            type="date"
+                            value={formatDateForInput(requiredSendDate)}
+                            onChange={(e) =>
+                              setRequiredSendDate(e.target.value)
+                            }
+                            className="border-2 border-blue-300 focus:border-blue-500"
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => setIsEditingDate(false)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              Guardar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setRequiredSendDate(
+                                  task.requiredSendDate || ""
+                                );
+                                setIsEditingDate(false);
+                              }}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <p className="text-base font-semibold text-gray-900">
+                            {formatDate(requiredSendDate)}
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setIsEditingDate(true)}
+                            className="p-1 hover:bg-gray-100"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -176,7 +392,9 @@ export function TaskDetailsDialog({
                       </div>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Estado</p>
+                      <p className="text-sm font-medium text-gray-500 mb-2">
+                        Estado
+                      </p>
                       {renderStatusBadge(task.state)}
                     </div>
                   </div>
@@ -203,7 +421,9 @@ export function TaskDetailsDialog({
                         <p className="text-base font-semibold text-gray-900 truncate">
                           {taskResponsible.firstName} {taskResponsible.lastName}
                         </p>
-                        <p className="text-sm text-gray-500">Responsable actual</p>
+                        <p className="text-sm text-gray-500">
+                          Responsable actual
+                        </p>
                       </div>
                     </div>
                   )}
@@ -212,14 +432,30 @@ export function TaskDetailsDialog({
                     <div className="flex items-center gap-4 p-4 border border-green-300 rounded-lg bg-green-50/50">
                       <Avatar className="h-12 w-12 border-2 border-white shadow-sm flex-shrink-0">
                         <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-green-500 to-green-600 text-white font-semibold text-sm">
-                          {availableUsers.find((user) => user.id === selectedResponsibleId)?.firstName[0]}
-                          {availableUsers.find((user) => user.id === selectedResponsibleId)?.lastName[0]}
+                          {
+                            availableUsers.find(
+                              (user) => user.id === selectedResponsibleId
+                            )?.firstName[0]
+                          }
+                          {
+                            availableUsers.find(
+                              (user) => user.id === selectedResponsibleId
+                            )?.lastName[0]
+                          }
                         </div>
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <p className="text-base font-semibold text-gray-900 truncate">
-                          {availableUsers.find((user) => user.id === selectedResponsibleId)?.firstName}{" "}
-                          {availableUsers.find((user) => user.id === selectedResponsibleId)?.lastName}
+                          {
+                            availableUsers.find(
+                              (user) => user.id === selectedResponsibleId
+                            )?.firstName
+                          }{" "}
+                          {
+                            availableUsers.find(
+                              (user) => user.id === selectedResponsibleId
+                            )?.lastName
+                          }
                         </p>
                         <p className="text-sm text-green-600 font-medium">
                           Nuevo Responsable: {selectedResponsibleName}
@@ -245,7 +481,9 @@ export function TaskDetailsDialog({
                         <div className="flex items-center justify-between p-4 border border-blue-200 rounded-lg bg-blue-50/50">
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-blue-600" />
-                            <p className="text-sm font-medium text-blue-900">Seleccionar nuevo responsable</p>
+                            <p className="text-sm font-medium text-blue-900">
+                              Seleccionar nuevo responsable
+                            </p>
                           </div>
                           <Button
                             variant="ghost"
@@ -266,7 +504,11 @@ export function TaskDetailsDialog({
                               {availableUsers
                                 .filter((user) => user.role === "roleOperator")
                                 .map((user) => (
-                                  <SelectItem key={user.id} value={user.id.toString()} className="py-3">
+                                  <SelectItem
+                                    key={user.id}
+                                    value={user.id.toString()}
+                                    className="py-3"
+                                  >
                                     <div className="flex items-center gap-3">
                                       <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center text-xs font-semibold">
                                         {user.firstName[0]}
@@ -289,13 +531,15 @@ export function TaskDetailsDialog({
             </div>
 
             {/* Right Column - Comments */}
-            <div className="lg:col-span-3">
+            <div className="space-y-6">
               <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm h-full">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 bg-purple-50 rounded-lg">
                     <MessageSquare className="h-5 w-5 text-purple-600" />
                   </div>
-                  <h3 className="font-semibold text-lg text-gray-900">Comentarios</h3>
+                  <h3 className="font-semibold text-lg text-gray-900">
+                    Comentarios
+                  </h3>
                 </div>
 
                 <div className="space-y-4">
@@ -318,5 +562,5 @@ export function TaskDetailsDialog({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
