@@ -62,8 +62,8 @@ export default function EditModal({ isOpen, onClose, title, item, taskId, action
     }
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div className="fixed inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md mx-4 border border-gray-200">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
                     <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-500 hover:text-gray-700">

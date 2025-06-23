@@ -6,14 +6,22 @@ import { ChevronLeft, Edit, X, Wrench, AlertTriangle, Shield, HelpCircle, Chevro
 import { Button } from "@/components/ui/button"
 import type { ArtpData, Task } from "@/types/task"
 import EditModal from "./EditModal"
+import DeleteConfirmModal from "./DeleteConfirmModal"
 
 interface SupervisorArtpProps {
-    artpData: ArtpData;
-    taskData: Task;
+    artpData: ArtpData
+    taskData: Task
     editToolAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
     editUndesiredEventAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
     editControlAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
     editVerificationQuestionAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
+    deleteToolAction: (toolId: string, taskId: string) => Promise<{ success: boolean; message: string }>
+    deleteUndesiredEventAction: (eventId: string, taskId: string) => Promise<{ success: boolean; message: string }>
+    deleteControlAction: (controlId: string, taskId: string) => Promise<{ success: boolean; message: string }>
+    deleteVerificationQuestionAction: (
+        questionId: string,
+        taskId: string,
+    ) => Promise<{ success: boolean; message: string }>
 }
 
 interface ActionButtonsProps {
@@ -22,6 +30,13 @@ interface ActionButtonsProps {
 }
 
 interface EditModalState {
+    isOpen: boolean
+    type: "tool" | "undesiredEvent" | "control" | "verificationQuestion" | null
+    item: any
+    title: string
+}
+
+interface DeleteModalState {
     isOpen: boolean
     type: "tool" | "undesiredEvent" | "control" | "verificationQuestion" | null
     item: any
@@ -60,12 +75,23 @@ export default function SupervisorArtp({
     editUndesiredEventAction,
     editControlAction,
     editVerificationQuestionAction, 
+    deleteToolAction,
+    deleteUndesiredEventAction,
+    deleteControlAction,
+    deleteVerificationQuestionAction,
 }: SupervisorArtpProps) {
     const router = useRouter();
 
     const [expandedActivities, setExpandedActivities] = useState<Set<number>>(new Set())
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
     const [editModal, setEditModal] = useState<EditModalState>({
+        isOpen: false,
+        type: null,
+        item: null,
+        title: "",
+    })
+
+    const [deleteModal, setDeleteModal] = useState<DeleteModalState>({
         isOpen: false,
         type: null,
         item: null,
@@ -97,13 +123,33 @@ export default function SupervisorArtp({
         })
     }
 
-    const handleDelete = (type: string, id: string) => {
-        console.log(`Delete ${type} with ID ${id}`)
-        // Implementar funcionalidad de borrar más tarde
+    const handleDelete = (type: "tool" | "undesiredEvent" | "control" | "verificationQuestion", item: any) => {
+        const titles = {
+            tool: "Eliminar Herramienta",
+            undesiredEvent: "Eliminar Evento No Deseado",
+            control: "Eliminar Control",
+            verificationQuestion: "Eliminar Pregunta de Verificación",
+        }
+
+        setDeleteModal({
+            isOpen: true,
+            type,
+            item,
+            title: titles[type],
+        })
     }
 
     const closeModal = () => {
         setEditModal({
+            isOpen: false,
+            type: null,
+            item: null,
+            title: "",
+        })
+    }
+
+    const closeDeleteModal = () => {
+        setDeleteModal({
             isOpen: false,
             type: null,
             item: null,
@@ -123,6 +169,40 @@ export default function SupervisorArtp({
                 return editVerificationQuestionAction
             default:
                 return editToolAction
+        }
+    }
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteModal.type || !deleteModal.item) return
+
+        try {
+            let result
+            const itemId = deleteModal.item.id.toString()
+            const taskId = taskData.id.toString()
+
+            switch (deleteModal.type) {
+                case "tool":
+                    result = await deleteToolAction(itemId, taskId)
+                    break
+                case "undesiredEvent":
+                    result = await deleteUndesiredEventAction(itemId, taskId)
+                    break
+                case "control":
+                    result = await deleteControlAction(itemId, taskId)
+                    break
+                case "verificationQuestion":
+                    result = await deleteVerificationQuestionAction(itemId, taskId)
+                    break
+                default:
+                    return
+            }
+
+            if (result.success) {
+                closeDeleteModal()
+                // Optionally show success message
+            }
+        } catch (error) {
+            console.error("Error deleting item:", error)
         }
     }
 
@@ -242,7 +322,7 @@ export default function SupervisorArtp({
                                                                 </div>
                                                                 <ActionButtons
                                                                     onEdit={() => handleEdit("tool", tool)}
-                                                                    onDelete={() => handleDelete("tool", tool.id.toString())}
+                                                                    onDelete={() => handleDelete("tool", tool)}
                                                                 />
                                                             </div>
                                                         ))}
@@ -283,7 +363,7 @@ export default function SupervisorArtp({
                                                                 </div>
                                                                 <ActionButtons
                                                                     onEdit={() => handleEdit("undesiredEvent", event)}
-                                                                    onDelete={() => handleDelete("undesiredEvent", event.id.toString())}
+                                                                    onDelete={() => handleDelete("undesiredEvent", event)}
                                                                 />
                                                             </div>
                                                         ))}
@@ -324,7 +404,7 @@ export default function SupervisorArtp({
                                                                 </div>
                                                                 <ActionButtons
                                                                     onEdit={() => handleEdit("control", control)}
-                                                                    onDelete={() => handleDelete("control", control.id.toString())}
+                                                                    onDelete={() => handleDelete("control", control)}
                                                                 />
                                                             </div>
                                                         ))}
@@ -365,7 +445,7 @@ export default function SupervisorArtp({
                                                                 </div>
                                                                 <ActionButtons
                                                                     onEdit={() => handleEdit("verificationQuestion", question)}
-                                                                    onDelete={() => handleDelete("verificationQuestion", question.id.toString())}
+                                                                    onDelete={() => handleDelete("verificationQuestion", question)}
                                                                 />
                                                             </div>
                                                         ))}
@@ -390,6 +470,17 @@ export default function SupervisorArtp({
                     taskId={taskData.id.toString()}
                     action={getEditAction()}
                     type={editModal.type}
+                />
+            )}
+
+            {deleteModal.isOpen && deleteModal.type && (
+                <DeleteConfirmModal
+                    isOpen={deleteModal.isOpen}
+                    onClose={closeDeleteModal}
+                    onConfirm={handleDeleteConfirm}
+                    title={deleteModal.title}
+                    itemName={deleteModal.item.title}
+                    type={deleteModal.type}
                 />
             )}
         </div>

@@ -1,5 +1,5 @@
 import SupervisorArtp from "./components/SupervisorArtp";
-import { generateArtp, getTasksByReviewer, updateTool, updateUndesiredEvent, updateControl, updateVerificationQuestion } from "@/services/task";
+import { generateArtp, getTasksByReviewer, updateTool, updateUndesiredEvent, updateControl, updateVerificationQuestion, deleteControl, deleteTool, deleteUndesiredEvent, deleteVerificationQuestion } from "@/services/task";
 import { notFound } from "next/navigation";
 import type { ArtpData, Task } from "@/types/task";
 import { cookies } from "next/headers";
@@ -144,6 +144,90 @@ async function editVerificationQuestion(formData: FormData) {
   }
 }
 
+async function removeTool(toolId: string, taskId: string) {
+  "use server"
+  try {
+    const serviceFormData = new FormData()
+    serviceFormData.append("id", toolId)
+    const result = await deleteTool(serviceFormData)
+    if (!result) {
+      return { success: false, message: "Error" }
+    }
+    if (result.success) {
+      revalidatePath(`/supervisor/${taskId}/artp`)
+      return { success: true, message: "Herramienta eliminada correctamente" }
+    } else {
+      return { success: false, message: result.error || "Error al eliminar la herramienta" }
+    }
+  } catch (error) {
+    console.error("Error deleting tool:", error)
+    return { success: false, message: "Error al eliminar la herramienta" }
+  }
+}
+
+async function removeUndesiredEvent(eventId: string, taskId: string) {
+  "use server"
+  try {
+    const serviceFormData = new FormData()
+    serviceFormData.append("id", eventId)
+    const result = await deleteUndesiredEvent(serviceFormData)
+    if (!result) {
+      return { success: false, message: "Error" }
+    }
+    if (result.success) {
+      revalidatePath(`/supervisor/${taskId}/artp`)
+      return { success: true, message: "Evento no deseado eliminado correctamente" }
+    } else {
+      return { success: false, message: result.error || "Error al eliminar el evento no deseado" }
+    }
+  } catch (error) {
+    console.error("Error deleting undesired event:", error)
+    return { success: false, message: "Error al eliminar el evento no deseado" }
+  }
+}
+
+async function removeControl(controlId: string, taskId: string) {
+  "use server"
+  try {
+    const serviceFormData = new FormData()
+    serviceFormData.append("id", controlId)
+    const result = await deleteControl(serviceFormData)
+    if (!result) {
+      return { success: false, message: "Error" }
+    }
+    if (result.success) {
+      revalidatePath(`/supervisor/${taskId}/artp`)
+      return { success: true, message: "Control eliminado correctamente" }
+    } else {
+      return { success: false, message: result.error || "Error al eliminar el control" }
+    }
+  } catch (error) {
+    console.error("Error deleting control:", error)
+    return { success: false, message: "Error al eliminar el control" }
+  }
+}
+
+async function removeVerificationQuestion(questionId: string, taskId: string) {
+  "use server"
+  try {
+    const serviceFormData = new FormData()
+    serviceFormData.append("id", questionId)
+    const result = await deleteVerificationQuestion(serviceFormData)
+    if (!result) {
+      return { success: false, message: "Error" }
+    }
+    if (result.success) {
+      revalidatePath(`/supervisor/${taskId}/artp`)
+      return { success: true, message: "Pregunta de verificación eliminada correctamente" }
+    } else {
+      return { success: false, message: result.error || "Error al eliminar la pregunta de verificación" }
+    }
+  } catch (error) {
+    console.error("Error deleting verification question:", error)
+    return { success: false, message: "Error al eliminar la pregunta de verificación" }
+  }
+}
+
 export default async function ArtpSupervisorPage({
     params
 } : {
@@ -165,6 +249,10 @@ export default async function ArtpSupervisorPage({
         editUndesiredEventAction={editUndesiredEvent}
         editControlAction={editControl}
         editVerificationQuestionAction={editVerificationQuestion}
+        deleteToolAction={removeTool}
+        deleteUndesiredEventAction={removeUndesiredEvent}
+        deleteControlAction={removeControl}
+        deleteVerificationQuestionAction={removeVerificationQuestion}
       />
     )
 }

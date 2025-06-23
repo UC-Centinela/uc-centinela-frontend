@@ -659,3 +659,171 @@ export async function updateVerificationQuestion(formData: FormData) {
     return { success: false, error: "Unknown error" };
   }
 }
+
+export async function deleteTool(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteTool($deleteToolId: Int!) {
+          deleteTool(id: $deleteToolId)
+        }
+      `,
+      variables: {
+        deleteToolId: Number(rawFormData.id),
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.deleteTool === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function deleteUndesiredEvent(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteUndesiredEvent($deleteUndesiredEventId: Int!) {
+          deleteUndesiredEvent(id: $deleteUndesiredEventId)
+        }
+      `,
+      variables: {
+        deleteUndesiredEventId: Number(rawFormData.id),
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.deleteUndesiredEvent === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function deleteControl(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteControl($deleteControlId: Int!) {
+          deleteControl(id: $deleteControlId)
+        }
+      `,
+      variables: {
+        deleteControlId: Number(rawFormData.id),
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.deleteControl === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function deleteVerificationQuestion(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteVerificationQuestion($deleteVerificationQuestionId: Int!) {
+          deleteVerificationQuestion(id: $deleteVerificationQuestionId)
+        }
+      `,
+      variables: {
+        deleteVerificationQuestionId: Number(rawFormData.id),
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.deleteVerificationQuestion === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
