@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useState, useContext, ReactNode } from 'react';
+import { MultimediaItem } from '@/types/multimedia';
 import TaskExecution from "./TaskExecution";
 
 interface ControlStrategy {
@@ -34,17 +35,9 @@ function ControlStrategiesProvider({ children, initialStrategies = [] }: { child
   );
 }
 
-interface MultimediaData {
-  id: number;
-  taskId: number;
-  photoUrl: string | null;
-  videoUrl: string | null;
-  audioTranscription: string | null;
-}
-
 interface TaskExecutionClientWrapperProps {
   taskId: string;
-  multimediaData: MultimediaData[];
+  multimediaData: MultimediaItem[];
   taskComments: string | null;
 }
 

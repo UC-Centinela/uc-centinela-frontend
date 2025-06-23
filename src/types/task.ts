@@ -43,3 +43,44 @@ export interface TaskFilters {
         end: Date;
     };
 } 
+
+export interface CriticActivity {
+    id: number;
+    title: string;
+    taskId: number;
+}
+
+export interface Tools {
+    id: number;
+    criticActivityId: number;
+    title: string;
+}
+
+export interface UndesiredEvent {
+    id: number;
+    criticActivityId: number;
+    title: string;
+    description?: string | null;
+}
+
+export interface Control {
+    id: number;
+    criticActivityId: number;
+    title: string;
+    description?: string | null;
+}
+
+export interface VerificationQuestion {
+    id: number;
+    criticActivityId: number;
+    title: string;
+    description?: string | null;
+}
+
+export interface ArtpData {
+    criticActivities: CriticActivity[];
+    tools?: Tools[];
+    undesiredEvents?: UndesiredEvent[];
+    controls?: Control[];
+    verificationQuestions?: VerificationQuestion[];
+}

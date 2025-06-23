@@ -1,7 +1,7 @@
 "use server";
 
 import { getTokenAndEmail } from "./users";
-import { Task } from "@/types/task";
+import { Task, ArtpData } from "@/types/task";
 import { gql } from "@apollo/client";
 import client from "@/lib/apollo-client";
 
@@ -98,7 +98,7 @@ export async function getTasksByUser(userId: number): Promise<Task[]> {
   }
 }
 
-export async function getTaskByReviewer(revisorId: number): Promise<Task[]> {
+export async function getTasksByReviewer(revisorId: number): Promise<Task[]> {
   try {
     const data = await getTokenAndEmail();
 
@@ -333,7 +333,6 @@ export async function validateTaskAccess(taskId: string): Promise<boolean> {
     if (!auth || !auth.email) {
       return false;
     }
-
     // Query the API to check if the user has access to this task
     const { data, errors } = await client.query({
       query: CHECK_TASK_ACCESS,
@@ -395,5 +394,74 @@ export async function deleteTask(formData: FormData) {
     };
   } else {
     return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function generateArtp(formData: FormData):Promise<ArtpData | null> {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation GenerateArtp($input: GenerateArtpInput!) {
+          generateArtp(input: $input) {
+            criticActivities {
+              id
+              title
+              taskId
+            }
+            tools {
+              id
+              criticActivityId
+              title
+            }
+            undesiredEvents {
+              id
+              criticActivityId
+              title
+              description  
+            }
+            controls {
+              id
+              criticActivityId
+              title
+              description
+            }
+            verificationQuestions {
+              id
+              criticActivityId
+              title
+              description
+            }
+          }
+        }
+      `,
+      variables: {
+        input: {
+          taskId: Number(rawFormData.taskId)
+        },
+      },
+    }),
+  });
+  const result = await response.json();
+  console.log("ARTP Result:", result)
+  if (result.data && result.data.generateArtp) {
+    return result.data.generateArtp as ArtpData;
+  } else if (result.errors && result.errors.length > 0) {
+    return null;
+  } else {
+    return null;
   }
 }

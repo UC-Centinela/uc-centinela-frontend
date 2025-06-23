@@ -297,7 +297,7 @@ export function TaskDetailsDialog({
               onClick={() => router.push(`/supervisor/${task.id}/register`)}
             >
               <FileText size={18} className="text-blue-600" />
-              Ver ARTP
+              Ver Registro
             </Button>
           </div>
 
