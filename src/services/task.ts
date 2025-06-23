@@ -465,3 +465,197 @@ export async function generateArtp(formData: FormData):Promise<ArtpData | null> 
     return null;
   }
 }
+
+export async function updateTool(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation UpdateTool($input: UpdateToolInput!) {
+          updateTool(input: $input) {
+            id
+            criticActivityId
+            title
+          }
+        }
+      `,
+      variables: {
+        input: {
+          id: Number.parseInt(rawFormData.id as string),
+          title: rawFormData.title
+        },
+      },
+    }),
+  });
+  const result = await response.json();
+  if (result.data && result.data.updateTool) {
+   return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function updateUndesiredEvent(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation UpdateUndesiredEvent($input: UpdateUndesiredEventInput!) {
+          updateUndesiredEvent(input: $input) {
+            id
+            criticActivityId
+            title
+            description
+          }
+        }
+      `,
+      variables: {
+        input: {
+          id: Number.parseInt(rawFormData.id as string),
+          title: rawFormData.title,
+          description: rawFormData.description,
+        },
+      },
+    }),
+  });
+  const result = await response.json();
+  if (result.data && result.data.updateUndesiredEvent) {
+   return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function updateControl(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation UpdateControl($input: UpdateControlInput!) {
+          updateControl(input: $input) {
+            id
+            criticActivityId
+            title
+            description
+          }
+        }
+      `,
+      variables: {
+        input: {
+          id: Number.parseInt(rawFormData.id as string),
+          title: rawFormData.title,
+          description: rawFormData.description,
+        },
+      },
+    }),
+  });
+  const result = await response.json();
+  if (result.data && result.data.updateControl) {
+   return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function updateVerificationQuestion(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation UpdateVerificationQuestion($input: UpdateVerificationQuestionInput!) {
+          updateVerificationQuestion(input: $input) {
+            id
+            criticActivityId
+            title
+            description
+          }
+        }
+      `,
+      variables: {
+        input: {
+          id: Number.parseInt(rawFormData.id as string),
+          title: rawFormData.title,
+          description: rawFormData.description,
+        },
+      },
+    }),
+  });
+  const result = await response.json();
+  if (result.data && result.data.updateVerificationQuestion) {
+   return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}

@@ -2,28 +2,35 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, CheckCircle, Edit, X, Wrench, AlertTriangle, Shield, HelpCircle, ChevronDown, ChevronRight } from "lucide-react"
+import { ChevronLeft, Edit, X, Wrench, AlertTriangle, Shield, HelpCircle, ChevronDown, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { ArtpData, Task } from "@/types/task"
+import EditModal from "./EditModal"
 
 interface SupervisorArtpProps {
     artpData: ArtpData;
     taskData: Task;
+    editToolAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
+    editUndesiredEventAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
+    editControlAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
+    editVerificationQuestionAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
 }
 
 interface ActionButtonsProps {
-    onApprove: () => void;
     onEdit: () => void;
-    onReject: () => void;
+    onDelete: () => void;
 }
 
-function ActionButtons({ onApprove, onEdit, onReject }: ActionButtonsProps) {
+interface EditModalState {
+    isOpen: boolean
+    type: "tool" | "undesiredEvent" | "control" | "verificationQuestion" | null
+    item: any
+    title: string
+}
+
+function ActionButtons({ onEdit, onDelete }: ActionButtonsProps) {
   return (
     <div className="flex gap-2 ml-auto">
-      <Button size="sm" onClick={onApprove} className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-xs">
-        <CheckCircle className="h-3 w-3 mr-1" />
-        Aprobar
-      </Button>
       <Button
         size="sm"
         variant="outline"
@@ -36,22 +43,34 @@ function ActionButtons({ onApprove, onEdit, onReject }: ActionButtonsProps) {
       <Button
         size="sm"
         variant="outline"
-        onClick={onReject}
+        onClick={onDelete}
         className="border-red-500 text-red-600 hover:bg-red-50 px-3 py-1 text-xs"
       >
         <X className="h-3 w-3 mr-1" />
-        Rechazar
+        Borrar
       </Button>
     </div>
   )
 }
 
-export default function SupervisorArtp({ artpData, taskData }: SupervisorArtpProps) {
+export default function SupervisorArtp({
+    artpData,
+    taskData,
+    editToolAction,
+    editUndesiredEventAction,
+    editControlAction,
+    editVerificationQuestionAction, 
+}: SupervisorArtpProps) {
     const router = useRouter();
 
     const [expandedActivities, setExpandedActivities] = useState<Set<number>>(new Set())
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
-    const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+    const [editModal, setEditModal] = useState<EditModalState>({
+        isOpen: false,
+        type: null,
+        item: null,
+        title: "",
+    })
 
     const getDataForCriticActivity = (criticActivityId: number) => {
         return {
@@ -62,8 +81,49 @@ export default function SupervisorArtp({ artpData, taskData }: SupervisorArtpPro
         }
     }
 
-    const handleAction = (action: string, type: string, id:string) => {
-        console.log(`${action} ${type} with ID ${id}`)
+    const handleEdit = (type: "tool" | "undesiredEvent" | "control" | "verificationQuestion", item: any) => {
+        const titles = {
+            tool: "Editar Herramienta",
+            undesiredEvent: "Editar Evento No Deseado",
+            control: "Editar Control",
+            verificationQuestion: "Editar Pregunta de Verificación",
+        }
+
+        setEditModal({
+            isOpen: true,
+            type,
+            item,
+            title: titles[type],
+        })
+    }
+
+    const handleDelete = (type: string, id: string) => {
+        console.log(`Delete ${type} with ID ${id}`)
+        // Implementar funcionalidad de borrar más tarde
+    }
+
+    const closeModal = () => {
+        setEditModal({
+            isOpen: false,
+            type: null,
+            item: null,
+            title: "",
+        })
+    }
+
+    const getEditAction = () => {
+        switch (editModal.type) {
+            case "tool":
+                return editToolAction
+            case "undesiredEvent":
+                return editUndesiredEventAction
+            case "control":
+                return editControlAction
+            case "verificationQuestion":
+                return editVerificationQuestionAction
+            default:
+                return editToolAction
+        }
     }
 
     const toggleActivity = (activityId: number) => {
@@ -181,9 +241,8 @@ export default function SupervisorArtp({ artpData, taskData }: SupervisorArtpPro
                                                                     <p className="text-sm text-gray-800">{tool.title}</p>
                                                                 </div>
                                                                 <ActionButtons
-                                                                    onApprove={() => handleAction("approve", "tool", tool.id.toString())}
-                                                                    onEdit={() => handleAction("edit", "tool", tool.id.toString())}
-                                                                    onReject={() => handleAction("reject", "tool", tool.id.toString())}
+                                                                    onEdit={() => handleEdit("tool", tool)}
+                                                                    onDelete={() => handleDelete("tool", tool.id.toString())}
                                                                 />
                                                             </div>
                                                         ))}
@@ -223,9 +282,8 @@ export default function SupervisorArtp({ artpData, taskData }: SupervisorArtpPro
                                                                     )}
                                                                 </div>
                                                                 <ActionButtons
-                                                                    onApprove={() => handleAction("approve", "undesiredEvent", event.id.toString())}
-                                                                    onEdit={() => handleAction("edit", "undesiredEvent", event.id.toString())}
-                                                                    onReject={() => handleAction("reject", "undesiredEvent", event.id.toString())}
+                                                                    onEdit={() => handleEdit("undesiredEvent", event)}
+                                                                    onDelete={() => handleDelete("undesiredEvent", event.id.toString())}
                                                                 />
                                                             </div>
                                                         ))}
@@ -265,9 +323,8 @@ export default function SupervisorArtp({ artpData, taskData }: SupervisorArtpPro
                                                                     )}
                                                                 </div>
                                                                 <ActionButtons
-                                                                    onApprove={() => handleAction("approve", "control", control.id.toString())}
-                                                                    onEdit={() => handleAction("edit", "control", control.id.toString())}
-                                                                    onReject={() => handleAction("reject", "control", control.id.toString())}
+                                                                    onEdit={() => handleEdit("control", control)}
+                                                                    onDelete={() => handleDelete("control", control.id.toString())}
                                                                 />
                                                             </div>
                                                         ))}
@@ -307,9 +364,8 @@ export default function SupervisorArtp({ artpData, taskData }: SupervisorArtpPro
                                                                     )}
                                                                 </div>
                                                                 <ActionButtons
-                                                                    onApprove={() => handleAction("approve", "verificationQuestion", question.id.toString())}
-                                                                    onEdit={() => handleAction("edit", "verificationQuestion", question.id.toString())}
-                                                                    onReject={() => handleAction("reject", "verificationQuestion", question.id.toString())}
+                                                                    onEdit={() => handleEdit("verificationQuestion", question)}
+                                                                    onDelete={() => handleDelete("verificationQuestion", question.id.toString())}
                                                                 />
                                                             </div>
                                                         ))}
@@ -324,6 +380,18 @@ export default function SupervisorArtp({ artpData, taskData }: SupervisorArtpPro
                     })}
                 </div>
             </div>
+
+            {editModal.isOpen && editModal.type && (
+                <EditModal
+                    isOpen={editModal.isOpen}
+                    onClose={closeModal}
+                    title={editModal.title}
+                    item={editModal.item}
+                    taskId={taskData.id.toString()}
+                    action={getEditAction()}
+                    type={editModal.type}
+                />
+            )}
         </div>
     )
 }

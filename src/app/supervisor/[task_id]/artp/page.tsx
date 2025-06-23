@@ -1,9 +1,10 @@
 import SupervisorArtp from "./components/SupervisorArtp";
-import { generateArtp, getTasksByReviewer } from "@/services/task";
+import { generateArtp, getTasksByReviewer, updateTool, updateUndesiredEvent, updateControl, updateVerificationQuestion } from "@/services/task";
 import { notFound } from "next/navigation";
 import type { ArtpData, Task } from "@/types/task";
 import { cookies } from "next/headers";
 import { getUserProfile } from "@/services/users";
+import { revalidatePath } from "next/cache";
 
 async function getArtpData(taskId: string): Promise<ArtpData | null> {
     try {
@@ -44,6 +45,105 @@ async function getTaskData(taskId: string): Promise<Task | null> {
   }
 }
 
+async function editTool(formData: FormData) {
+  "use server"
+  try {
+    const toolId = formData.get('toolId') as string
+    const serviceFormData = new FormData
+    serviceFormData.append('id', toolId)
+    serviceFormData.append('title', formData.get('title') as string)
+    const result = await updateTool(serviceFormData)
+    if (!result) {
+      return { success: false, message: 'Error'}
+    }
+    if (result.success) {
+      const taskId = formData.get('taskId') as string
+      revalidatePath(`/supervisor/${taskId}/artp`)
+      return { success: true, message: 'Herramienta actualizada correctamente' }
+    } else {
+      return { success: false, message: result.error || "Error al actualizar la herramienta" }
+    }
+  } catch (error) {
+    console.error("Error updating tool:", error)
+    return { success: false, message: "Error al actualizar la herramienta" }
+  }
+}
+
+async function editUndesiredEvent(formData: FormData) {
+  "use server"
+  try {
+    const eventId = formData.get("eventId") as string
+    const serviceFormData = new FormData()
+    serviceFormData.append("id", eventId)
+    serviceFormData.append("title", formData.get("title") as string)
+    serviceFormData.append("description", formData.get("description") as string)
+    const result = await updateUndesiredEvent(serviceFormData)
+    if (!result) {
+      return { success: false, message: "Error" }
+    }
+    if (result.success) {
+      const taskId = formData.get("taskId") as string
+      revalidatePath(`/supervisor/${taskId}/artp`)
+      return { success: true, message: "Evento no deseado actualizado correctamente" }
+    } else {
+      return { success: false, message: result.error || "Error al actualizar el evento no deseado" }
+    }
+  } catch (error) {
+    console.error("Error updating undesired event:", error)
+    return { success: false, message: "Error al actualizar el evento no deseado" }
+  }
+}
+
+async function editControl(formData: FormData) {
+  "use server"
+  try {
+    const controlId = formData.get("controlId") as string
+    const serviceFormData = new FormData()
+    serviceFormData.append("id", controlId)
+    serviceFormData.append("title", formData.get("title") as string)
+    serviceFormData.append("description", formData.get("description") as string)
+    const result = await updateControl(serviceFormData)
+    if (!result) {
+      return { success: false, message: "Error" }
+    }
+    if (result.success) {
+      const taskId = formData.get("taskId") as string
+      revalidatePath(`/supervisor/${taskId}/artp`)
+      return { success: true, message: "Control actualizado correctamente" }
+    } else {
+      return { success: false, message: result.error || "Error al actualizar el control" }
+    }
+  } catch (error) {
+    console.error("Error updating control:", error)
+    return { success: false, message: "Error al actualizar el control" }
+  }
+}
+
+async function editVerificationQuestion(formData: FormData) {
+  "use server"
+  try {
+    const questionId = formData.get("questionId") as string
+    const serviceFormData = new FormData()
+    serviceFormData.append("id", questionId)
+    serviceFormData.append("title", formData.get("title") as string)
+    serviceFormData.append("description", formData.get("description") as string)
+    const result = await updateVerificationQuestion(serviceFormData)
+    if (!result) {
+      return { success: false, message: "Error" }
+    }
+    if (result.success) {
+      const taskId = formData.get("taskId") as string
+      revalidatePath(`/supervisor/${taskId}/artp`)
+      return { success: true, message: "Pregunta de verificación actualizada correctamente" }
+    } else {
+      return { success: false, message: result.error || "Error al actualizar la pregunta de verificación" }
+    }
+  } catch (error) {
+    console.error("Error updating verification question:", error)
+    return { success: false, message: "Error al actualizar la pregunta de verificación" }
+  }
+}
+
 export default async function ArtpSupervisorPage({
     params
 } : {
@@ -57,5 +157,14 @@ export default async function ArtpSupervisorPage({
     if (!artpData) {
         notFound();
     }
-    return <SupervisorArtp artpData={artpData} taskData={taskData} />
+    return (
+      <SupervisorArtp
+        artpData={artpData}
+        taskData={taskData}
+        editToolAction={editTool}
+        editUndesiredEventAction={editUndesiredEvent}
+        editControlAction={editControl}
+        editVerificationQuestionAction={editVerificationQuestion}
+      />
+    )
 }
