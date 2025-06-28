@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, Plus, Edit, Users, Delete } from "lucide-react"
+import { Plus, Edit, Users, Delete, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { handleLogout } from "@/services/users"
 import CreateUserModal from "./CreateUserModal"
 import EditUserModal from "./EditUserModal"
 import DeleteUserModal from "./DeleteUserModal"
@@ -107,17 +108,27 @@ export default function UsersTable({ users, createUserAction, editUserAction, up
     return (
         <div className="min-h-screen bg-gray-100 pb-6">
             {/* Header */}
-            <div className="bg-white p-4 shadow-sm">
-                <Button variant="ghost" onClick={() => router.back()} className="text-red-500 mb-2">
-                    <ChevronLeft className="h-5 w-5 mr-1" /> Volver
-                </Button>
+            <div className="relative bg-white p-4 shadow-sm min-h-[100px]">
+                {/* Botón Logout fijo en esquina superior derecha */}
+                <a
+                    href="/auth/logout"
+                    className="fixed top-4 right-4 w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center z-50 shadow-md hover:bg-teal-200"
+                    onClick={() => handleLogout()}
+                    >
+                    <LogOut className="h-5 w-5 text-teal-700" />
+                </a>
 
-                <div className="flex items-center justify-between mb-6 mt-4">
+                {/* Contenedor con título a la izquierda y botón Crear Usuario a la derecha */}
+                <div className="flex items-center justify-between mt-16">
                     <div className="flex items-center gap-3">
                         <Users className="h-8 w-8 text-teal-700" />
                         <h1 className="text-2xl font-bold text-teal-800">Administración de Usuarios</h1>
                     </div>
-                    <Button onClick={handleCreateUser} className="bg-teal-700 hover:bg-teal-800 text-white">
+
+                    <Button
+                        onClick={handleCreateUser}
+                        className="bg-teal-700 hover:bg-teal-800 text-white"
+                    >
                         <Plus className="h-4 w-4 mr-2" />
                         Crear Usuario
                     </Button>
