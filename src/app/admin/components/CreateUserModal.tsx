@@ -18,6 +18,8 @@ export default function CreateUserModal({ isOpen, onClose, action }: CreateUserM
   const [email, setEmail] = useState("")
   const [rut, setRut] = useState("")
   const [role, setRole] = useState("roleOperator")
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [rutError, setRutError] = useState<string | null>(null)
   const [state, formAction, isPending] = useActionState(
     async (_state: { success: boolean; message: string } | null, formData: FormData) => {
         return await action(formData)
@@ -27,16 +29,57 @@ export default function CreateUserModal({ isOpen, onClose, action }: CreateUserM
 
   useEffect(() => {
     if (state?.success) {
-      setFirstName("")
-      setLastName("")
-      setEmail("")
-      setRut("")
-      setRole("roleOperator")
-      onClose()
+      window.location.reload()
     }
-  }, [state?.success, onClose])
+  }, [state])
+
+  const validateRut = (rut: string): { valid: boolean; error?: string } => {
+    if (!rut) {
+        return { valid: false, error: "El RUT no puede estar vacío" }
+    }
+    const cleanRut = rut.replace(/\./g, "").replace(/-/g, "").toUpperCase()
+    if (!/^\d{7,8}[0-9K]$/.test(cleanRut)) {
+        return { valid: false, error: "El RUT tiene un formato inválido. Usa el formato 12345678-9" }
+    }
+
+    const body = cleanRut.slice(0, -1)
+    const dv = cleanRut.slice(-1).toUpperCase()
+
+    let sum = 0
+    let multiple = 2
+
+    for (let i = body.length - 1; i >= 0; i--) {
+      sum += parseInt(body[i]) * multiple
+      multiple = multiple < 7 ? multiple + 1 : 2
+    }
+
+    const correctDv = 11 - (sum % 11)
+    const calculatedDv = correctDv === 11 ? "0" : correctDv === 10 ? "K" : correctDv.toString()
+
+    if (dv !== calculatedDv) {
+        return { valid: false, error: "El RUT ingresado no es válido" }
+    }
+
+    return { valid: true }
+  }
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
 
   const handleSubmit = (formData: FormData) => {
+    const rutValue = formData.get("rut") as string
+    const emailValue = formData.get("email") as string
+
+    const { valid: validRut, error: rutError } = validateRut(rutValue)
+    const validEmail = validateEmail(emailValue)
+
+    setRutError(!validRut ? rutError || "RUT inválido" : null)
+    setEmailError(!validEmail ? "Correo electrónico inválido" : null)
+
+    if (!validRut || !validEmail) return
+
     formAction(formData)
   }
 
@@ -92,6 +135,7 @@ export default function CreateUserModal({ isOpen, onClose, action }: CreateUserM
               className="mt-1"
               placeholder="usuario@ejemplo.com"
             />
+            {emailError && <p className="text-red-600 text-sm mt-1">{emailError}</p>}
           </div>
 
           <div>
@@ -103,8 +147,9 @@ export default function CreateUserModal({ isOpen, onClose, action }: CreateUserM
               onChange={(e) => setRut(e.target.value)}
               required
               className="mt-1"
-              placeholder="12.345.678-9"
+              placeholder="12345678-9"
             />
+            {rutError && <p className="text-red-600 text-sm mt-1">{rutError}</p>}
           </div>
 
           <div>
@@ -116,11 +161,13 @@ export default function CreateUserModal({ isOpen, onClose, action }: CreateUserM
               onChange={(e) => setRole(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="roleOperator">Operador</option>
-              <option value="roleAdmin">Supervisor</option>
-              <option value="roleSuperAdmin">Administrador</option>
+              <option value="OPERATOR">Operador</option>
+              <option value="ADMIN">Supervisor</option>
+              <option value="SUPERADMIN">Administrador</option>
             </select>
           </div>
+
+          <input type="hidden" name="customerId" value="1" />
 
           {state && !state.success && <div className="text-red-600 text-sm bg-red-50 p-2 rounded">{state.message}</div>}
 

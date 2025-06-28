@@ -2,10 +2,11 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, Plus, Edit, Users } from "lucide-react"
+import { ChevronLeft, Plus, Edit, Users, Delete } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import CreateUserModal from "./CreateUserModal"
 import EditUserModal from "./EditUserModal"
+import DeleteUserModal from "./DeleteUserModal"
 import type { User } from "@/types/user"
 
 interface UsersTableProps {
@@ -13,6 +14,7 @@ interface UsersTableProps {
     createUserAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
     editUserAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
     updateRoleAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
+    deleteUserAction: (FormData: FormData) => Promise<{ success: boolean; message: string }>
 }
 
 interface CreateModalState {
@@ -24,7 +26,12 @@ interface EditModalState {
     user: User | null
 }
 
-export default function UsersTable({ users, createUserAction, editUserAction, updateRoleAction }: UsersTableProps) {
+interface DeleteModalState {
+    isOpen: boolean
+    user: User | null
+}
+
+export default function UsersTable({ users, createUserAction, editUserAction, updateRoleAction, deleteUserAction }: UsersTableProps) {
     const router = useRouter()
 
     const [createModal, setCreateModal] = useState<CreateModalState>({
@@ -32,6 +39,11 @@ export default function UsersTable({ users, createUserAction, editUserAction, up
     })
 
     const [editModal, setEditModal] = useState<EditModalState>({
+        isOpen: false,
+        user: null,
+    })
+
+    const [deleteModal, setDeleteModal] = useState<DeleteModalState>({
         isOpen: false,
         user: null,
     })
@@ -44,12 +56,20 @@ export default function UsersTable({ users, createUserAction, editUserAction, up
         setEditModal({ isOpen: true, user })
     }
 
+    const handleDeleteUser = (user: User) => {
+        setDeleteModal({ isOpen: true, user })
+    }
+
     const closeCreateModal = () => {
         setCreateModal({ isOpen: false })
     }
 
     const closeEditModal = () => {
         setEditModal({ isOpen: false, user: null })
+    }
+
+    const closeDeleteModal = () => {
+        setDeleteModal({ isOpen: false, user: null })
     }
 
     const getRoleDisplayName = (role: string) => {
@@ -77,6 +97,12 @@ export default function UsersTable({ users, createUserAction, editUserAction, up
             return "bg-gray-100 text-gray-800"; // Desconocido
         }
     }
+
+    const sortedUsers = [...users].sort((a, b) => {
+        const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+        const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+    })
 
     return (
         <div className="min-h-screen bg-gray-100 pb-6">
@@ -133,7 +159,7 @@ export default function UsersTable({ users, createUserAction, editUserAction, up
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {users.map((user) => (
+                                    {sortedUsers.map((user) => (
                                         <tr key={user.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
@@ -175,6 +201,15 @@ export default function UsersTable({ users, createUserAction, editUserAction, up
                                                     <Edit className="h-3 w-3 mr-1" />
                                                     Editar
                                                 </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => handleDeleteUser(user)}
+                                                    className="border-red-500 text-red-600 hover:bg-red-50 px-3 py-1 text-xs bg-transparent ml-2"
+                                                >
+                                                    <Delete className="h-3 w-3 mr-1" />
+                                                    Borrar
+                                                </Button>
                                             </td>
                                         </tr>
                                     ))}
@@ -197,6 +232,15 @@ export default function UsersTable({ users, createUserAction, editUserAction, up
                     user={editModal.user}
                     editAction={editUserAction}
                     updateRoleAction={updateRoleAction}
+                />
+            )}
+
+            {deleteModal.isOpen && deleteModal.user && (
+                <DeleteUserModal
+                    isOpen={deleteModal.isOpen}
+                    onClose={closeDeleteModal}
+                    user={deleteModal.user}
+                    deleteAction={deleteUserAction}
                 />
             )}
         </div>

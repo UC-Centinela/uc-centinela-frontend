@@ -1,4 +1,4 @@
-import { getUsers, updateUserRole, updateUser, createUser, getUserProfile } from "@/services/users";
+import { getUsers, updateUserRole, updateUser, createUser, getUserProfile, removeUserByEmail } from "@/services/users";
 import { notFound } from "next/navigation";
 import UsersTable from "./components/UsersTable";
 
@@ -66,6 +66,24 @@ async function createNewUser(formData: FormData) {
     }
 }
 
+async function deleteUser(formData: FormData) {
+    "use server"
+    try {
+        const result = await removeUserByEmail(formData)
+        if (!result) {
+            return { success: false, message: 'Error'}
+        }
+        if (result.success) {
+            return { success: true, message: 'Usuario eliminado correctamente' }
+        } else {
+          return { success: false, message: result.error || "Error al eliminar el usuario" }
+        }
+    } catch (error) {
+        console.error("Error removing user:", error)
+        return { success: false, message: "Error al eliminar el usuario" }
+    }
+}
+
 export default async function AdminPage() {
     const userProfile = await getUserProfile()
     const userId = userProfile?.data?.getUserByEmail?.id;
@@ -79,6 +97,7 @@ export default async function AdminPage() {
             createUserAction={createNewUser}
             editUserAction={changeUserData}
             updateRoleAction={changeUserRole}
+            deleteUserAction={deleteUser}
         />
     )
 }

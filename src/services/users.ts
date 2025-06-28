@@ -222,7 +222,7 @@ export async function updateUserRole(formData: FormData) {
 
   const result = await response.json();
 
-  if (result.data && result.data.assignRole === true) {
+  if (result.data && result.data.assignRole && result.data.assignRole.id) {
     return { success: true };
   } else if (result.errors && result.errors.length > 0) {
     return {
@@ -269,8 +269,7 @@ export async function updateUser(formData: FormData) {
           email: rawFormData.email,
           firstName: rawFormData.firstName,
           lastName: rawFormData.lastName,
-          customerId: rawFormData.customerId,
-          role: rawFormData.role,
+          customerId: Number(rawFormData.customerId),
           rut: rawFormData.rut,
         },
       },
@@ -279,7 +278,7 @@ export async function updateUser(formData: FormData) {
 
   const result = await response.json();
 
-  if (result.data && result.data.updateUser === true) {
+  if (result.data && result.data.updateUser && result.data.updateUser.id) {
     return { success: true };
   } else if (result.errors && result.errors.length > 0) {
     return {
@@ -318,6 +317,7 @@ export async function createUser(formData: FormData) {
             customerId
             role
             rut
+            idpId
           }
         }
       `,
@@ -326,7 +326,7 @@ export async function createUser(formData: FormData) {
           firstName: rawFormData.firstName,
           lastName: rawFormData.lastName,
           email: rawFormData.email,
-          customerId: rawFormData.customerId,
+          customerId: Number(rawFormData.customerId),
           role: rawFormData.role,
           rut: rawFormData.rut,
         },
@@ -335,8 +335,48 @@ export async function createUser(formData: FormData) {
   });
 
   const result = await response.json();
+  if (result.data && result.data.createUser && result.data.createUser.idpId) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
 
-  if (result.data && result.data.createUser === true) {
+export async function removeUserByEmail(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData)
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation RemoveUserByEmail($email: String!) {
+          removeUserByEmail(email: $email)
+        }
+      `,
+      variables: {
+        email: rawFormData.email
+      },
+    }),
+  });
+
+  const result = await response.json();
+  if (result.data && result.data.removeUserByEmail === true) {
     return { success: true };
   } else if (result.errors && result.errors.length > 0) {
     return {

@@ -5,16 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { X } from "lucide-react"
-
-interface User {
-  id: number
-  firstName: string
-  lastName: string
-  email: string
-  rut: string
-  role: string
-  customerId?: string | null
-}
+import type { User } from "@/types/user"
 
 interface EditUserModalProps {
   isOpen: boolean
@@ -27,26 +18,53 @@ interface EditUserModalProps {
 export default function EditUserModal({ isOpen, onClose, user, editAction, updateRoleAction }: EditUserModalProps) {
   const [firstName, setFirstName] = useState(user.firstName)
   const [lastName, setLastName] = useState(user.lastName)
-  const [rut, setRut] = useState(user.rut)
-  const [role, setRole] = useState(user.role)
+
+  // Función para mapear el rol del usuario al valor del select
+  const mapUserRoleToSelectValue = (userRole: string) => {
+    switch (userRole) {
+      case "roleOperator":
+        return "OPERATOR"
+      case "roleAdmin":
+        return "ADMIN"
+      case "roleSuperAdmin":
+        return "SUPERADMIN"
+      default:
+        return "OPERATOR"
+    }
+  }
+
+  const [role, setRole] = useState(mapUserRoleToSelectValue(user.role))
+
   const [editState, editFormAction, isEditPending] = useActionState(
     async (_state: { success: boolean; message: string } | null, formData: FormData) => {
-        return await editAction(formData)
+      return await editAction(formData)
     },
-    null
+    null,
   )
+
   const [roleState, roleFormAction, isRolePending] = useActionState(
     async (_state: { success: boolean; message: string } | null, formData: FormData) => {
-        return await updateRoleAction(formData)
+      const newFormData = new FormData()
+      newFormData.append("userEmail", formData.get("userEmail") as string)
+      newFormData.append("role", formData.get("role") as string)
+      return await updateRoleAction(newFormData)
     },
-    null
+    null,
   )
 
   useEffect(() => {
-    if (editState?.success || roleState?.success) {
-      onClose()
+    if (user) {
+      setFirstName(user.firstName)
+      setLastName(user.lastName)
+      setRole(mapUserRoleToSelectValue(user.role)) // Mapear correctamente el rol
     }
-  }, [editState?.success, roleState?.success, onClose])
+  }, [user])
+
+  useEffect(() => {
+    if (editState?.success || roleState?.success) {
+      window.location.reload()
+    }
+  }, [editState?.success, roleState?.success])
 
   const handleEditSubmit = (formData: FormData) => {
     editFormAction(formData)
@@ -70,6 +88,30 @@ export default function EditUserModal({ isOpen, onClose, user, editAction, updat
         return role
     }
   }
+
+    function validarRut(rut: string): boolean {
+        rut = rut.replace(/\./g, "").replace("-", "");
+        const cuerpo = rut.slice(0, -1);
+        let dv = rut.slice(-1).toUpperCase();
+
+        let suma = 0;
+        let multiplo = 2;
+
+        for (let i = cuerpo.length - 1; i >= 0; i--) {
+            suma += parseInt(cuerpo[i]) * multiplo;
+            multiplo = multiplo < 7 ? multiplo + 1 : 2;
+        }
+
+        const dvEsperado = 11 - (suma % 11);
+        let dvCalc = dvEsperado === 11 ? "0" : dvEsperado === 10 ? "K" : dvEsperado.toString();
+
+        return dv === dvCalc;
+    }
+
+
+  // Comparar correctamente si el rol ha cambiado
+  const currentSelectValue = mapUserRoleToSelectValue(user.role)
+  const hasRoleChanged = role !== currentSelectValue
 
   return (
     <div className="fixed inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-50">
@@ -113,18 +155,6 @@ export default function EditUserModal({ isOpen, onClose, user, editAction, updat
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="rut">RUT</Label>
-                <Input
-                  id="rut"
-                  name="rut"
-                  value={rut}
-                  onChange={(e) => setRut(e.target.value)}
-                  required
-                  className="mt-1"
-                />
-              </div>
-
               {/* Campos ocultos necesarios para la mutation */}
               <input type="hidden" name="role" value={user.role} />
               <input type="hidden" name="customerId" value={user.customerId || ""} />
@@ -157,9 +187,9 @@ export default function EditUserModal({ isOpen, onClose, user, editAction, updat
                   onChange={(e) => setRole(e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="roleOperator">Operador</option>
-                  <option value="roleAdmin">Supervisor</option>
-                  <option value="roleSuperAdmin">Administrador</option>
+                  <option value="OPERATOR">Operador</option>
+                  <option value="ADMIN">Supervisor</option>
+                  <option value="SUPERADMIN">Administrador</option>
                 </select>
               </div>
 
@@ -169,10 +199,14 @@ export default function EditUserModal({ isOpen, onClose, user, editAction, updat
 
               <Button
                 type="submit"
-                disabled={isRolePending || role === user.role}
-                className="w-full bg-orange-600 hover:bg-orange-700"
+                disabled={isRolePending || !hasRoleChanged}
+                className={`w-full ${
+                  hasRoleChanged
+                    ? "bg-orange-600 hover:bg-orange-700"
+                    : "bg-gray-400 cursor-not-allowed hover:bg-gray-400"
+                }`}
               >
-                {isRolePending ? "Actualizando..." : "Cambiar Rol"}
+                {isRolePending ? "Actualizando..." : hasRoleChanged ? "Cambiar Rol" : "Sin cambios"}
               </Button>
             </form>
           </div>
