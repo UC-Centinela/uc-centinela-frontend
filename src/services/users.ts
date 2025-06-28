@@ -233,3 +233,117 @@ export async function updateUserRole(formData: FormData) {
     return { success: false, error: "Unknown error" };
   }
 }
+
+export async function updateUser(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData)
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation UpdateUser($updateUserInput: UpdateUserInput!) {
+          updateUser(updateUserInput: $updateUserInput) {
+            id
+            firstName
+            lastName
+            email
+            customerId
+            role
+            rut
+          }
+        }
+      `,
+      variables: {
+        updateUserInput: {
+          email: rawFormData.email,
+          firstName: rawFormData.firstName,
+          lastName: rawFormData.lastName,
+          customerId: rawFormData.customerId,
+          role: rawFormData.role,
+          rut: rawFormData.rut,
+        },
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.updateUser === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function createUser(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData)
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation CreateUser($input: CreateUserInput!) {
+          createUser(input: $input) {
+            id
+            firstName
+            lastName
+            email
+            customerId
+            role
+            rut
+          }
+        }
+      `,
+      variables: {
+        input: {
+          firstName: rawFormData.firstName,
+          lastName: rawFormData.lastName,
+          email: rawFormData.email,
+          customerId: rawFormData.customerId,
+          role: rawFormData.role,
+          rut: rawFormData.rut,
+        },
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.createUser === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
