@@ -89,26 +89,6 @@ export default function EditUserModal({ isOpen, onClose, user, editAction, updat
     }
   }
 
-    function validarRut(rut: string): boolean {
-        rut = rut.replace(/\./g, "").replace("-", "");
-        const cuerpo = rut.slice(0, -1);
-        let dv = rut.slice(-1).toUpperCase();
-
-        let suma = 0;
-        let multiplo = 2;
-
-        for (let i = cuerpo.length - 1; i >= 0; i--) {
-            suma += parseInt(cuerpo[i]) * multiplo;
-            multiplo = multiplo < 7 ? multiplo + 1 : 2;
-        }
-
-        const dvEsperado = 11 - (suma % 11);
-        let dvCalc = dvEsperado === 11 ? "0" : dvEsperado === 10 ? "K" : dvEsperado.toString();
-
-        return dv === dvCalc;
-    }
-
-
   // Comparar correctamente si el rol ha cambiado
   const currentSelectValue = mapUserRoleToSelectValue(user.role)
   const hasRoleChanged = role !== currentSelectValue

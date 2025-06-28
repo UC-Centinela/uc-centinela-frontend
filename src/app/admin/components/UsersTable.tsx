@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Plus, Edit, Users, Delete, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { handleLogout } from "@/services/users"
@@ -34,7 +33,6 @@ interface DeleteModalState {
 }
 
 export default function UsersTable({ users, currentUserId, createUserAction, editUserAction, updateRoleAction, deleteUserAction }: UsersTableProps) {
-    const router = useRouter()
 
     const [createModal, setCreateModal] = useState<CreateModalState>({
         isOpen: false,
