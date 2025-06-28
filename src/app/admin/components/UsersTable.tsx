@@ -12,6 +12,7 @@ import type { User } from "@/types/user"
 
 interface UsersTableProps {
     users: User[]
+    currentUserId: string
     createUserAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
     editUserAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
     updateRoleAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
@@ -32,7 +33,7 @@ interface DeleteModalState {
     user: User | null
 }
 
-export default function UsersTable({ users, createUserAction, editUserAction, updateRoleAction, deleteUserAction }: UsersTableProps) {
+export default function UsersTable({ users, currentUserId, createUserAction, editUserAction, updateRoleAction, deleteUserAction }: UsersTableProps) {
     const router = useRouter()
 
     const [createModal, setCreateModal] = useState<CreateModalState>({
@@ -99,7 +100,9 @@ export default function UsersTable({ users, createUserAction, editUserAction, up
         }
     }
 
-    const sortedUsers = [...users].sort((a, b) => {
+    const filteredUsers = users.filter(user => user.id.toString() !== currentUserId.toString()) 
+
+    const sortedUsers = [...filteredUsers].sort((a, b) => {
         const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
         const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
         return nameA.localeCompare(nameB);

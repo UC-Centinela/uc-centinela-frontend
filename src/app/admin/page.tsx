@@ -94,6 +94,7 @@ export default async function AdminPage() {
     return (
         <UsersTable
             users={users}
+            currentUserId={userId}
             createUserAction={createNewUser}
             editUserAction={changeUserData}
             updateRoleAction={changeUserRole}
