@@ -188,3 +188,48 @@ export async function getUserById(userId: string): Promise<User | null> {
     return null;
   }
 }
+
+export async function updateUserRole(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData)
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation AssignRole($role: Role!, $userEmail: String!) {
+          assignRole(role: $role, userEmail: $userEmail) {
+            id
+          }
+        }
+      `,
+      variables: {
+        role: rawFormData.role,
+        userEmail: rawFormData.userEmail
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.assignRole === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
