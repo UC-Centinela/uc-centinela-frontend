@@ -26,6 +26,7 @@ import {
   MessageSquare,
   User,
   Edit,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Task, TaskState } from "@/types/task";
@@ -43,6 +44,7 @@ interface TaskDetailsDialogProps {
     taskId: string,
     data: {
       creatorUserId: number;
+      revisorUserId: number;
       comments: string;
       title: string;
       instruction: string;
@@ -68,7 +70,14 @@ export function TaskDetailsDialog({
   const [selectedResponsibleName, setSelectedResponsibleName] = useState<
     string | null
   >(null);
+  const [selectedSupervisorId, setSelectedSupervisorId] = useState<
+    number | null
+  >(null);
+  const [selectedSupervisorName, setSelectedSupervisorName] = useState<
+    string | null
+  >(null);
   const [isReassigning, setIsReassigning] = useState(false);
+  const [isReassigningSupervisor, setIsReassigningSupervisor] = useState(false);
   const [title, setTitle] = useState(task?.title || "");
   const [instruction, setInstruction] = useState(task?.instruction || "");
   const [state, setState] = useState(task?.state || "PENDING");
@@ -85,6 +94,7 @@ export function TaskDetailsDialog({
   useEffect(() => {
     setComment(task?.comments || "");
     setSelectedResponsibleId(null);
+    setSelectedSupervisorId(null);
     setTitle(task?.title || "");
     setInstruction(task?.instruction || "");
     setState(task?.state || "PENDING");
@@ -97,6 +107,11 @@ export function TaskDetailsDialog({
 
   const router = useRouter();
   if (!task) return null;
+
+  // Obtener el supervisor actual de la tarea
+  const currentSupervisor = availableUsers.find(
+    (user) => user.id === task.revisorUserId
+  );
 
   const handleReassign = (userId: string) => {
     if (userId) {
@@ -111,6 +126,23 @@ export function TaskDetailsDialog({
         );
         setSelectedResponsibleId(Number(userId));
         setIsReassigning(false);
+      }
+    }
+  };
+
+  const handleReassignSupervisor = (userId: string) => {
+    if (userId) {
+      const selectedUser = availableUsers.find(
+        (user) => user.id.toString() === userId
+      );
+
+      // Verificar que el usuario seleccionado sea un supervisor
+      if (selectedUser && selectedUser.role === "roleAdmin") {
+        setSelectedSupervisorName(
+          selectedUser.firstName + " " + selectedUser.lastName
+        );
+        setSelectedSupervisorId(Number(userId));
+        setIsReassigningSupervisor(false);
       }
     }
   };
@@ -159,9 +191,14 @@ export function TaskDetailsDialog({
     selectedResponsibleId &&
     selectedResponsibleId.toString() !== taskResponsible?.id.toString();
 
+  const isSupervisorNew =
+    selectedSupervisorId &&
+    selectedSupervisorId.toString() !== task.revisorUserId.toString();
+
   const hasChanges =
     comment.trim() !== task.comments ||
     isResponsibleNew ||
+    isSupervisorNew ||
     title !== task.title ||
     instruction !== task.instruction ||
     requiredSendDate !== task.requiredSendDate;
@@ -276,8 +313,11 @@ export function TaskDetailsDialog({
               onClick={() => {
                 const responsibleId =
                   selectedResponsibleId || taskResponsible?.id || 0;
+                const supervisorId =
+                  selectedSupervisorId || task.revisorUserId || 0;
                 onSaveChanges(task.id, {
                   creatorUserId: responsibleId,
+                  revisorUserId: supervisorId,
                   comments: comment.trim(),
                   title: title,
                   instruction: instruction,
@@ -286,6 +326,8 @@ export function TaskDetailsDialog({
                   requiredSendDate: requiredSendDate,
                 });
                 setSelectedResponsibleId(null);
+                setSelectedSupervisorId(null);
+                window.location.reload();
               }}
               disabled={!hasChanges || isReadOnly}
               className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 transition-all duration-200"
@@ -515,6 +557,136 @@ export function TaskDetailsDialog({
                                   >
                                     <div className="flex items-center gap-3">
                                       <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center text-xs font-semibold">
+                                        {user.firstName[0]}
+                                        {user.lastName[0]}
+                                      </div>
+                                      <span className="font-medium">
+                                        {user.firstName} {user.lastName}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Supervisor Card */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                <h3 className="font-semibold text-lg text-gray-900 mb-4 flex items-center gap-2">
+                  <div className="h-2 w-2 bg-purple-500 rounded-full"></div>
+                  Supervisor
+                </h3>
+
+                <div className="space-y-4">
+                  {currentSupervisor && (
+                    <div className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50/50">
+                      <Avatar className="h-12 w-12 border-2 border-white shadow-sm flex-shrink-0">
+                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 text-white font-semibold text-sm">
+                          {currentSupervisor.firstName[0]}
+                          {currentSupervisor.lastName[0]}
+                        </div>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-semibold text-gray-900 truncate">
+                          {currentSupervisor.firstName} {currentSupervisor.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Supervisor actual
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedSupervisorId && isSupervisorNew && (
+                    <div className="flex items-center gap-4 p-4 border border-purple-300 rounded-lg bg-purple-50/50">
+                      <Avatar className="h-12 w-12 border-2 border-white shadow-sm flex-shrink-0">
+                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 text-white font-semibold text-sm">
+                          {
+                            availableUsers.find(
+                              (user) => user.id === selectedSupervisorId
+                            )?.firstName[0]
+                          }
+                          {
+                            availableUsers.find(
+                              (user) => user.id === selectedSupervisorId
+                            )?.lastName[0]
+                          }
+                        </div>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-semibold text-gray-900 truncate">
+                          {
+                            availableUsers.find(
+                              (user) => user.id === selectedSupervisorId
+                            )?.firstName
+                          }{" "}
+                          {
+                            availableUsers.find(
+                              (user) => user.id === selectedSupervisorId
+                            )?.lastName
+                          }
+                        </p>
+                        <p className="text-sm text-purple-600 font-medium">
+                          Nuevo Supervisor: {selectedSupervisorName}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reassign Supervisor Section */}
+                  <div className="space-y-3">
+                    {isReadOnly ? (
+                      <div className="text-gray-500 text-sm italic">No se puede reasignar el supervisor {readOnlyReason}</div>
+                    ) : !isReassigningSupervisor ? (
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => setIsReassigningSupervisor(true)}
+                        className="w-full flex items-center gap-3 py-3 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-all duration-200"
+                      >
+                        <Shield className="h-4 w-4" />
+                        Reasignar Supervisor
+                      </Button>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 border border-purple-200 rounded-lg bg-purple-50/50">
+                          <div className="flex items-center gap-2">
+                            <Shield className="h-4 w-4 text-purple-600" />
+                            <p className="text-sm font-medium text-purple-900">
+                              Seleccionar nuevo supervisor
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIsReassigningSupervisor(false)}
+                            className="hover:bg-purple-100"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        <div className="relative">
+                          <Select onValueChange={handleReassignSupervisor}>
+                            <SelectTrigger className="w-full h-12 text-left">
+                              <SelectValue placeholder="Seleccionar supervisor" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[250px] overflow-y-auto z-[9999] w-full mr-4">
+                              {availableUsers
+                                .filter((user) => user.role === "roleAdmin")
+                                .map((user) => (
+                                  <SelectItem
+                                    key={user.id}
+                                    value={user.id.toString()}
+                                    className="py-3"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center text-xs font-semibold">
                                         {user.firstName[0]}
                                         {user.lastName[0]}
                                       </div>

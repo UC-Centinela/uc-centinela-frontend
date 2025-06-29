@@ -245,7 +245,6 @@ export default function SupervisorArtp({
         try {
             const success = await rejectTaskAction(taskData.id.toString(), comment)
             if (success) {
-                setRejectModalOpen(false)
                 setRejectComment("")
                 return true;
             } else {

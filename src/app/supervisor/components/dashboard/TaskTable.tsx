@@ -26,6 +26,7 @@ interface TaskTableProps {
     taskId: string,
     data: {
       creatorUserId: number;
+      revisorUserId: number;
       comments: string;
       title: string;
       instruction: string;
@@ -127,6 +128,7 @@ export function TaskTable({
     taskId: string,
     data: {
       creatorUserId: number;
+      revisorUserId: number;
       comments: string;
       title: string;
       instruction: string;
@@ -142,6 +144,7 @@ export function TaskTable({
               ...task,
               comments: data.comments, // Actualiza el comentario
               creatorUserId: data.creatorUserId, // Actualiza el responsable
+              revisorUserId: data.revisorUserId, // Actualiza el supervisor
               title: data.title, // Actualiza el título
               instruction: data.instruction, // Actualiza la instrucción
               state: data.state, // Actualiza el estado
@@ -157,6 +160,7 @@ export function TaskTable({
         ...selectedTask,
         comments: data.comments, // Actualiza el comentario
         creatorUserId: data.creatorUserId, // Actualiza el responsable
+        revisorUserId: data.revisorUserId, // Actualiza el supervisor
         title: data.title, // Actualiza el título
         instruction: data.instruction, // Actualiza la instrucción
         state: data.state, // Actualiza el estado
@@ -167,6 +171,7 @@ export function TaskTable({
     // Llamar callback externo si quieres persistir en backend
     onSaveChanges(taskId, {
       creatorUserId: data.creatorUserId,
+      revisorUserId: data.revisorUserId,
       comments: data.comments,
       title: data.title,
       instruction: data.instruction,
@@ -182,44 +187,6 @@ export function TaskTable({
     onDeleteTask(taskId);
     handleCloseDeleteDialog();
   };
-
-  // const handleReassignResponsible = (taskId: string, newResponsibleId: number) => {
-  //   setTasks((prevTasks) =>
-  //     prevTasks.map((task) =>
-  //       task.id === taskId
-  //         ? { ...task, creatorUserId: newResponsibleId } // Actualiza el responsable
-  //         : task
-  //     )
-  //   );
-
-  //   // Actualizar selectedTask si está abierto
-  //   if (selectedTask && selectedTask.id === taskId) {
-  //     setSelectedTask({ ...selectedTask, creatorUserId: newResponsibleId });
-  //   }
-
-  //   // Llamar callback externo si quieres persistir en backend
-  //   const id = Number(taskId);
-  //   onReassignResponsible(id, newResponsibleId);
-  // };
-
-  // const handleAddComment = (taskId: string, comment: string) => {
-  //   setTasks((prevTasks) =>
-  //     prevTasks.map((task) =>
-  //       task.id === taskId
-  //         ? { ...task, comments: comment } // O concatena si es array
-  //         : task
-  //     )
-  //   );
-
-  //   // Actualizar selectedTask si está abierto
-  //   if (selectedTask && selectedTask.id === taskId) {
-  //     setSelectedTask({ ...selectedTask, comments: comment });
-  //   }
-
-  //   // Llamar callback externo si quieres persistir en backend
-  //   const id = Number(taskId);
-  //   onAddComment(id, comment);
-  // };
 
   return (
     <>

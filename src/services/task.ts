@@ -379,9 +379,9 @@ export async function deleteTask(formData: FormData) {
       },
     }),
   });
-
+  console.log("Delete Task:", rawFormData.id)
   const result = await response.json();
-
+  console.log("Delete Task Result:", result)
   if (result.data && result.data.deleteTask === true) {
     return { success: true };
   } else if (result.errors && result.errors.length > 0) {

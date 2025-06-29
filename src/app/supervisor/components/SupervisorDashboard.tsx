@@ -12,7 +12,8 @@ import type {
   TaskFilters as TaskFiltersType,
 } from "@/types/task";
 import type { User } from "@/types/user";
-import { updateTask, deleteTask } from "@/services/task";
+import { updateTask, deleteTask, deleteArtp } from "@/services/task";
+import { getMultimediaDataByTaskId, deleteMultimedia } from "@/services/multimedia";
 
 interface SupervisorDashboardProps {
   initialTasks: Task[];
@@ -116,6 +117,7 @@ export function SupervisorDashboard({
     taskId: string,
     data: {
       creatorUserId: number;
+      revisorUserId: number;
       comments: string;
       title: string;
       instruction: string;
@@ -128,6 +130,7 @@ export function SupervisorDashboard({
       const formData = new FormData();
       formData.append("id", taskId.toString());
       formData.append("creatorUserId", data.creatorUserId.toString());
+      formData.append("revisorUserId", data.revisorUserId.toString());
       formData.append("comments", data.comments);
       formData.append("title", data.title);
       formData.append("instruction", data.instruction);
@@ -156,10 +159,18 @@ export function SupervisorDashboard({
   const handleDeleteTask = async (taskId: string) => {
     try {
       const formData = new FormData();
+      const artpFormData = new FormData();
       formData.append("id", taskId.toString());
+      artpFormData.append("taskId", taskId.toString());
+      const multimediaData = await getMultimediaDataByTaskId(taskId);
+      for (const multimedia of multimediaData) {
+        await deleteMultimedia(multimedia.id.toString());
+      }
+      await deleteArtp(artpFormData);
       const result = await deleteTask(formData);
       if (result?.success) {
         setTasks((prev) => prev.filter((task) => task.id !== taskId));
+        window.location.reload();
       } else {
         console.error("Error al eliminar tarea:", result?.error);
       }

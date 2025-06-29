@@ -345,8 +345,8 @@ export default function TaskExecution({
                 Listo <CheckCircle className="h-4 w-4 ml-1" />
               </div>
             ) : (
-              <div className="bg-pink-200 text-pink-700 px-3 py-0.5 rounded-full text-sm font-medium flex items-center">
-                Pendiente <AlertCircle className="h-4 w-4 ml-1" />
+              <div className="bg-pink-200 text-pink-700 px-3 py-0.5 rounded-full text-sm font-medium">
+                Opcional
               </div>
             )}
           </div>
