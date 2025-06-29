@@ -28,7 +28,6 @@ import {
   Edit,
   Shield,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { Task, TaskState } from "@/types/task";
 import type { User as TaskUser } from "@/types/user";
 import { useState, useEffect } from "react";

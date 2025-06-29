@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronLeft, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -20,7 +19,6 @@ export default function TaskRegister({
     controlStrategies,
 }: TaskRegisterProps) {
     const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
 
     const videoUrl:string = multimediaData.find(item => item.videoUrl)?.videoUrl || "";
     const photoUrls:string[]  = multimediaData

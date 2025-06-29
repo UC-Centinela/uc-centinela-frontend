@@ -6,16 +6,15 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { X } from "lucide-react"
+import type { Tools, UndesiredEvent, Control, VerificationQuestion } from "@/types/task"
+
+type EditableItem = Tools | UndesiredEvent | Control | VerificationQuestion
 
 interface EditModalProps {
     isOpen: boolean
     onClose: () => void
     title: string
-    item: {
-        id: number
-        title: string
-        description?: string
-    }
+    item: EditableItem
     taskId: string
     action: (formData: FormData) => Promise<{ success: boolean; message: string }>
     type: "tool" | "undesiredEvent" | "control" | "verificationQuestion"
@@ -23,7 +22,7 @@ interface EditModalProps {
 
 export default function EditModal({ isOpen, onClose, title, item, taskId, action, type }: EditModalProps) {
     const [itemTitle, setItemTitle] = useState(item.title)
-    const [itemDescription, setItemDescription] = useState(item.description || "")
+    const [itemDescription, setItemDescription] = useState('description' in item ? item.description || "" : "")
     const [state, formAction, isPending] = useActionState(
         async (_state: { success: boolean; message: string } | null, formData: FormData) => {
             return await action(formData)

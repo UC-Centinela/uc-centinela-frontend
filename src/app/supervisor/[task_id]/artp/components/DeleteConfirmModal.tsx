@@ -8,7 +8,6 @@ interface DeleteConfirmModalProps {
     isOpen: boolean
     onClose: () => void
     onConfirm: () => Promise<void>
-    title: string
     itemName: string
     type: "tool" | "undesiredEvent" | "control" | "verificationQuestion"
 }
@@ -17,7 +16,6 @@ export default function DeleteConfirmModal({
     isOpen,
     onClose,
     onConfirm,
-    title,
     itemName,
     type,
 }: DeleteConfirmModalProps) {
@@ -66,7 +64,9 @@ export default function DeleteConfirmModal({
 
                 <div className="mb-6">
                     <p className="text-gray-600 mb-2">¿Seguro que desea eliminar {getItemTypeName()}:</p>
-                    <p className="font-semibold text-gray-800 bg-gray-50 p-2 rounded border-l-4 border-red-500">"{itemName}"</p>
+                    <p className="font-semibold text-gray-800 bg-gray-50 p-2 rounded border-l-4 border-red-500">
+                        &quot;{itemName}&quot;
+                    </p>
                     <p className="text-sm text-red-600 mt-2">Esta acción no se puede deshacer.</p>
                 </div>
 

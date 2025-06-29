@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Task } from "@/types/task"
 import { useRouter } from "next/navigation"
-import { CheckCircle, XCircle } from "lucide-react"
+import { XCircle } from "lucide-react"
 
 interface RejectedTaskProps {
     taskData: Task

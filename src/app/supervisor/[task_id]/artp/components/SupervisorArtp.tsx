@@ -4,10 +4,13 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronLeft, Edit, X, Wrench, AlertTriangle, Shield, HelpCircle, ChevronDown, ChevronRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { ArtpData, Task } from "@/types/task"
+import type { ArtpData, Task, Tools, UndesiredEvent, Control, VerificationQuestion } from "@/types/task"
 import EditModal from "./EditModal"
 import DeleteConfirmModal from "./DeleteConfirmModal"
 import RejectModal from "./RejectModal"
+
+// Union type for items that can be edited/deleted
+type EditableItem = Tools | UndesiredEvent | Control | VerificationQuestion
 
 interface SupervisorArtpProps {
     artpData: ArtpData
@@ -35,14 +38,14 @@ interface ActionButtonsProps {
 interface EditModalState {
     isOpen: boolean
     type: "tool" | "undesiredEvent" | "control" | "verificationQuestion" | null
-    item: any
+    item: EditableItem | null
     title: string
 }
 
 interface DeleteModalState {
     isOpen: boolean
     type: "tool" | "undesiredEvent" | "control" | "verificationQuestion" | null
-    item: any
+    item: EditableItem | null
     title: string
 }
 
@@ -120,7 +123,7 @@ export default function SupervisorArtp({
         }
     }
 
-    const handleEdit = (type: "tool" | "undesiredEvent" | "control" | "verificationQuestion", item: any) => {
+    const handleEdit = (type: "tool" | "undesiredEvent" | "control" | "verificationQuestion", item: EditableItem) => {
         const titles = {
             tool: "Editar Herramienta",
             undesiredEvent: "Editar Evento No Deseado",
@@ -136,7 +139,7 @@ export default function SupervisorArtp({
         })
     }
 
-    const handleDelete = (type: "tool" | "undesiredEvent" | "control" | "verificationQuestion", item: any) => {
+    const handleDelete = (type: "tool" | "undesiredEvent" | "control" | "verificationQuestion", item: EditableItem) => {
         const titles = {
             tool: "Eliminar Herramienta",
             undesiredEvent: "Eliminar Evento No Deseado",
@@ -253,6 +256,7 @@ export default function SupervisorArtp({
             }
         } catch (error) {
             setRejectError("Ocurrió un error al rechazar la tarea.")
+            console.error("Error rejecting task:", error)
             return false;
         } finally {
             setIsRejecting(false)
@@ -574,12 +578,12 @@ export default function SupervisorArtp({
 
             </div>
 
-            {editModal.isOpen && editModal.type && (
+            {editModal.isOpen && editModal.type && editModal.item && (
                 <EditModal
                     isOpen={editModal.isOpen}
                     onClose={closeModal}
                     title={editModal.title}
-                    item={editModal.item}
+                    item={editModal.item!}
                     taskId={taskData.id.toString()}
                     action={getEditAction()}
                     type={editModal.type}
@@ -591,8 +595,7 @@ export default function SupervisorArtp({
                     isOpen={deleteModal.isOpen}
                     onClose={closeDeleteModal}
                     onConfirm={handleDeleteConfirm}
-                    title={deleteModal.title}
-                    itemName={deleteModal.item.title}
+                    itemName={deleteModal.item?.title || ""}
                     type={deleteModal.type}
                 />
             )}
