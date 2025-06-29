@@ -1,6 +1,7 @@
 import { getUsers, updateUserRole, updateUser, createUser, getUserProfile, removeUserByEmail } from "@/services/users";
 import { notFound } from "next/navigation";
 import UsersTable from "./components/UsersTable";
+import { getTaskByReviewer, getTasksByUser } from "@/services/task";
 
 async function getUsersData() {
     try {
@@ -15,6 +16,34 @@ async function getUsersData() {
 async function changeUserRole(formData: FormData) {
     "use server"
     try {
+        const userEmail = formData.get("userEmail") as string
+        
+        // Obtener el usuario actual para verificar su rol
+        const users = await getUsers()
+        const currentUser = users.find(user => user.email === userEmail)
+        
+        if (!currentUser) {
+            return { success: false, message: 'Usuario no encontrado' }
+        }
+        
+        // Verificar si el usuario tiene tareas asignadas según su rol actual
+        let hasTasks = false
+        
+        if (currentUser.role === "roleOperator") {
+            const operatorTasks = await getTasksByUser(Number(currentUser.id))
+            hasTasks = operatorTasks.length > 0
+        } else if (currentUser.role === "roleAdmin") {
+            const supervisorTasks = await getTaskByReviewer(Number(currentUser.id))
+            hasTasks = supervisorTasks.length > 0
+        }
+        
+        if (hasTasks) {
+            return { 
+                success: false, 
+                message: `No se puede cambiar el rol del usuario porque tiene tareas asignadas. Por favor, reasigna las tareas antes de cambiar el rol.` 
+            }
+        }
+        
         const result = await updateUserRole(formData)
         if (!result) {
             return { success: false, message: 'Error'}
@@ -69,6 +98,34 @@ async function createNewUser(formData: FormData) {
 async function deleteUser(formData: FormData) {
     "use server"
     try {
+        const userEmail = formData.get("email") as string
+        
+        // Obtener el usuario actual para verificar su rol
+        const users = await getUsers()
+        const currentUser = users.find(user => user.email === userEmail)
+        
+        if (!currentUser) {
+            return { success: false, message: 'Usuario no encontrado' }
+        }
+        
+        // Verificar si el usuario tiene tareas asignadas según su rol
+        let hasTasks = false
+        
+        if (currentUser.role === "roleOperator") {
+            const operatorTasks = await getTasksByUser(Number(currentUser.id))
+            hasTasks = operatorTasks.length > 0
+        } else if (currentUser.role === "roleAdmin") {
+            const supervisorTasks = await getTaskByReviewer(Number(currentUser.id))
+            hasTasks = supervisorTasks.length > 0
+        }
+        
+        if (hasTasks) {
+            return { 
+                success: false, 
+                message: `No se puede eliminar el usuario porque tiene tareas asignadas. Por favor, reasigna las tareas antes de eliminar el usuario.` 
+            }
+        }
+        
         const result = await removeUserByEmail(formData)
         if (!result) {
             return { success: false, message: 'Error'}

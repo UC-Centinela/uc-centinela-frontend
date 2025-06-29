@@ -9,12 +9,12 @@ interface DeleteModalProps {
   isOpen: boolean
   onClose: () => void
   user: User
-  deleteAction: (formData: FormData) => Promise<{ success: boolean; error?: string }>
+  deleteAction: (formData: FormData) => Promise<{ success: boolean; message: string }>
 }
 
 export default function DeleteUserModal({ isOpen, onClose, user, deleteAction }: DeleteModalProps) {
     const [state, formAction, isPending] = useActionState(
-        async (_state: { success: boolean; error?: string } | null, formData: FormData) => {
+        async (_state: { success: boolean; message: string } | null, formData: FormData) => {
             return await deleteAction(formData)
         },
         null
@@ -52,7 +52,7 @@ export default function DeleteUserModal({ isOpen, onClose, user, deleteAction }:
                     </p>
 
                     {state && !state.success && (
-                        <div className="text-red-600 text-sm bg-red-50 p-2 rounded">{state.error}</div>
+                        <div className="text-red-600 text-sm bg-red-50 p-2 rounded">{state.message}</div>
                     )}
 
                     <div className="flex justify-end gap-2">
