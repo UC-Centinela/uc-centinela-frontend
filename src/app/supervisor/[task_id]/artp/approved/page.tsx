@@ -41,7 +41,7 @@ export default async function ApprovedPage({
     const { task_id } = await params 
 
     const taskData = await getTaskData(task_id)
-    if (!taskData) {
+    if (!taskData || taskData.state !== "REVIEWED") {
         return notFound()
     }
 
