@@ -56,6 +56,12 @@ export function SupervisorDashboard({
       count: tasks.filter((task) => task.state === "REVIEWED").length,
       color: "#10b981",
     },
+    {
+      status: ["IS_REJECTED"],
+      label: "Rechazadas",
+      count: tasks.filter((task) => task.state === "IS_REJECTED").length,
+      color: "#ef4444",
+    },
   ];
 
   // Handlers
@@ -175,6 +181,9 @@ export function SupervisorDashboard({
       case "approved":
         newState = ["REVIEWED"];
         break;
+      case "rejected":
+        newState = ["IS_REJECTED"];
+        break;
       default:
         newState = undefined;
     }
@@ -213,7 +222,10 @@ export function SupervisorDashboard({
 
   return (
     <div>
-      <Header onTabChange={handleTabChange}>{dashboardContent}</Header>
+      <Header onTabChange={handleTabChange}>
+        {/* Aquí podrías agregar las tabs visuales si no están en Header */}
+        {dashboardContent}
+      </Header>
     </div>
   );
 }

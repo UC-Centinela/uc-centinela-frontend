@@ -67,6 +67,10 @@ export function TaskTable({
         return (
           <Badge className="bg-[#10b981] hover:bg-[#059669]">Aprobada</Badge>
         );
+      case "IS_REJECTED":
+        return (
+          <Badge className="bg-[#ef4444] hover:bg-[#b91c1c]">Rechazada</Badge>
+        );
       default:
         return (
           <Badge className="bg-[#6b7280] hover:bg-[#4b5563]">{state}</Badge>

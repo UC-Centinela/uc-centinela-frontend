@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import type { ArtpData, Task } from "@/types/task"
 import EditModal from "./EditModal"
 import DeleteConfirmModal from "./DeleteConfirmModal"
+import RejectModal from "./RejectModal"
 
 interface SupervisorArtpProps {
     artpData: ArtpData
@@ -23,6 +24,7 @@ interface SupervisorArtpProps {
         taskId: string,
     ) => Promise<{ success: boolean; message: string }>
     approveTaskAction: (taskId: string) => Promise<boolean>
+    rejectTaskAction: (taskId: string, comment: string) => Promise<boolean>
 }
 
 interface ActionButtonsProps {
@@ -80,7 +82,8 @@ export default function SupervisorArtp({
     deleteUndesiredEventAction,
     deleteControlAction,
     deleteVerificationQuestionAction,
-    approveTaskAction
+    approveTaskAction,
+    rejectTaskAction
 }: SupervisorArtpProps) {
     const router = useRouter();
 
@@ -100,6 +103,13 @@ export default function SupervisorArtp({
         item: null,
         title: "",
     })
+
+    const [isRejecting, setIsRejecting] = useState(false)
+    const [rejectModalOpen, setRejectModalOpen] = useState(false)
+    const [rejectComment, setRejectComment] = useState("")
+    const [rejectError, setRejectError] = useState("")
+
+    const isReadOnly = taskData.state === "REVIEWED" || taskData.state === "IS_REJECTED";
 
     const getDataForCriticActivity = (criticActivityId: number) => {
         return {
@@ -225,6 +235,31 @@ export default function SupervisorArtp({
         }
     }
 
+    const handleRejectTaskWithComment = async (comment: string): Promise<boolean> => {
+        if (!comment.trim()) {
+            setRejectError("Debes ingresar un comentario explicando el motivo del rechazo.")
+            return false;
+        }
+        setIsRejecting(true)
+        setRejectError("")
+        try {
+            const success = await rejectTaskAction(taskData.id.toString(), comment)
+            if (success) {
+                setRejectModalOpen(false)
+                setRejectComment("")
+                return true;
+            } else {
+                setRejectError("Ocurrió un error al rechazar la tarea.")
+                return false;
+            }
+        } catch (error) {
+            setRejectError("Ocurrió un error al rechazar la tarea.")
+            return false;
+        } finally {
+            setIsRejecting(false)
+        }
+    }
+
     const toggleActivity = (activityId: number) => {
         const newExpanded = new Set(expandedActivities)
         if (newExpanded.has(activityId)) {
@@ -339,10 +374,12 @@ export default function SupervisorArtp({
                                                                 <div className="flex-1">
                                                                     <p className="text-sm text-gray-800">{tool.title}</p>
                                                                 </div>
-                                                                <ActionButtons
-                                                                    onEdit={() => handleEdit("tool", tool)}
-                                                                    onDelete={() => handleDelete("tool", tool)}
-                                                                />
+                                                                {!isReadOnly && (
+                                                                    <ActionButtons
+                                                                        onEdit={() => handleEdit("tool", tool)}
+                                                                        onDelete={() => handleDelete("tool", tool)}
+                                                                    />
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>
@@ -380,10 +417,12 @@ export default function SupervisorArtp({
                                                                         <p className="text-xs text-gray-600 mb-2">{event.description}</p>
                                                                     )}
                                                                 </div>
-                                                                <ActionButtons
-                                                                    onEdit={() => handleEdit("undesiredEvent", event)}
-                                                                    onDelete={() => handleDelete("undesiredEvent", event)}
-                                                                />
+                                                                {!isReadOnly && (
+                                                                    <ActionButtons
+                                                                        onEdit={() => handleEdit("undesiredEvent", event)}
+                                                                        onDelete={() => handleDelete("undesiredEvent", event)}
+                                                                    />
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>
@@ -421,10 +460,12 @@ export default function SupervisorArtp({
                                                                         <p className="text-xs text-gray-600 mb-2">{control.description}</p>
                                                                     )}
                                                                 </div>
-                                                                <ActionButtons
-                                                                    onEdit={() => handleEdit("control", control)}
-                                                                    onDelete={() => handleDelete("control", control)}
-                                                                />
+                                                                {!isReadOnly && (
+                                                                    <ActionButtons
+                                                                        onEdit={() => handleEdit("control", control)}
+                                                                        onDelete={() => handleDelete("control", control)}
+                                                                    />
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>
@@ -462,10 +503,12 @@ export default function SupervisorArtp({
                                                                         <p className="text-xs text-gray-600 mb-2">{question.description}</p>
                                                                     )}
                                                                 </div>
-                                                                <ActionButtons
-                                                                    onEdit={() => handleEdit("verificationQuestion", question)}
-                                                                    onDelete={() => handleDelete("verificationQuestion", question)}
-                                                                />
+                                                                {!isReadOnly && (
+                                                                    <ActionButtons
+                                                                        onEdit={() => handleEdit("verificationQuestion", question)}
+                                                                        onDelete={() => handleDelete("verificationQuestion", question)}
+                                                                    />
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>
@@ -479,25 +522,55 @@ export default function SupervisorArtp({
                     })}
                 </div>
 
-                <div className="mt-8 flex justify-center">
-                    <Button
-                        onClick={handleApproveTask}
-                        disabled={isApproving}
-                        className="bg-teal-700 hover:bg-teal-800 text-white px-8 py-3 text-lg font-semibold"
-                        size="lg"
-                    >
-                        {isApproving ? (
-                            <div className="flex items-center">
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                                Aprobando...
-                            </div>
-                        ) : (
-                            <div className="flex items-center">
-                                <Check className="h-5 w-5 mr-2" />
-                                Aprobar ARTP
-                            </div>
-                        )}
-                    </Button>
+                <div className="mt-8 flex justify-center gap-4">
+                    {isReadOnly ? (
+                        <div className="text-lg text-gray-600 font-semibold py-6">
+                          {taskData.state === "REVIEWED"
+                            ? "La tarea ya ha sido aprobada y no se puede modificar."
+                            : taskData.state === "IS_REJECTED"
+                            ? "La tarea fue rechazada y no se puede modificar."
+                            : "La tarea no se puede modificar."}
+                        </div>
+                    ) : (
+                        <>
+                        <Button
+                            onClick={handleApproveTask}
+                            disabled={isApproving}
+                            className="bg-teal-700 hover:bg-teal-800 text-white px-8 py-3 text-lg font-semibold"
+                            size="lg"
+                        >
+                            {isApproving ? (
+                                <div className="flex items-center">
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                    Aprobando...
+                                </div>
+                            ) : (
+                                <div className="flex items-center">
+                                    <Check className="h-5 w-5 mr-2" />
+                                    Aprobar ARTP
+                                </div>
+                            )}
+                        </Button>
+                        <Button
+                            onClick={() => setRejectModalOpen(true)}
+                            disabled={isRejecting}
+                            className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 text-lg font-semibold"
+                            size="lg"
+                        >
+                            {isRejecting ? (
+                                <div className="flex items-center">
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                    Rechazando...
+                                </div>
+                            ) : (
+                                <div className="flex items-center">
+                                    <X className="h-5 w-5 mr-2" />
+                                    Rechazar ARTP
+                                </div>
+                            )}
+                        </Button>
+                        </>
+                    )}
                 </div>
 
             </div>
@@ -522,6 +595,19 @@ export default function SupervisorArtp({
                     title={deleteModal.title}
                     itemName={deleteModal.item.title}
                     type={deleteModal.type}
+                />
+            )}
+
+            {rejectModalOpen && (
+                <RejectModal
+                    isOpen={rejectModalOpen}
+                    onClose={() => { setRejectModalOpen(false); setRejectError(""); }}
+                    onConfirm={async (comment) => await handleRejectTaskWithComment(comment)}
+                    loading={isRejecting}
+                    error={rejectError}
+                    comment={rejectComment}
+                    setComment={setRejectComment}
+                    taskId={taskData.id.toString()}
                 />
             )}
         </div>

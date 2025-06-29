@@ -116,37 +116,32 @@ export function TaskDetailsDialog({
   };
 
   const renderStatusBadge = (state: Task["state"]) => {
-    const statusConfig = {
-      PENDING: {
-        label: "Asignada",
-        className: "bg-amber-500 hover:bg-amber-600 text-white",
-      },
-      IN_PROGRESS: {
-        label: "En progreso",
-        className: "bg-blue-500 hover:bg-blue-600 text-white",
-      },
-      COMPLETED: {
-        label: "En revisión",
-        className: "bg-violet-500 hover:bg-violet-600 text-white",
-      },
-      REVIEWED: {
-        label: "Aprobada",
-        className: "bg-emerald-500 hover:bg-emerald-600 text-white",
-      },
-      default: {
-        label: state,
-        className: "bg-gray-500 hover:bg-gray-600 text-white",
-      },
-    };
-
-    const config =
-      statusConfig[state as keyof typeof statusConfig] || statusConfig.default;
-
-    return (
-      <Badge className={cn("font-medium", config.className)}>
-        {config.label}
-      </Badge>
-    );
+    switch (state) {
+      case "PENDING":
+        return (
+          <Badge className="bg-[#f59e0b] hover:bg-[#d97706]">Asignada</Badge>
+        );
+      case "IN_PROGRESS":
+        return (
+          <Badge className="bg-[#f59e0b] hover:bg-[#d97706]">Asignada</Badge>
+        );
+      case "COMPLETED":
+        return (
+          <Badge className="bg-[#3b82f6] hover:bg-[#2563eb]">En revisión</Badge>
+        );
+      case "REVIEWED":
+        return (
+          <Badge className="bg-[#10b981] hover:bg-[#059669]">Aprobada</Badge>
+        );
+      case "IS_REJECTED":
+        return (
+          <Badge className="bg-[#ef4444] hover:bg-[#b91c1c]">Rechazada</Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-[#6b7280] hover:bg-[#4b5563]">{state}</Badge>
+        );
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -170,6 +165,13 @@ export function TaskDetailsDialog({
     title !== task.title ||
     instruction !== task.instruction ||
     requiredSendDate !== task.requiredSendDate;
+
+  const isReadOnly = task.state === "REVIEWED" || task.state === "IS_REJECTED";
+  const readOnlyReason = task.state === "REVIEWED"
+    ? "porque la tarea ya fue aprobada."
+    : task.state === "IS_REJECTED"
+    ? "porque la tarea fue rechazada."
+    : "por su estado actual.";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -285,7 +287,7 @@ export function TaskDetailsDialog({
                 });
                 setSelectedResponsibleId(null);
               }}
-              disabled={!hasChanges}
+              disabled={!hasChanges || isReadOnly}
               className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 transition-all duration-200"
             >
               Guardar Cambios
@@ -466,7 +468,9 @@ export function TaskDetailsDialog({
 
                   {/* Reassign Section */}
                   <div className="space-y-3">
-                    {!isReassigning ? (
+                    {isReadOnly ? (
+                      <div className="text-gray-500 text-sm italic">No se puede reasignar el responsable {readOnlyReason}</div>
+                    ) : !isReassigning ? (
                       <Button
                         variant="outline"
                         size="lg"
@@ -554,7 +558,11 @@ export function TaskDetailsDialog({
                         // No hacer nada, permitir el comportamiento normal de nueva línea
                       }
                     }}
+                    disabled={isReadOnly}
                   />
+                  {isReadOnly && (
+                    <div className="text-gray-500 text-sm italic mt-2">No se pueden editar los comentarios {readOnlyReason}</div>
+                  )}
                 </div>
               </div>
             </div>

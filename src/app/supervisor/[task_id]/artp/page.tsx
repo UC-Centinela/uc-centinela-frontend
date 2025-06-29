@@ -35,17 +35,27 @@ async function approveTask(taskId: string): Promise<boolean> {
   }
 }
 
-// async function rejectTask(taskId: string) {
-//   try {
-//     const stateFormData = new FormData()
-//     stateFormData.append("taskId", taskId)
-//     stateFormData.append("state", "IS_REJECTED")
-//     const artpFormData = new FormData()
-//     artpFormData.append("taskId", taskId)
-//     const stateResponse = await updateTask(stateFormData)
-//     const artpResponse = await deleteArtp(artpFormData)
-//   }
-// }
+async function rejectTask(taskId: string, comment: string) {
+  "use server"
+  try {
+    const stateFormData = new FormData()
+    stateFormData.append("id", taskId)
+    stateFormData.append("state", "IS_REJECTED")
+    stateFormData.append("comments", comment)
+    const artpFormData = new FormData()
+    artpFormData.append("taskId", taskId)
+    const stateResponse = await updateTask(stateFormData)
+    const artpResponse = await deleteArtp(artpFormData)
+    console.log(stateResponse, artpResponse)
+    if (!stateResponse?.success || !artpResponse?.success) {
+      return false
+    }
+    return true
+  } catch (error) {
+    console.error("Error rejecting task:", error)
+    return false
+  }
+}
 
 async function getTaskData(taskId: string): Promise<Task | null> {
   try {
@@ -283,6 +293,7 @@ export default async function ArtpSupervisorPage({
         deleteControlAction={removeControl}
         deleteVerificationQuestionAction={removeVerificationQuestion}
         approveTaskAction={approveTask}
+        rejectTaskAction={rejectTask}
       />
     )
 }
