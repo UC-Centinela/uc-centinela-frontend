@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, Edit, X, Wrench, AlertTriangle, Shield, HelpCircle, ChevronDown, ChevronRight } from "lucide-react"
+import { ChevronLeft, Edit, X, Wrench, AlertTriangle, Shield, HelpCircle, ChevronDown, ChevronRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { ArtpData, Task } from "@/types/task"
 import EditModal from "./EditModal"
@@ -22,6 +22,7 @@ interface SupervisorArtpProps {
         questionId: string,
         taskId: string,
     ) => Promise<{ success: boolean; message: string }>
+    approveTaskAction: (taskId: string) => Promise<boolean>
 }
 
 interface ActionButtonsProps {
@@ -79,11 +80,13 @@ export default function SupervisorArtp({
     deleteUndesiredEventAction,
     deleteControlAction,
     deleteVerificationQuestionAction,
+    approveTaskAction
 }: SupervisorArtpProps) {
     const router = useRouter();
 
     const [expandedActivities, setExpandedActivities] = useState<Set<number>>(new Set())
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
+    const [isApproving, setIsApproving] = useState(false)
     const [editModal, setEditModal] = useState<EditModalState>({
         isOpen: false,
         type: null,
@@ -203,6 +206,22 @@ export default function SupervisorArtp({
             }
         } catch (error) {
             console.error("Error deleting item:", error)
+        }
+    }
+
+    const handleApproveTask = async () => {
+        setIsApproving(true)
+        try {
+            const success = await approveTaskAction(taskData.id.toString())
+            if (success) {
+                router.push(`/supervisor/${taskData.id}/artp/approved`)
+            } else {
+                console.error("Error approving task")
+            }
+        } catch (error) {
+            console.error("Error approving task:", error)
+        } finally {
+            setIsApproving(false)
         }
     }
 
@@ -459,6 +478,28 @@ export default function SupervisorArtp({
                         )
                     })}
                 </div>
+
+                <div className="mt-8 flex justify-center">
+                    <Button
+                        onClick={handleApproveTask}
+                        disabled={isApproving}
+                        className="bg-teal-700 hover:bg-teal-800 text-white px-8 py-3 text-lg font-semibold"
+                        size="lg"
+                    >
+                        {isApproving ? (
+                            <div className="flex items-center">
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                Aprobando...
+                            </div>
+                        ) : (
+                            <div className="flex items-center">
+                                <Check className="h-5 w-5 mr-2" />
+                                Aprobar ARTP
+                            </div>
+                        )}
+                    </Button>
+                </div>
+
             </div>
 
             {editModal.isOpen && editModal.type && (

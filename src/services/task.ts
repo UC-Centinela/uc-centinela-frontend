@@ -230,19 +230,17 @@ type UpdateTaskInput = {
 
 export async function updateTask(formData: FormData) {
   const rawFormData = Object.fromEntries(formData);
-  console.log(rawFormData);
   const data = await getTokenAndEmail();
 
   if (!data?.accessToken) {
     return null;
   }
-
+  
   const { accessToken } = data;
-
+  
   if (!rawFormData.id) {
     return { success: false, error: "Task ID is required" };
   }
-
   const fieldTransforms: FieldTransforms = {
     id: (value: FormDataValue) => Number(value),
     creatorUserId: (value: FormDataValue) => Number(value),
@@ -273,7 +271,6 @@ export async function updateTask(formData: FormData) {
     },
     {} as UpdateTaskInput
   );
-
   const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
     method: "POST",
     headers: {
@@ -464,6 +461,46 @@ export async function generateArtp(formData: FormData):Promise<ArtpData | null> 
   } else {
     return null;
   }
+}
+
+export async function deleteArtp(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteArtp($taskId: Int!) {
+          deleteArtp(taskId: $taskId)
+        }
+      `,
+      variables: {
+        taskId: Number(rawFormData.taskId)
+      },
+    }),
+  });
+  const result = await response.json();
+  if (result.data && result.data.deleteArtp === true) {
+    return { success: true }
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  } 
 }
 
 export async function updateTool(formData: FormData) {

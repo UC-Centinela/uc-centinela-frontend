@@ -1,5 +1,5 @@
 import SupervisorArtp from "./components/SupervisorArtp";
-import { generateArtp, getTasksByReviewer, updateTool, updateUndesiredEvent, updateControl, updateVerificationQuestion, deleteControl, deleteTool, deleteUndesiredEvent, deleteVerificationQuestion } from "@/services/task";
+import { generateArtp, deleteArtp, getTasksByReviewer, updateTask, updateTool, updateUndesiredEvent, updateControl, updateVerificationQuestion, deleteControl, deleteTool, deleteUndesiredEvent, deleteVerificationQuestion } from "@/services/task";
 import { notFound } from "next/navigation";
 import type { ArtpData, Task } from "@/types/task";
 import { cookies } from "next/headers";
@@ -17,6 +17,35 @@ async function getArtpData(taskId: string): Promise<ArtpData | null> {
         return null;
     }
 }
+
+async function approveTask(taskId: string): Promise<boolean> {
+  "use server"
+  try {
+    const formData = new FormData()
+    formData.append("id", taskId)
+    formData.append("state", "REVIEWED")
+    const response = await updateTask(formData)
+    if (!response?.success) {
+      return false
+    }
+    return response?.success
+  } catch (error) {
+    console.error("Error approving task:", error)
+    return false
+  }
+}
+
+// async function rejectTask(taskId: string) {
+//   try {
+//     const stateFormData = new FormData()
+//     stateFormData.append("taskId", taskId)
+//     stateFormData.append("state", "IS_REJECTED")
+//     const artpFormData = new FormData()
+//     artpFormData.append("taskId", taskId)
+//     const stateResponse = await updateTask(stateFormData)
+//     const artpResponse = await deleteArtp(artpFormData)
+//   }
+// }
 
 async function getTaskData(taskId: string): Promise<Task | null> {
   try {
@@ -253,6 +282,7 @@ export default async function ArtpSupervisorPage({
         deleteUndesiredEventAction={removeUndesiredEvent}
         deleteControlAction={removeControl}
         deleteVerificationQuestionAction={removeVerificationQuestion}
+        approveTaskAction={approveTask}
       />
     )
 }
