@@ -2,10 +2,21 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, Info, AlertCircle, CheckCircle, X } from "lucide-react";
+import {
+  ChevronLeft,
+  Info,
+  AlertCircle,
+  CheckCircle,
+  X,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import TranscriptionForm, { TranscriptionResult } from "@/app/transcription/components/TranscriptionForm";
-import PhotoUploadForm, { PhotoUploadResult } from "@/app/tasks/components/PhotoUploadForm";
+import TranscriptionForm, {
+  TranscriptionResult,
+} from "@/app/transcription/components/TranscriptionForm";
+import PhotoUploadForm, {
+  PhotoUploadResult,
+} from "@/app/tasks/components/PhotoUploadForm";
 import ControlStrategySelector from "@/app/tasks/components/ControlStrategySelector";
 import { gql, useQuery, useMutation } from "@apollo/client";
 import client from "@/lib/apollo-client";
@@ -13,7 +24,7 @@ import Image from "next/image";
 import { MultimediaItem } from "@/types/multimedia";
 import { updateTask } from "@/services/task";
 import { useControlStrategies } from "./TaskExecutionClientWrapper";
-
+import { generateArtp } from "@/services/artp";
 
 const FIND_CONTROL_STRATEGIES_BY_TASK = gql`
   query FindControlStrategiesByTask($taskId: Int!) {
@@ -52,8 +63,12 @@ export default function TaskExecution({
   taskComments = null,
 }: TaskExecutionProps) {
   const router = useRouter();
-  const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null);
-  const [uploadedVideo, setUploadedVideo] = useState<MultimediaItem | null>(null);
+  const [isGeneratingARTP, setIsGeneratingARTP] = useState(false);
+  const [transcriptionResult, setTranscriptionResult] =
+    useState<TranscriptionResult | null>(null);
+  const [uploadedVideo, setUploadedVideo] = useState<MultimediaItem | null>(
+    null
+  );
   const [uploadedPhotos, setUploadedPhotos] = useState<MultimediaItem[]>([]);
   const [showStrategySelector, setShowStrategySelector] = useState(false);
   const { selectedStrategies, setSelectedStrategies } = useControlStrategies();
@@ -72,19 +87,22 @@ export default function TaskExecution({
   const hasExistingPhotos = totalPhotos > 0;
 
   // Obtener todas las estrategias de control
-  const { loading: loadingStrategies } = useQuery(FIND_CONTROL_STRATEGIES_BY_TASK, {
-    client,
-    variables: { taskId: taskId ? Number(taskId) : 0 },
-    skip: !taskId,
-    onError: (error) => {
-      console.error("Error fetching strategies:", error);
-    },
-    onCompleted: (data) => {
-      if (data?.findControlStrategiesByTask) {
-        setSelectedStrategies(data.findControlStrategiesByTask);
-      }
+  const { loading: loadingStrategies } = useQuery(
+    FIND_CONTROL_STRATEGIES_BY_TASK,
+    {
+      client,
+      variables: { taskId: taskId ? Number(taskId) : 0 },
+      skip: !taskId,
+      onError: (error) => {
+        console.error("Error fetching strategies:", error);
+      },
+      onCompleted: (data) => {
+        if (data?.findControlStrategiesByTask) {
+          setSelectedStrategies(data.findControlStrategiesByTask);
+        }
+      },
     }
-  });
+  );
 
   const handleUpdateTask = async (taskId: string, newComments: string) => {
     setIsSavingComments(true);
@@ -95,7 +113,7 @@ export default function TaskExecution({
       formData.append("id", taskId);
       formData.append("comments", newComments.trim());
 
-      const result = await updateTask(formData)
+      const result = await updateTask(formData);
       if (result?.success) {
         if (result.data?.comments !== undefined) {
           setComments(result.data.comments || "");
@@ -106,14 +124,18 @@ export default function TaskExecution({
       } else {
         console.error("Error updating task:", result?.error || "Unknown error");
         setIsSavingComments(false);
-        setError("Error al guardar los comentarios. Por favor, intente de nuevo.");
+        setError(
+          "Error al guardar los comentarios. Por favor, intente de nuevo."
+        );
       }
     } catch (error) {
       console.error("Error updating task:", error);
       setIsSavingComments(false);
-      setError("Error al guardar los comentarios. Por favor, intente de nuevo.");
+      setError(
+        "Error al guardar los comentarios. Por favor, intente de nuevo."
+      );
     }
-  }
+  };
 
   const [unassignControlStrategy] = useMutation(UNASSIGN_CONTROL_STRATEGY, {
     client,
@@ -192,13 +214,15 @@ export default function TaskExecution({
         variables: {
           input: {
             taskId: Number(taskId),
-            controlStrategyId: Number(strategy.id)
-          }
-        }
+            controlStrategyId: Number(strategy.id),
+          },
+        },
       });
-      
+
       // Remove from UI regardless of API call
-      setSelectedStrategies(selectedStrategies.filter((s) => s.id !== strategy.id));
+      setSelectedStrategies(
+        selectedStrategies.filter((s) => s.id !== strategy.id)
+      );
     } catch (error) {
       console.error("Error removing strategy:", error);
       setError("Error al eliminar la estrategia. Por favor, intente de nuevo.");
@@ -215,6 +239,24 @@ export default function TaskExecution({
     const hasStrategies = selectedStrategies.length > 0;
     return hasVideo && hasStrategies;
   }, [hasExistingVideo, selectedStrategies.length]);
+
+  const handleGenerateARTP = async () => {
+    if (!canGenerateARTP) return;
+    setIsGeneratingARTP(true);
+    try {
+      const result = await generateArtp({ taskId: Number(taskId) });
+      if (result) {
+        console.log("artp result", result);
+      } else {
+        console.error("Error generating ARTP:", result);
+      }
+    } catch (error) {
+      console.error("Error generating ARTP:", error);
+    } finally {
+      setIsGeneratingARTP(false);
+      router.push(`/tasks/${taskId}/artp-result`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 pb-6">
@@ -282,12 +324,15 @@ export default function TaskExecution({
                 <div className="flex-shrink-0 mr-1">
                   <Info className="h-5 w-5 text-teal-700 mt-0.5" />
                 </div>
-                <h3 className="text-base font-semibold text-gray-700">Instrucciones</h3>
+                <h3 className="text-base font-semibold text-gray-700">
+                  Instrucciones
+                </h3>
               </div>
 
               <p className="text-gray-600 mb-6 text-base">
-                Suba un video de la tarea, actividades y peligros describiendo de manera exhaustiva. Solo se
-                permiten archivos <strong>.mp4</strong>.
+                Suba un video de la tarea, actividades y peligros describiendo
+                de manera exhaustiva. Solo se permiten archivos{" "}
+                <strong>.mp4</strong>.
               </p>
             </>
           )}
@@ -313,7 +358,9 @@ export default function TaskExecution({
                 <div className="flex justify-end mt-2">
                   <Button
                     variant="ghost"
-                    onClick={() => router.push(`/tasks/${taskId}/video-details`)}
+                    onClick={() =>
+                      router.push(`/tasks/${taskId}/video-details`)
+                    }
                     className="text-red-500"
                   >
                     Ver Detalles
@@ -339,7 +386,9 @@ export default function TaskExecution({
         {/* ========== SECCIÓN 2: SUBIR FOTOGRAFÍAS ========== */}
         <section className="bg-white rounded-lg p-5 shadow-sm">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-bold text-gray-800">2. Subir Fotografías</h2>
+            <h2 className="text-lg font-bold text-gray-800">
+              2. Subir Fotografías
+            </h2>
             {hasExistingPhotos ? (
               <div className="bg-green-200 text-green-700 px-3 py-0.5 rounded-full text-sm font-medium flex items-center">
                 Listo <CheckCircle className="h-4 w-4 ml-1" />
@@ -357,11 +406,14 @@ export default function TaskExecution({
                 <div className="flex-shrink-0 mr-1">
                   <Info className="h-5 w-5 text-teal-700 mt-0.5" />
                 </div>
-                <h3 className="text-base font-semibold text-gray-700">Instrucciones</h3>
+                <h3 className="text-base font-semibold text-gray-700">
+                  Instrucciones
+                </h3>
               </div>
               <p className="text-gray-600 mb-6 text-base">
-                Suba fotos de la zona, herramientas y materiales a utilizar. Asegúrese de tener buena
-                iluminación. Puede subir hasta 5 fotos en total.
+                Suba fotos de la zona, herramientas y materiales a utilizar.
+                Asegúrese de tener buena iluminación. Puede subir hasta 5 fotos
+                en total.
               </p>
             </>
           )}
@@ -471,11 +523,14 @@ export default function TaskExecution({
                 <div className="flex-shrink-0 mr-1">
                   <Info className="h-5 w-5 text-teal-700 mt-0.5" />
                 </div>
-                <h3 className="text-base font-semibold text-gray-700">Instrucciones</h3>
+                <h3 className="text-base font-semibold text-gray-700">
+                  Instrucciones
+                </h3>
               </div>
 
               <p className="text-gray-600 mb-6 text-base">
-                Revise las estrategias de control que correspondan a la tarea y/o agregue nuevas.
+                Revise las estrategias de control que correspondan a la tarea
+                y/o agregue nuevas.
               </p>
 
               <Button
@@ -491,7 +546,9 @@ export default function TaskExecution({
         {/* ========== SECCIÓN 4: COMENTARIOS ADICIONALES ========== */}
         <section className="bg-white rounded-lg p-5 shadow-sm">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-bold text-gray-800">4. Comentarios Adicionales</h2>
+            <h2 className="text-lg font-bold text-gray-800">
+              4. Comentarios Adicionales
+            </h2>
             <div className="bg-pink-200 text-pink-700 px-3 py-0.5 rounded-full text-sm font-medium">
               Opcional
             </div>
@@ -501,7 +558,9 @@ export default function TaskExecution({
             <div className="flex-shrink-0 mr-1">
               <Info className="h-5 w-5 text-teal-700 mt-0.5" />
             </div>
-            <h3 className="text-base font-semibold text-gray-700">Instrucciones</h3>
+            <h3 className="text-base font-semibold text-gray-700">
+              Instrucciones
+            </h3>
           </div>
 
           <p className="text-gray-600 mb-6 text-base">
@@ -543,26 +602,53 @@ export default function TaskExecution({
         </section>
 
         <Button
-          onClick={() => router.push(`/tasks/${taskId}/artp-result`)}
-          disabled={!canGenerateARTP}
+          onClick={handleGenerateARTP}
+          disabled={!canGenerateARTP || isGeneratingARTP}
           className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg mb-4 flex items-center justify-center h-12 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {!canGenerateARTP ? (
+          {isGeneratingARTP ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Generando Análisis de Riesgo...
+            </>
+          ) : !canGenerateARTP ? (
             <>
               Completa los requisitos para generar ARTP
               <AlertCircle className="ml-2 h-5 w-5" />
             </>
           ) : (
-            "Generar ARTP"
+            <>Generar ARTP</>
           )}
         </Button>
 
-        {!canGenerateARTP && (
+        {isGeneratingARTP && (
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-6 mt-4">
+            <div className="flex items-center justify-center mb-4">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mr-3" />
+              <h3 className="text-lg font-semibold text-blue-800">
+                Generando Análisis de Riesgo
+              </h3>
+            </div>
+            <div className="text-center text-blue-700 mb-4">
+              <p className="mb-2">Estamos procesando su información...</p>
+              <p className="text-sm">
+                Esto puede tomar unos momentos. Por favor, no cierre esta
+                página.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!canGenerateARTP && !isGeneratingARTP && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mt-2">
-            <h3 className="text-sm font-medium text-yellow-800 mb-2">Requisitos pendientes:</h3>
+            <h3 className="text-sm font-medium text-yellow-800 mb-2">
+              Requisitos pendientes:
+            </h3>
             <ul className="list-disc pl-5 text-sm text-yellow-700">
               {!hasExistingVideo && <li>Debe subir un video de la tarea</li>}
-              {selectedStrategies.length === 0 && <li>Debe seleccionar al menos una estrategia de control</li>}
+              {selectedStrategies.length === 0 && (
+                <li>Debe seleccionar al menos una estrategia de control</li>
+              )}
             </ul>
           </div>
         )}
@@ -579,5 +665,3 @@ export default function TaskExecution({
     </div>
   );
 }
-
-
