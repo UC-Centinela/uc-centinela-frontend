@@ -1,4 +1,10 @@
-import { ArtpCriticActivity } from "@/services/artp";
+import {
+  ArtpCriticActivity,
+  ArtpTool,
+  ArtpUndesiredEvent,
+  ArtpControl,
+  ArtpVerificationQuestion,
+} from "@/services/artp";
 import { ArtpToolSection } from "./ArtpToolSection";
 import { ArtpUndesiredEventSection } from "./ArtpUndesiredEventSection";
 import { ArtpControlSection } from "./ArtpControlSection";
@@ -7,10 +13,10 @@ import { ArtpVerificationQuestionSection } from "./ArtpVerificationQuestionSecti
 interface ArtpActivityCardProps {
   activity: ArtpCriticActivity;
   index: number;
-  tools: any[];
-  undesiredEvents: any[];
-  controls: any[];
-  verificationQuestions: any[];
+  tools: ArtpTool[];
+  undesiredEvents: ArtpUndesiredEvent[];
+  controls: ArtpControl[];
+  verificationQuestions: ArtpVerificationQuestion[];
   // Estado para herramientas
   addingTool: { [criticActivityId: string]: boolean };
   newToolTitle: { [criticActivityId: string]: string };

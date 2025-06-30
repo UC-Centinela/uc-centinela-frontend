@@ -2,10 +2,9 @@ import { ReactNode } from "react";
 
 interface ArtpItemSectionProps {
   title: string;
-  items: any[];
+  items: unknown[];
   criticActivityId: string;
   adding: { [criticActivityId: string]: boolean };
-  editing: { [itemId: string]: boolean };
   onAdd: (criticActivityId: string) => void;
   onSetAdding: (criticActivityId: string, value: boolean) => void;
   children: ReactNode;
@@ -16,7 +15,6 @@ export function ArtpItemSection({
   items,
   criticActivityId,
   adding,
-  editing,
   onAdd,
   onSetAdding,
   children,

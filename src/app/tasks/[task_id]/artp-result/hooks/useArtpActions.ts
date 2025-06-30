@@ -14,13 +14,19 @@ import {
   deleteVerificationQuestion,
   updateVerificationQuestion,
 } from "@/services/verificationQuestion";
+import {
+  ArtpTool,
+  ArtpUndesiredEvent,
+  ArtpControl,
+  ArtpVerificationQuestion,
+} from "@/services/artp";
 
 export function useArtpActions() {
   // Acciones para herramientas
   const handleAddTool = async (
     criticActivityId: string,
     title: string,
-    setLocalTools: React.Dispatch<React.SetStateAction<any[]>>,
+    setLocalTools: React.Dispatch<React.SetStateAction<ArtpTool[]>>,
     setNewToolTitle: React.Dispatch<
       React.SetStateAction<{ [key: string]: string }>
     >,
@@ -43,7 +49,7 @@ export function useArtpActions() {
     toolId: string,
     criticActivityId: string,
     newTitle: string,
-    setLocalTools: React.Dispatch<React.SetStateAction<any[]>>,
+    setLocalTools: React.Dispatch<React.SetStateAction<ArtpTool[]>>,
     setEditingTool: React.Dispatch<
       React.SetStateAction<{ [key: string]: boolean }>
     >
@@ -69,7 +75,7 @@ export function useArtpActions() {
 
   const handleDeleteTool = async (
     toolId: string,
-    setLocalTools: React.Dispatch<React.SetStateAction<any[]>>
+    setLocalTools: React.Dispatch<React.SetStateAction<ArtpTool[]>>
   ) => {
     const ok = await deleteTool(toolId);
     if (ok) {
@@ -83,7 +89,9 @@ export function useArtpActions() {
     criticActivityId: string,
     title: string,
     description: string | null,
-    setLocalUndesiredEvents: React.Dispatch<React.SetStateAction<any[]>>,
+    setLocalUndesiredEvents: React.Dispatch<
+      React.SetStateAction<ArtpUndesiredEvent[]>
+    >,
     setNewUndesiredEvent: React.Dispatch<
       React.SetStateAction<{
         [key: string]: { title: string; description: string | null };
@@ -124,7 +132,9 @@ export function useArtpActions() {
     criticActivityId: string,
     newTitle: string,
     newDescription: string | null,
-    setLocalUndesiredEvents: React.Dispatch<React.SetStateAction<any[]>>,
+    setLocalUndesiredEvents: React.Dispatch<
+      React.SetStateAction<ArtpUndesiredEvent[]>
+    >,
     setEditingUndesiredEvent: React.Dispatch<
       React.SetStateAction<{ [key: string]: boolean }>
     >
@@ -153,7 +163,9 @@ export function useArtpActions() {
 
   const handleDeleteUndesiredEvent = async (
     eventId: string,
-    setLocalUndesiredEvents: React.Dispatch<React.SetStateAction<any[]>>
+    setLocalUndesiredEvents: React.Dispatch<
+      React.SetStateAction<ArtpUndesiredEvent[]>
+    >
   ) => {
     const ok = await deleteUndesiredEvent(eventId);
     if (ok) {
@@ -167,7 +179,7 @@ export function useArtpActions() {
     criticActivityId: string,
     title: string,
     description: string | null,
-    setLocalControls: React.Dispatch<React.SetStateAction<any[]>>,
+    setLocalControls: React.Dispatch<React.SetStateAction<ArtpControl[]>>,
     setNewControl: React.Dispatch<
       React.SetStateAction<{
         [key: string]: { title: string; description: string | null };
@@ -208,7 +220,7 @@ export function useArtpActions() {
     criticActivityId: string,
     newTitle: string,
     newDescription: string | null,
-    setLocalControls: React.Dispatch<React.SetStateAction<any[]>>,
+    setLocalControls: React.Dispatch<React.SetStateAction<ArtpControl[]>>,
     setEditingControl: React.Dispatch<
       React.SetStateAction<{ [key: string]: boolean }>
     >
@@ -237,7 +249,7 @@ export function useArtpActions() {
 
   const handleDeleteControl = async (
     controlId: string,
-    setLocalControls: React.Dispatch<React.SetStateAction<any[]>>
+    setLocalControls: React.Dispatch<React.SetStateAction<ArtpControl[]>>
   ) => {
     const ok = await deleteControl(controlId);
     if (ok) {
@@ -251,7 +263,9 @@ export function useArtpActions() {
     criticActivityId: string,
     title: string,
     description: string | null,
-    setLocalVerificationQuestions: React.Dispatch<React.SetStateAction<any[]>>,
+    setLocalVerificationQuestions: React.Dispatch<
+      React.SetStateAction<ArtpVerificationQuestion[]>
+    >,
     setNewVerificationQuestion: React.Dispatch<
       React.SetStateAction<{
         [key: string]: { title: string; description: string | null };
@@ -292,7 +306,9 @@ export function useArtpActions() {
     criticActivityId: string,
     newTitle: string,
     newDescription: string | null,
-    setLocalVerificationQuestions: React.Dispatch<React.SetStateAction<any[]>>,
+    setLocalVerificationQuestions: React.Dispatch<
+      React.SetStateAction<ArtpVerificationQuestion[]>
+    >,
     setEditingVerificationQuestion: React.Dispatch<
       React.SetStateAction<{ [key: string]: boolean }>
     >
@@ -321,7 +337,9 @@ export function useArtpActions() {
 
   const handleDeleteVerificationQuestion = async (
     questionId: string,
-    setLocalVerificationQuestions: React.Dispatch<React.SetStateAction<any[]>>
+    setLocalVerificationQuestions: React.Dispatch<
+      React.SetStateAction<ArtpVerificationQuestion[]>
+    >
   ) => {
     const ok = await deleteVerificationQuestion(questionId);
     if (ok) {

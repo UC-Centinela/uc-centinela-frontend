@@ -1,9 +1,5 @@
 import { useState } from "react";
 import { GenerateArtpResponse } from "@/services/artp";
-import { ArtpControl } from "@/services/artp";
-import { ArtpTool } from "@/services/artp";
-import { ArtpUndesiredEvent } from "@/services/artp";
-import { ArtpVerificationQuestion } from "@/services/artp";
 
 export function useArtpState(artpData: GenerateArtpResponse) {
   // Estado para herramientas

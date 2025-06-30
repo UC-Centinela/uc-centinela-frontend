@@ -206,7 +206,7 @@ export default function ARTPResultContent({
             Propuesta de ARTP (Análisis de Riesgo de la Tarea Planificado)
           </h2>
           <p className="text-gray-700 text-center mb-6">
-            Para la tarea "{taskTitle}" se recomienda lo siguiente:
+            Para la tarea &ldquo;{taskTitle}&rdquo; se recomienda lo siguiente:
           </p>
 
           <div className="space-y-6">
