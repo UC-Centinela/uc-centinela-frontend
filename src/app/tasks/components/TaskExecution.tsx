@@ -266,6 +266,7 @@ export default function TaskExecution({
           variant="ghost"
           onClick={() => router.push(`/tasks/${taskId}`)}
           className="text-red-500 mb-2"
+          disabled={isGeneratingARTP}
         >
           <ChevronLeft className="h-5 w-5 mr-1" /> Salir
         </Button>
@@ -362,6 +363,7 @@ export default function TaskExecution({
                       router.push(`/tasks/${taskId}/video-details`)
                     }
                     className="text-red-500"
+                    disabled={isGeneratingARTP}
                   >
                     Ver Detalles
                     <svg
@@ -442,6 +444,7 @@ export default function TaskExecution({
                   variant="ghost"
                   onClick={() => router.push(`/tasks/${taskId}/photo-details`)}
                   className="text-red-500"
+                  disabled={isGeneratingARTP}
                 >
                   Ver Detalles
                   <svg
@@ -513,6 +516,7 @@ export default function TaskExecution({
               <Button
                 onClick={() => setShowStrategySelector(true)}
                 className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg h-12"
+                disabled={isGeneratingARTP}
               >
                 Agregar más estrategias
               </Button>
@@ -536,6 +540,7 @@ export default function TaskExecution({
               <Button
                 onClick={() => setShowStrategySelector(true)}
                 className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg mb-4 flex items-center justify-center h-12"
+                disabled={isGeneratingARTP}
               >
                 Seleccionar Estrategias
               </Button>
@@ -580,7 +585,9 @@ export default function TaskExecution({
               />
               <Button
                 onClick={handleSaveComments}
-                disabled={!comments.trim() || isSavingComments}
+                disabled={
+                  !comments.trim() || isSavingComments || isGeneratingARTP
+                }
                 className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg h-12"
               >
                 {isSavingComments ? "Guardando..." : "Guardar comentarios"}
@@ -594,6 +601,7 @@ export default function TaskExecution({
               <Button
                 onClick={() => setIsEditingComments(true)}
                 className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg h-12"
+                disabled={isGeneratingARTP}
               >
                 {comments ? "Editar comentarios" : "Agregar comentarios"}
               </Button>
