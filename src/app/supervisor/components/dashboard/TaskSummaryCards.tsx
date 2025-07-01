@@ -29,16 +29,27 @@ const defaultStatusData: TaskStatusData[] = [
 
 export function TaskSummaryCards({ data }: TaskSummaryCardsProps) {
   // Combinar los datos proporcionados con los datos por defecto
-  const mergedData = defaultStatusData.map((defaultItem) => {
-    const matchingItem = data.find(
+  const mergedData = [
+    ...defaultStatusData.map((defaultItem) => {
+      const matchingItem = data.find(
+        (item) =>
+          JSON.stringify(item.status.sort()) ===
+          JSON.stringify(defaultItem.status.sort())
+      );
+      return matchingItem
+        ? { ...defaultItem, count: matchingItem.count }
+        : defaultItem;
+    }),
+    // Agrega cualquier estado extra (como 'Rechazadas') que no esté en defaultStatusData
+    ...data.filter(
       (item) =>
-        JSON.stringify(item.status.sort()) ===
-        JSON.stringify(defaultItem.status.sort())
-    );
-    return matchingItem
-      ? { ...defaultItem, count: matchingItem.count }
-      : defaultItem;
-  });
+        !defaultStatusData.some(
+          (def) =>
+            JSON.stringify(def.status.sort()) ===
+            JSON.stringify(item.status.sort())
+        )
+    ),
+  ];
 
   return (
     <div className="mb-6">

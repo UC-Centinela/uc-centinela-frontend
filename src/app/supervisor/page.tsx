@@ -1,6 +1,6 @@
 import { SupervisorDashboard } from "./components/SupervisorDashboard";
 import { getUsers, getUserProfile } from "@/services/users";
-import { getTaskByReviewer } from "@/services/task";
+import { getTasksByReviewer } from "@/services/task";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,7 @@ async function SupervisorPage() {
 
   const [users, tasks] = await Promise.all([
     getUsers(),
-    getTaskByReviewer(Number(userId)),
+    getTasksByReviewer(Number(userId)),
   ]);
 
   return (
