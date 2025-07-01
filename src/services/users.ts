@@ -188,3 +188,202 @@ export async function getUserById(userId: string): Promise<User | null> {
     return null;
   }
 }
+
+export async function updateUserRole(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData)
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation AssignRole($role: Role!, $userEmail: String!) {
+          assignRole(role: $role, userEmail: $userEmail) {
+            id
+          }
+        }
+      `,
+      variables: {
+        role: rawFormData.role,
+        userEmail: rawFormData.userEmail
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.assignRole && result.data.assignRole.id) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function updateUser(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData)
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation UpdateUser($updateUserInput: UpdateUserInput!) {
+          updateUser(updateUserInput: $updateUserInput) {
+            id
+            firstName
+            lastName
+            email
+            customerId
+            role
+            rut
+          }
+        }
+      `,
+      variables: {
+        updateUserInput: {
+          email: rawFormData.email,
+          firstName: rawFormData.firstName,
+          lastName: rawFormData.lastName,
+          customerId: Number(rawFormData.customerId),
+          rut: rawFormData.rut,
+        },
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.updateUser && result.data.updateUser.id) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function createUser(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData)
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation CreateUser($input: CreateUserInput!) {
+          createUser(input: $input) {
+            id
+            firstName
+            lastName
+            email
+            customerId
+            role
+            rut
+            idpId
+          }
+        }
+      `,
+      variables: {
+        input: {
+          firstName: rawFormData.firstName,
+          lastName: rawFormData.lastName,
+          email: rawFormData.email,
+          customerId: Number(rawFormData.customerId),
+          role: rawFormData.role,
+          rut: rawFormData.rut,
+        },
+      },
+    }),
+  });
+
+  const result = await response.json();
+  if (result.data && result.data.createUser && result.data.createUser.idpId) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function removeUserByEmail(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData)
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation RemoveUserByEmail($email: String!) {
+          removeUserByEmail(email: $email)
+        }
+      `,
+      variables: {
+        email: rawFormData.email
+      },
+    }),
+  });
+
+  const result = await response.json();
+  if (result.data && result.data.removeUserByEmail === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}

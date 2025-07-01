@@ -1,4 +1,4 @@
-import type { NextRequest } from "next/server";
+import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getUserProfile } from "./services/users";
 import { handleUserSession } from "./utils/functions";
@@ -30,12 +30,16 @@ export async function middleware(request: NextRequest) {
   const userRole = user?.data?.getUserByEmail?.role;
   
   // Prevent administrators from accessing /tasks routes
-  if (userRole === "roleAdmin" && currentPath.startsWith("/tasks")) {
+  if ((userRole === "roleAdmin" || userRole === "roleSuperAdmin") && currentPath.startsWith("/tasks")) {
     return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
   
   // Prevent operators from accessing /supervisor routes
-  if (userRole === "roleOperator" && currentPath.startsWith("/supervisor")) {
+  if ((userRole === "roleOperator" || userRole === "roleSuperAdmin") && currentPath.startsWith("/supervisor")) {
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
+  }
+
+  if ((userRole === "roleAdmin" || userRole === "roleOperator") && currentPath.startsWith("/admin")) {
     return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
 
@@ -46,10 +50,13 @@ export async function middleware(request: NextRequest) {
     if (userRole === "roleAdmin") {
       return NextResponse.redirect(new URL("/supervisor", request.url));
     }
+    if (userRole === "roleSuperAdmin") {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
   }
 
   if (currentPath === "/menu") {
-    if (userRole === "roleAdmin") {
+    if (userRole === "roleAdmin" || userRole === "roleSuperAdmin") {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
   }
