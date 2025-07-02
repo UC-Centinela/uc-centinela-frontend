@@ -12,7 +12,7 @@
 
 # testing
 /coverage
-
+app.yaml
 # next.js
 /.next/
 /out/
