@@ -1,0 +1,322 @@
+"use client"
+
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Avatar } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Calendar, Clock, FileText, X, MessageSquare, User } from "lucide-react"
+import { cn } from "@/lib/utils"
+import type { Task } from "@/types/task"
+import type { User as TaskUser } from "@/types/user"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+
+interface TaskDetailsDialogProps {
+  task: Task | null
+  taskResponsible: TaskUser | null
+  availableUsers: TaskUser[]
+  isOpen: boolean
+  onClose: () => void
+  onSaveChanges: (taskId: string, comment: string, newResponsibleId: number) => void
+}
+
+export function TaskDetailsDialog({
+  task,
+  taskResponsible,
+  availableUsers,
+  isOpen,
+  onClose,
+  onSaveChanges,
+}: TaskDetailsDialogProps) {
+  const [comment, setComment] = useState(task?.comments || "")
+  const [selectedResponsibleId, setSelectedResponsibleId] = useState<number | null>(null)
+  const [selectedResponsibleName, setSelectedResponsibleName] = useState<string | null>(null)
+  const [isReassigning, setIsReassigning] = useState(false)
+
+  useEffect(() => {
+    setComment(task?.comments || "")
+    setSelectedResponsibleId(null)
+  }, [task])
+
+  const router = useRouter()
+  if (!task) return null
+
+  const handleReassign = (userId: string) => {
+    if (userId) {
+      const selectedUser = availableUsers.find((user) => user.id.toString() === userId)
+
+      // Verificar que el usuario seleccionado sea un operador
+      if (selectedUser && selectedUser.role === "roleOperator") {
+        setSelectedResponsibleName(selectedUser.firstName + " " + selectedUser.lastName)
+        setSelectedResponsibleId(Number(userId))
+        setIsReassigning(false)
+      }
+    }
+  }
+
+  const renderStatusBadge = (state: Task["state"]) => {
+    const statusConfig = {
+      PENDING: {
+        label: "Asignada",
+        className: "bg-amber-500 hover:bg-amber-600 text-white",
+      },
+      IN_PROGRESS: {
+        label: "En progreso",
+        className: "bg-blue-500 hover:bg-blue-600 text-white",
+      },
+      COMPLETED: {
+        label: "En revisión",
+        className: "bg-violet-500 hover:bg-violet-600 text-white",
+      },
+      REVIEWED: {
+        label: "Aprobada",
+        className: "bg-emerald-500 hover:bg-emerald-600 text-white",
+      },
+      default: {
+        label: state,
+        className: "bg-gray-500 hover:bg-gray-600 text-white",
+      },
+    }
+
+    const config = statusConfig[state as keyof typeof statusConfig] || statusConfig.default
+
+    return <Badge className={cn("font-medium", config.className)}>{config.label}</Badge>
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
+  }
+
+  const isResponsibleNew = selectedResponsibleId && selectedResponsibleId.toString() !== taskResponsible?.id.toString()
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto p-0">
+        <div className="p-6 space-y-6">
+          {/* Header */}
+          <div className="flex items-start justify-between pb-4 border-b">
+            <DialogHeader className="flex-1 pr-8">
+              <DialogTitle className="text-2xl font-bold text-gray-900">{task.title}</DialogTitle>
+              <DialogDescription className="text-base leading-relaxed mt-3 text-gray-600">
+                {task.instruction}
+              </DialogDescription>
+            </DialogHeader>
+            <button onClick={onClose} className="rounded-full p-2 hover:bg-gray-100 transition-colors flex-shrink-0">
+              <X className="h-5 w-5 text-gray-500" />
+              <span className="sr-only">Cerrar</span>
+            </button>
+          </div>
+
+          {/* Action Button */}
+          <div className="flex justify-end gap-4">
+            <Button
+              size="lg"
+              onClick={() => {
+                const responsibleId = selectedResponsibleId || taskResponsible?.id || 0
+                onSaveChanges(task.id, comment.trim(), responsibleId)
+                setSelectedResponsibleId(null)
+              }}
+              disabled={comment.trim() === task.comments && !isResponsibleNew && !selectedResponsibleId}
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 transition-all duration-200"
+            >
+              Guardar Cambios
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex items-center gap-3 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all duration-200 px-6 py-3"
+              onClick={() => router.push(`/supervisor/${task.id}/register`)}
+            >
+              <FileText size={18} className="text-blue-600" />
+              Ver ARTP
+            </Button>
+          </div>
+
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            {/* Left Column - Task Info */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Basic Info Card */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                <h3 className="font-semibold text-lg text-gray-900 mb-4 flex items-center gap-2">
+                  <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                  Información de la Tarea
+                </h3>
+
+                <div className="space-y-5">
+                  <div className="flex items-start space-x-4">
+                    <div className="p-2 bg-blue-50 rounded-lg flex-shrink-0">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-500 mb-1">Fecha Creación</p>
+                      <p className="text-base font-semibold text-gray-900">{formatDate(task.assignationDate)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4">
+                    <div className="p-2 bg-amber-50 rounded-lg flex-shrink-0">
+                      <Clock className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-500 mb-1">Fecha Requerida</p>
+                      <p className="text-base font-semibold text-gray-900">{formatDate(task.requiredSendDate)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4">
+                    <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
+                      <div className="h-5 w-5 flex items-center justify-center">
+                        <div className="h-3 w-3 rounded-full bg-gray-400" />
+                      </div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Estado</p>
+                      {renderStatusBadge(task.state)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Responsible Person Card */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                <h3 className="font-semibold text-lg text-gray-900 mb-4 flex items-center gap-2">
+                  <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                  Responsable
+                </h3>
+
+                <div className="space-y-4">
+                  {taskResponsible && (
+                    <div className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50/50">
+                      <Avatar className="h-12 w-12 border-2 border-white shadow-sm flex-shrink-0">
+                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold text-sm">
+                          {taskResponsible.firstName[0]}
+                          {taskResponsible.lastName[0]}
+                        </div>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-semibold text-gray-900 truncate">
+                          {taskResponsible.firstName} {taskResponsible.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500">Responsable actual</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedResponsibleId && isResponsibleNew && (
+                    <div className="flex items-center gap-4 p-4 border border-green-300 rounded-lg bg-green-50/50">
+                      <Avatar className="h-12 w-12 border-2 border-white shadow-sm flex-shrink-0">
+                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-green-500 to-green-600 text-white font-semibold text-sm">
+                          {availableUsers.find((user) => user.id === selectedResponsibleId)?.firstName[0]}
+                          {availableUsers.find((user) => user.id === selectedResponsibleId)?.lastName[0]}
+                        </div>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-semibold text-gray-900 truncate">
+                          {availableUsers.find((user) => user.id === selectedResponsibleId)?.firstName}{" "}
+                          {availableUsers.find((user) => user.id === selectedResponsibleId)?.lastName}
+                        </p>
+                        <p className="text-sm text-green-600 font-medium">
+                          Nuevo Responsable: {selectedResponsibleName}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reassign Section */}
+                  <div className="space-y-3">
+                    {!isReassigning ? (
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => setIsReassigning(true)}
+                        className="w-full flex items-center gap-3 py-3 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-200"
+                      >
+                        <User className="h-4 w-4" />
+                        Reasignar Responsable
+                      </Button>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 border border-blue-200 rounded-lg bg-blue-50/50">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-blue-600" />
+                            <p className="text-sm font-medium text-blue-900">Seleccionar nuevo responsable</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIsReassigning(false)}
+                            className="hover:bg-blue-100"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        <div className="relative">
+                          <Select onValueChange={handleReassign}>
+                            <SelectTrigger className="w-full h-12 text-left">
+                              <SelectValue placeholder="Seleccionar responsable" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[250px] overflow-y-auto z-[9999] w-full mr-4">
+                              {availableUsers
+                                .filter((user) => user.role === "roleOperator")
+                                .map((user) => (
+                                  <SelectItem key={user.id} value={user.id.toString()} className="py-3">
+                                    <div className="flex items-center gap-3">
+                                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center text-xs font-semibold">
+                                        {user.firstName[0]}
+                                        {user.lastName[0]}
+                                      </div>
+                                      <span className="font-medium">
+                                        {user.firstName} {user.lastName}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Comments */}
+            <div className="lg:col-span-3">
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm h-full">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-purple-50 rounded-lg">
+                    <MessageSquare className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold text-lg text-gray-900">Comentarios</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Escribe un comentario sobre esta tarea..."
+                    className="w-full h-[350px] max-h-[350px] p-4 text-base border border-gray-300 bg-white rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 overflow-y-auto"
+                    onKeyDown={(e) => {
+                      // Solo permitir Enter para nuevas líneas, no para guardar
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        // No hacer nada, permitir el comportamiento normal de nueva línea
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}

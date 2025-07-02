@@ -2,6 +2,7 @@
 
 import { config } from "@/middleware";
 import { cookies } from "next/headers";
+import type { User } from "@/types/user";
 
 export const getTokenAndEmail = async () => {
   try {
@@ -97,6 +98,93 @@ export async function getUserProfile(): Promise<GetUserProfileResponse | null> {
     return result;
   } catch (error) {
     console.error("Error getting user profile:", error);
+    return null;
+  }
+}
+
+// Función para obtener todos los usuarios de un cliente
+export async function getUsers(): Promise<User[]> {
+  try {
+    const data = await getTokenAndEmail();
+
+    if (!data?.accessToken) {
+      return [];
+    }
+
+    const { accessToken } = data;
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        query: `
+          query AllUsers {
+            allUsers {
+              id
+              firstName
+              lastName
+              email
+              customerId
+              role
+              rut
+            }
+          }
+        `,
+      }),
+    });
+
+    const result = await response.json();
+    return result.data?.allUsers || [];
+  } catch (error) {
+    console.error("Error getting users:", error);
+    return [];
+  }
+}
+
+// Función para obtener un usuario por ID
+export async function getUserById(userId: string): Promise<User | null> {
+  try {
+    const data = await getTokenAndEmail();
+
+    if (!data?.accessToken) {
+      return null;
+    }
+
+    const { accessToken } = data;
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        query: `
+          query GetUserById($userId: String!) {
+            user(id: $userId) {
+              id
+              firstName
+              lastName
+              email
+              customerId
+              role
+              rut
+            }
+          }
+        `,
+        variables: {
+          userId,
+        },
+      }),
+    });
+
+    const result = await response.json();
+    return result.data?.user || null;
+  } catch (error) {
+    console.error("Error getting user by ID:", error);
     return null;
   }
 }
