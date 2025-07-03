@@ -1,6 +1,7 @@
 import TaskExecutionClientWrapper from "@/app/tasks/components/TaskExecutionClientWrapper";
 import { notFound } from "next/navigation";
 import { validateTaskAccess, getTasksByUser } from "@/services/task";
+import { getMultimediaDataByTaskId } from "@/services/multimedia";
 import { cookies } from "next/headers";
 import { getUserProfile } from "@/services/users";
 import { Task } from "@/types/task";
@@ -38,40 +39,6 @@ async function getTaskData(taskId: string) {
   }
 }
 
-async function getMultimediaData(taskId: string) {
-  try {
-    const response = await fetch(
-      process.env.NEXT_PUBLIC_GRAPHQL_API_URL || "/api/graphql",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: `
-            query FindMultimediaByTaskId($taskId: Int!) {
-              findMultimediaByTaskId(taskId: $taskId) {
-                id
-                taskId
-                photoUrl
-                videoUrl
-                audioTranscription
-              }
-            }
-          `,
-          variables: { taskId: Number(taskId) },
-        }),
-      }
-    );
-
-    const data = await response.json();
-    return data.data.findMultimediaByTaskId;
-  } catch (error) {
-    console.error("Error fetching multimedia data:", error);
-    return [];
-  }
-}
-
 export default async function RiskAnalysisPage({
   params,
 }: {
@@ -89,7 +56,7 @@ export default async function RiskAnalysisPage({
 
   const [taskData, multimediaData] = await Promise.all([
     getTaskData(task_id),
-    getMultimediaData(task_id),
+    getMultimediaDataByTaskId(task_id),
   ]);
 
   console.log("Task data loaded:", taskData);

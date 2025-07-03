@@ -1,5 +1,7 @@
+"use server";
+
 import { getTokenAndEmail } from "./users";
-import { Task } from "@/types/task";
+import { Task, ArtpData } from "@/types/task";
 import { gql } from "@apollo/client";
 import client from "@/lib/apollo-client";
 
@@ -96,7 +98,7 @@ export async function getTasksByUser(userId: number): Promise<Task[]> {
   }
 }
 
-export async function getTaskByReviewer(revisorId: number): Promise<Task[]> {
+export async function getTasksByReviewer(revisorId: number): Promise<Task[]> {
   try {
     const data = await getTokenAndEmail();
 
@@ -233,35 +235,42 @@ export async function updateTask(formData: FormData) {
   if (!data?.accessToken) {
     return null;
   }
-
+  
   const { accessToken } = data;
-
+  
   if (!rawFormData.id) {
     return { success: false, error: "Task ID is required" };
   }
-
   const fieldTransforms: FieldTransforms = {
     id: (value: FormDataValue) => Number(value),
     creatorUserId: (value: FormDataValue) => Number(value),
     revisorUserId: (value: FormDataValue) => Number(value),
-    state: (value: FormDataValue) => value instanceof File ? value.name : String(value),
-    title: (value: FormDataValue) => value instanceof File ? value.name : String(value),
-    instruction: (value: FormDataValue) => value instanceof File ? value.name : String(value),
-    assignationDate: (value: FormDataValue) => value instanceof File ? value.name : String(value),
-    requiredSendDate: (value: FormDataValue) => value instanceof File ? value.name : String(value),
-    comments: (value: FormDataValue) => value instanceof File ? value.name : String(value),
-  }
+    state: (value: FormDataValue) =>
+      value instanceof File ? value.name : String(value),
+    title: (value: FormDataValue) =>
+      value instanceof File ? value.name : String(value),
+    instruction: (value: FormDataValue) =>
+      value instanceof File ? value.name : String(value),
+    assignationDate: (value: FormDataValue) =>
+      value instanceof File ? value.name : String(value),
+    requiredSendDate: (value: FormDataValue) =>
+      value instanceof File ? value.name : String(value),
+    comments: (value: FormDataValue) =>
+      value instanceof File ? value.name : String(value),
+  };
 
-  const input = Object.entries(fieldTransforms).reduce((acc, [key, transform]) => {
-    const value = rawFormData[key];
-    if (key === 'id') {
-      (acc as Record<string, unknown>)[key] = transform(value);
-    } else if (value !== undefined && value !== null && value !== '') {
-      (acc as Record<string, unknown>)[key] = transform(value);
-    }
-    return acc;
-  }, {} as UpdateTaskInput)
-
+  const input = Object.entries(fieldTransforms).reduce(
+    (acc, [key, transform]) => {
+      const value = rawFormData[key];
+      if (key === "id") {
+        (acc as Record<string, unknown>)[key] = transform(value);
+      } else if (value !== undefined && value !== null && value !== "") {
+        (acc as Record<string, unknown>)[key] = transform(value);
+      }
+      return acc;
+    },
+    {} as UpdateTaskInput
+  );
   const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
     method: "POST",
     headers: {
@@ -294,7 +303,10 @@ export async function updateTask(formData: FormData) {
   if (result.data?.updateTask) {
     return { success: true, data: result.data.updateTask };
   } else {
-    return { success: false, error: result.errors?.[0]?.message || "Unknown error" };
+    return {
+      success: false,
+      error: result.errors?.[0]?.message || "Unknown error",
+    };
   }
 }
 
@@ -318,15 +330,14 @@ export async function validateTaskAccess(taskId: string): Promise<boolean> {
     if (!auth || !auth.email) {
       return false;
     }
-
     // Query the API to check if the user has access to this task
     const { data, errors } = await client.query({
       query: CHECK_TASK_ACCESS,
-      variables: { 
-        findTaskId: Number(taskId), 
-        userEmail: auth.email 
+      variables: {
+        findTaskId: Number(taskId),
+        userEmail: auth.email,
       },
-      fetchPolicy: 'network-only' // Don't use cache for this security check
+      fetchPolicy: "network-only", // Don't use cache for this security check
     });
 
     // If there are errors or no data, the user doesn't have access
@@ -338,5 +349,518 @@ export async function validateTaskAccess(taskId: string): Promise<boolean> {
   } catch (error) {
     console.error("Error validating task access:", error);
     return false;
+  }
+}
+
+export async function deleteTask(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteTask($deleteTaskId: Int!) {
+          deleteTask(id: $deleteTaskId)
+        }
+      `,
+      variables: {
+        deleteTaskId: Number(rawFormData.id),
+      },
+    }),
+  });
+  console.log("Delete Task:", rawFormData.id)
+  const result = await response.json();
+  console.log("Delete Task Result:", result)
+  if (result.data && result.data.deleteTask === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function generateArtp(formData: FormData):Promise<ArtpData | null> {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation GenerateArtp($input: GenerateArtpInput!) {
+          generateArtp(input: $input) {
+            criticActivities {
+              id
+              title
+              taskId
+            }
+            tools {
+              id
+              criticActivityId
+              title
+            }
+            undesiredEvents {
+              id
+              criticActivityId
+              title
+              description  
+            }
+            controls {
+              id
+              criticActivityId
+              title
+              description
+            }
+            verificationQuestions {
+              id
+              criticActivityId
+              title
+              description
+            }
+          }
+        }
+      `,
+      variables: {
+        input: {
+          taskId: Number(rawFormData.taskId)
+        },
+      },
+    }),
+  });
+  const result = await response.json();
+  console.log("ARTP Result:", result)
+  if (result.data && result.data.generateArtp) {
+    return result.data.generateArtp as ArtpData;
+  } else if (result.errors && result.errors.length > 0) {
+    return null;
+  } else {
+    return null;
+  }
+}
+
+export async function deleteArtp(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteArtp($taskId: Int!) {
+          deleteArtp(taskId: $taskId)
+        }
+      `,
+      variables: {
+        taskId: Number(rawFormData.taskId)
+      },
+    }),
+  });
+  const result = await response.json();
+  if (result.data && result.data.deleteArtp === true) {
+    return { success: true }
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  } 
+}
+
+export async function updateTool(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation UpdateTool($input: UpdateToolInput!) {
+          updateTool(input: $input) {
+            id
+            criticActivityId
+            title
+          }
+        }
+      `,
+      variables: {
+        input: {
+          id: Number.parseInt(rawFormData.id as string),
+          title: rawFormData.title
+        },
+      },
+    }),
+  });
+  const result = await response.json();
+  if (result.data && result.data.updateTool) {
+   return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function updateUndesiredEvent(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation UpdateUndesiredEvent($input: UpdateUndesiredEventInput!) {
+          updateUndesiredEvent(input: $input) {
+            id
+            criticActivityId
+            title
+            description
+          }
+        }
+      `,
+      variables: {
+        input: {
+          id: Number.parseInt(rawFormData.id as string),
+          title: rawFormData.title,
+          description: rawFormData.description,
+        },
+      },
+    }),
+  });
+  const result = await response.json();
+  if (result.data && result.data.updateUndesiredEvent) {
+   return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function updateControl(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation UpdateControl($input: UpdateControlInput!) {
+          updateControl(input: $input) {
+            id
+            criticActivityId
+            title
+            description
+          }
+        }
+      `,
+      variables: {
+        input: {
+          id: Number.parseInt(rawFormData.id as string),
+          title: rawFormData.title,
+          description: rawFormData.description,
+        },
+      },
+    }),
+  });
+  const result = await response.json();
+  if (result.data && result.data.updateControl) {
+   return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function updateVerificationQuestion(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return null;
+  }
+
+  const { accessToken } = data;
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation UpdateVerificationQuestion($input: UpdateVerificationQuestionInput!) {
+          updateVerificationQuestion(input: $input) {
+            id
+            criticActivityId
+            title
+            description
+          }
+        }
+      `,
+      variables: {
+        input: {
+          id: Number.parseInt(rawFormData.id as string),
+          title: rawFormData.title,
+          description: rawFormData.description,
+        },
+      },
+    }),
+  });
+  const result = await response.json();
+  if (result.data && result.data.updateVerificationQuestion) {
+   return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function deleteTool(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteTool($deleteToolId: Int!) {
+          deleteTool(id: $deleteToolId)
+        }
+      `,
+      variables: {
+        deleteToolId: Number(rawFormData.id),
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.deleteTool === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function deleteUndesiredEvent(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteUndesiredEvent($deleteUndesiredEventId: Int!) {
+          deleteUndesiredEvent(id: $deleteUndesiredEventId)
+        }
+      `,
+      variables: {
+        deleteUndesiredEventId: Number(rawFormData.id),
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.deleteUndesiredEvent === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function deleteControl(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteControl($deleteControlId: Int!) {
+          deleteControl(id: $deleteControlId)
+        }
+      `,
+      variables: {
+        deleteControlId: Number(rawFormData.id),
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.deleteControl === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function deleteVerificationQuestion(formData: FormData) {
+  const rawFormData = Object.fromEntries(formData);
+  const data = await getTokenAndEmail();
+
+  if (!data?.accessToken) {
+    return { success: false, error: "No access token" };
+  }
+
+  const { accessToken } = data;
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation DeleteVerificationQuestion($deleteVerificationQuestionId: Int!) {
+          deleteVerificationQuestion(id: $deleteVerificationQuestionId)
+        }
+      `,
+      variables: {
+        deleteVerificationQuestionId: Number(rawFormData.id),
+      },
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.data && result.data.deleteVerificationQuestion === true) {
+    return { success: true };
+  } else if (result.errors && result.errors.length > 0) {
+    return {
+      success: false,
+      error: result.errors[0].message || "Unknown error",
+    };
+  } else {
+    return { success: false, error: "Unknown error" };
   }
 }

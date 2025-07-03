@@ -12,27 +12,43 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 // import { FileText, FileSpreadsheet, Eye } from "lucide-react";
-import { Eye } from "lucide-react";
-import type { Task } from "@/types/task";
+import { Eye, Trash } from "lucide-react";
+import type { Task, TaskState } from "@/types/task";
 import type { User } from "@/types/user";
 import { TaskDetailsDialog } from "./TaskDetails";
+import { TaskDeleteDialog } from "./TaskDelete";
 
 interface TaskTableProps {
   tasks: Task[];
   users: User[];
   onViewDetails: (task: Task) => void;
-  onSaveChanges: (taskId: string, comment: string, newResponsibleId: number) => void
+  onSaveChanges: (
+    taskId: string,
+    data: {
+      creatorUserId: number;
+      revisorUserId: number;
+      comments: string;
+      title: string;
+      instruction: string;
+      state: TaskState;
+      assignationDate: string;
+      requiredSendDate: string;
+    }
+  ) => void;
+  onDeleteTask: (taskId: string) => void;
 }
 
 export function TaskTable({
   tasks: initialTasks,
   users,
-  onSaveChanges
+  onSaveChanges,
+  onDeleteTask,
 }: TaskTableProps) {
   // Estados para controlar el diálogo
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const renderStatusBadge = (state: Task["state"]) => {
     switch (state) {
@@ -51,6 +67,10 @@ export function TaskTable({
       case "REVIEWED":
         return (
           <Badge className="bg-[#10b981] hover:bg-[#059669]">Aprobada</Badge>
+        );
+      case "IS_REJECTED":
+        return (
+          <Badge className="bg-[#ef4444] hover:bg-[#b91c1c]">Rechazada</Badge>
         );
       default:
         return (
@@ -78,27 +98,58 @@ export function TaskTable({
 
   const onViewDetails = (task: Task) => {
     setSelectedTask(task);
-    setIsDialogOpen(true);
+    setIsDetailsDialogOpen(true);
   };
 
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
+  const onDeleteView = (task: Task) => {
+    setSelectedTask(task);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleCloseDetailsDialog = () => {
+    setIsDetailsDialogOpen(false);
+    setSelectedTask(null);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
     setSelectedTask(null);
   };
 
   // Función para obtener el responsable de la tarea
   const getTaskResponsible = (task: Task) => {
-    return users.find(user => String(user.id) === String(task.creatorUserId)) || null;
+    return (
+      users.find((user) => String(user.id) === String(task.creatorUserId)) ||
+      null
+    );
   };
 
-  const handleSaveChanges = (taskId: string, comment: string, newResponsibleId: number) => {
+  const handleSaveChanges = (
+    taskId: string,
+    data: {
+      creatorUserId: number;
+      revisorUserId: number;
+      comments: string;
+      title: string;
+      instruction: string;
+      state: TaskState;
+      assignationDate: string;
+      requiredSendDate: string;
+    }
+  ) => {
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
         task.id === taskId
           ? {
               ...task,
-              comments: comment, // Actualiza el comentario
-              creatorUserId: newResponsibleId, // Actualiza el responsable
+              comments: data.comments, // Actualiza el comentario
+              creatorUserId: data.creatorUserId, // Actualiza el responsable
+              revisorUserId: data.revisorUserId, // Actualiza el supervisor
+              title: data.title, // Actualiza el título
+              instruction: data.instruction, // Actualiza la instrucción
+              state: data.state, // Actualiza el estado
+              assignationDate: data.assignationDate, // Actualiza la fecha de asignación
+              requiredSendDate: data.requiredSendDate, // Actualiza la fecha requerida
             }
           : task
       )
@@ -107,52 +158,35 @@ export function TaskTable({
     if (selectedTask && selectedTask.id === taskId) {
       setSelectedTask({
         ...selectedTask,
-        comments: comment, // Actualiza el comentario
-        creatorUserId: newResponsibleId, // Actualiza el responsable
+        comments: data.comments, // Actualiza el comentario
+        creatorUserId: data.creatorUserId, // Actualiza el responsable
+        revisorUserId: data.revisorUserId, // Actualiza el supervisor
+        title: data.title, // Actualiza el título
+        instruction: data.instruction, // Actualiza la instrucción
+        state: data.state, // Actualiza el estado
+        assignationDate: data.assignationDate, // Actualiza la fecha de asignación
+        requiredSendDate: data.requiredSendDate, // Actualiza la fecha requerida
       });
     }
     // Llamar callback externo si quieres persistir en backend
-    onSaveChanges(taskId, comment, newResponsibleId);
-    handleCloseDialog();
-  }
+    onSaveChanges(taskId, {
+      creatorUserId: data.creatorUserId,
+      revisorUserId: data.revisorUserId,
+      comments: data.comments,
+      title: data.title,
+      instruction: data.instruction,
+      state: data.state,
+      assignationDate: data.assignationDate,
+      requiredSendDate: data.requiredSendDate,
+    });
+    handleCloseDetailsDialog();
+  };
 
-  // const handleReassignResponsible = (taskId: string, newResponsibleId: number) => {
-  //   setTasks((prevTasks) =>
-  //     prevTasks.map((task) =>
-  //       task.id === taskId
-  //         ? { ...task, creatorUserId: newResponsibleId } // Actualiza el responsable
-  //         : task
-  //     )
-  //   );
-
-  //   // Actualizar selectedTask si está abierto
-  //   if (selectedTask && selectedTask.id === taskId) {
-  //     setSelectedTask({ ...selectedTask, creatorUserId: newResponsibleId });
-  //   }
-
-  //   // Llamar callback externo si quieres persistir en backend
-  //   const id = Number(taskId);
-  //   onReassignResponsible(id, newResponsibleId);
-  // };
-
-  // const handleAddComment = (taskId: string, comment: string) => {
-  //   setTasks((prevTasks) =>
-  //     prevTasks.map((task) =>
-  //       task.id === taskId
-  //         ? { ...task, comments: comment } // O concatena si es array
-  //         : task
-  //     )
-  //   );
-
-  //   // Actualizar selectedTask si está abierto
-  //   if (selectedTask && selectedTask.id === taskId) {
-  //     setSelectedTask({ ...selectedTask, comments: comment });
-  //   }
-
-  //   // Llamar callback externo si quieres persistir en backend
-  //   const id = Number(taskId);
-  //   onAddComment(id, comment);
-  // };
+  const handleConfirmDelete = (taskId: string) => {
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+    onDeleteTask(taskId);
+    handleCloseDeleteDialog();
+  };
 
   return (
     <>
@@ -179,14 +213,21 @@ export function TaskTable({
                 <TableCell>{getUserName(task.creatorUserId)}</TableCell>
                 <TableCell>{getUserName(task.revisorUserId)}</TableCell>
                 <TableCell>
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end items-center gap-2">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => onViewDetails(task)}
                       className="h-8 w-8 text-muted-foreground hover:text-foreground"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDeleteView(task)}
+                    >
+                      <Trash className="h-5 w-5" />
                     </Button>
                   </div>
                 </TableCell>
@@ -196,14 +237,19 @@ export function TaskTable({
         </Table>
       </div>
 
-      {/* Diálogo de detalles de tarea */}
       <TaskDetailsDialog
         task={selectedTask}
         taskResponsible={selectedTask ? getTaskResponsible(selectedTask) : null}
         availableUsers={users}
-        isOpen={isDialogOpen}
-        onClose={handleCloseDialog}
+        isOpen={isDetailsDialogOpen}
+        onClose={handleCloseDetailsDialog}
         onSaveChanges={handleSaveChanges}
+      />
+      <TaskDeleteDialog
+        task={selectedTask}
+        isOpen={isDeleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        onConfirmDelete={handleConfirmDelete}
       />
     </>
   );

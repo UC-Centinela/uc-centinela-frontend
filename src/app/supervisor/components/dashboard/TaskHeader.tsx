@@ -7,7 +7,6 @@ import { LogOut, Plus } from "lucide-react";
 import { handleLogout } from "@/services/users";
 import { Button } from "@/components/ui/button";
 
-
 interface HeaderProps {
   children: React.ReactNode;
   onTabChange?: (value: string) => void;
@@ -67,6 +66,9 @@ export function Header({ children, onTabChange }: HeaderProps) {
               <TabsTrigger value="approved" className={tabStyles}>
                 Aprobadas
               </TabsTrigger>
+              <TabsTrigger value="rejected" className={tabStyles}>
+                Rechazadas
+              </TabsTrigger>
             </TabsList>
             <Button
               className="bg-[#176170] hover:bg-[#134b57] text-white flex items-center gap-2 mb-2"
@@ -87,6 +89,9 @@ export function Header({ children, onTabChange }: HeaderProps) {
             {children}
           </TabsContent>
           <TabsContent value="approved" className="mt-4">
+            {children}
+          </TabsContent>
+          <TabsContent value="rejected" className="mt-4">
             {children}
           </TabsContent>
         </Tabs>
