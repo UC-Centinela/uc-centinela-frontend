@@ -1,7 +1,7 @@
 import { getUsers, updateUserRole, updateUser, createUser, getUserProfile, removeUserByEmail } from "@/services/users";
 import { notFound } from "next/navigation";
 import UsersTable from "./components/UsersTable";
-import { getTaskByReviewer, getTasksByUser } from "@/services/task";
+import { getTasksByReviewer, getTasksByUser } from "@/services/task";
 
 async function getUsersData() {
     try {
@@ -33,7 +33,7 @@ async function changeUserRole(formData: FormData) {
             const operatorTasks = await getTasksByUser(Number(currentUser.id))
             hasTasks = operatorTasks.length > 0
         } else if (currentUser.role === "roleAdmin") {
-            const supervisorTasks = await getTaskByReviewer(Number(currentUser.id))
+            const supervisorTasks = await getTasksByReviewer(Number(currentUser.id))
             hasTasks = supervisorTasks.length > 0
         }
         
@@ -115,7 +115,7 @@ async function deleteUser(formData: FormData) {
             const operatorTasks = await getTasksByUser(Number(currentUser.id))
             hasTasks = operatorTasks.length > 0
         } else if (currentUser.role === "roleAdmin") {
-            const supervisorTasks = await getTaskByReviewer(Number(currentUser.id))
+            const supervisorTasks = await getTasksByReviewer(Number(currentUser.id))
             hasTasks = supervisorTasks.length > 0
         }
         
