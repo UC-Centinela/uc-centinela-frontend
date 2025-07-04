@@ -74,6 +74,10 @@ export default async function RegisterPage({
     getControlStrategies(task_id)
   ]);
 
+  if (taskData?.state === 'PENDING') {
+    notFound();
+  }
+
   return (
     <TaskRegister
       taskData={taskData}
