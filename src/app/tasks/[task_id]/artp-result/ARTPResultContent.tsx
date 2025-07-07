@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GenerateArtpResponse } from "@/services/artp";
@@ -22,7 +21,6 @@ export default function ARTPResultContent({
   taskTitle,
   artpData,
 }: ARTPResultContentProps) {
-  const router = useRouter();
   const state = useArtpState(artpData);
   const actions = useArtpActions();
 

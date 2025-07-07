@@ -1,14 +1,7 @@
 import TaskExecutionClientWrapper from "@/app/tasks/components/TaskExecutionClientWrapper";
 import { notFound, redirect } from "next/navigation";
-import {
-  validateTaskAccess,
-  getTasksByUser,
-  getTaskData,
-} from "@/services/task";
+import { validateTaskAccess, getTaskData } from "@/services/task";
 import { getMultimediaDataByTaskId } from "@/services/multimedia";
-import { cookies } from "next/headers";
-import { getUserProfile } from "@/services/users";
-import { Task } from "@/types/task";
 
 export default async function RiskAnalysisPage({
   params,
