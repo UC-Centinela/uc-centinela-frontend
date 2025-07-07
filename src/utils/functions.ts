@@ -6,16 +6,17 @@ export async function handleUserSession(request: NextRequest) {
   const response = await auth0.middleware(request);
   const session = await auth0.getSession(request);
 
-  if (session?.user?.email) {
+  if (session?.user?.name) {
     try {
       const accessToken = session.tokenSet?.accessToken;
       if (accessToken) {
         const newResponse = NextResponse.next();
-        const emailToStore = session.user.email;
+        const emailToStore = session.user.name;
 
         const cookieStore = await cookies();
         cookieStore.set("userEmail", emailToStore, {
           path: "/",
+          ...(process.env.NODE_ENV === "production" ? { domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN } : {}),
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",
@@ -23,6 +24,7 @@ export async function handleUserSession(request: NextRequest) {
 
         cookieStore.set("accessToken", accessToken, {
           path: "/",
+          ...(process.env.NODE_ENV === "production" ? { domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN } : {}),
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",

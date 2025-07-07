@@ -22,14 +22,26 @@ export async function handleLogout() {
     cookieStore.set("accessToken", "", {
       ...config,
       maxAge: -1,
+      ...(process.env.NODE_ENV === "production" ? { domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN } : {}),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
     });
     cookieStore.set("userEmail", "", {
       ...config,
       maxAge: -1,
+      ...(process.env.NODE_ENV === "production" ? { domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN } : {}),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
     });
     cookieStore.set("userRole", "", {
       ...config,
       maxAge: -1,
+      ...(process.env.NODE_ENV === "production" ? { domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN } : {}),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
     });
 
     return true;
