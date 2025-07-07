@@ -1,43 +1,14 @@
 import TaskExecutionClientWrapper from "@/app/tasks/components/TaskExecutionClientWrapper";
-import { notFound } from "next/navigation";
-import { validateTaskAccess, getTasksByUser } from "@/services/task";
+import { notFound, redirect } from "next/navigation";
+import {
+  validateTaskAccess,
+  getTasksByUser,
+  getTaskData,
+} from "@/services/task";
 import { getMultimediaDataByTaskId } from "@/services/multimedia";
 import { cookies } from "next/headers";
 import { getUserProfile } from "@/services/users";
 import { Task } from "@/types/task";
-
-async function getTaskData(taskId: string) {
-  try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get("accessToken")?.value;
-
-    if (!accessToken) {
-      return null;
-    }
-
-    // Obtener perfil del usuario
-    const user = await getUserProfile();
-    if (!user?.data?.getUserByEmail?.id) {
-      return null;
-    }
-    
-    const userId = parseInt(user.data.getUserByEmail.id);
-    console.log("Getting tasks for user:", userId);
-    
-    const tasks = await getTasksByUser(userId)
-    console.log("All tasks received:", tasks);
-    console.log("Task ID:", taskId);
-
-    const task = tasks.find((t: Task) => t.id.toString() === taskId);
-    console.log("Found task:", task);
-    console.log("Task comments:", task?.comments);
-
-    return task || null;
-  } catch (error) {
-    console.error("Error fetching task data:", error);
-    return null;
-  }
-}
 
 export default async function RiskAnalysisPage({
   params,
@@ -61,6 +32,14 @@ export default async function RiskAnalysisPage({
 
   console.log("Task data loaded:", taskData);
   console.log("Task comments to be passed:", taskData?.comments);
+
+  if (taskData?.state === "COMPLETED") {
+    redirect(`/tasks/${task_id}/send`);
+  } else if (taskData?.state === "REVIEWED") {
+    redirect(`/tasks/${task_id}/approved`);
+  } else if (taskData?.state === "IS_REJECTED") {
+    redirect(`/tasks`);
+  }
 
   return (
     <TaskExecutionClientWrapper
