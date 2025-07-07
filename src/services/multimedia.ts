@@ -1,15 +1,25 @@
 "use server"
 
 import { MultimediaItem } from "@/types/multimedia"
+import { getTokenAndEmail } from "./users";
 
 export async function getMultimediaDataByTaskId(taskId: string): Promise<MultimediaItem[]> {
   try {
+    const tokenEmailData = await getTokenAndEmail();
+
+    if (!tokenEmailData?.accessToken) {
+      return [];
+    }
+
+    const { accessToken } = tokenEmailData;
+
     const response = await fetch(
       process.env.NEXT_PUBLIC_GRAPHQL_API_URL || "/api/graphql",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           query: `
@@ -29,7 +39,8 @@ export async function getMultimediaDataByTaskId(taskId: string): Promise<Multime
     );
 
     const data = await response.json();
-    return data.data.findMultimediaByTaskId;
+    
+    return data.data.findMultimediaByTaskId || [];
   } catch (error) {
     console.error("Error fetching multimedia data:", error);
     return [];
