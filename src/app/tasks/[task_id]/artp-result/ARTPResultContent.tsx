@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { GenerateArtpResponse } from "@/services/artp";
 import { useArtpState } from "./hooks/useArtpState";
 import { useArtpActions } from "./hooks/useArtpActions";
