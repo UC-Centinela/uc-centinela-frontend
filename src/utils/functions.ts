@@ -16,7 +16,7 @@ export async function handleUserSession(request: NextRequest) {
         const cookieStore = await cookies();
         cookieStore.set("userEmail", emailToStore, {
           path: "/",
-          domain: "uc-centinela-frontend.vercel.app",
+          ...(process.env.NODE_ENV === "production" ? { domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN } : {}),
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",
@@ -24,7 +24,7 @@ export async function handleUserSession(request: NextRequest) {
 
         cookieStore.set("accessToken", accessToken, {
           path: "/",
-          domain: "uc-centinela-frontend.vercel.app",
+          ...(process.env.NODE_ENV === "production" ? { domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN } : {}),
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",

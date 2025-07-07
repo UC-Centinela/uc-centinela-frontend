@@ -22,7 +22,7 @@ export async function handleLogout() {
     cookieStore.set("accessToken", "", {
       ...config,
       maxAge: -1,
-      domain: "uc-centinela-frontend.vercel.app",
+      ...(process.env.NODE_ENV === "production" ? { domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN } : {}),
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -30,7 +30,7 @@ export async function handleLogout() {
     cookieStore.set("userEmail", "", {
       ...config,
       maxAge: -1,
-      domain: "uc-centinela-frontend.vercel.app",
+      ...(process.env.NODE_ENV === "production" ? { domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN } : {}),
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -38,7 +38,7 @@ export async function handleLogout() {
     cookieStore.set("userRole", "", {
       ...config,
       maxAge: -1,
-      domain: "uc-centinela-frontend.vercel.app",
+      ...(process.env.NODE_ENV === "production" ? { domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN } : {}),
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
