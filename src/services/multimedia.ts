@@ -29,7 +29,8 @@ export async function getMultimediaDataByTaskId(taskId: string): Promise<Multime
     );
 
     const data = await response.json();
-    return data.data.findMultimediaByTaskId;
+    
+    return data.data.findMultimediaByTaskId || [];
   } catch (error) {
     console.error("Error fetching multimedia data:", error);
     return [];
