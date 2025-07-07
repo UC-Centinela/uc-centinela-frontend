@@ -14,8 +14,6 @@ export default async function SendPage({ params }: any) {
   const taskData = await getTaskData(task_id);
   if (taskData?.state === "REVIEWED") {
     redirect(`/tasks/${task_id}/approved`);
-  } else if (taskData?.state === "PENDING") {
-    redirect(`/tasks/${task_id}`);
   } else if (taskData?.state === "IS_REJECTED") {
     redirect(`/tasks`);
   }
