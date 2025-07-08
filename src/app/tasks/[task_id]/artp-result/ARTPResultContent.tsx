@@ -1,9 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { GenerateArtpResponse } from "@/services/artp";
 import { useArtpState } from "./hooks/useArtpState";
 import { useArtpActions } from "./hooks/useArtpActions";
@@ -22,7 +20,6 @@ export default function ARTPResultContent({
   taskTitle,
   artpData,
 }: ARTPResultContentProps) {
-  const router = useRouter();
   const state = useArtpState(artpData);
   const actions = useArtpActions();
 
@@ -185,14 +182,6 @@ export default function ARTPResultContent({
   return (
     <div className="min-h-screen bg-gray-100 pb-6">
       <div className="bg-white p-4 shadow-sm">
-        <Button
-          variant="ghost"
-          onClick={() => router.push(`/tasks/${taskId}/risk_analysis`)}
-          className="text-red-500 mb-2"
-        >
-          <ChevronLeft className="h-5 w-5 mr-1" /> Volver
-        </Button>
-
         <h1 className="text-2xl font-bold text-teal-800 mb-6 mt-4">
           Resultado ARTP
         </h1>
