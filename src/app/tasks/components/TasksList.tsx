@@ -19,6 +19,8 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
         return ["COMPLETED"];
       case "approved":
         return ["REVIEWED"];
+      case "rejected":
+        return ["IS_REJECTED"];
       default:
         return [];
     }
@@ -31,6 +33,7 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
   const getStatusName = () => {
     if (activeTab === "assigned") return "asignadas";
     if (activeTab === "review") return "en revisión";
+    if (activeTab === "rejected") return "rechazadas";
     return "aprobadas";
   };
 
@@ -114,6 +117,17 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
           >
             Aprobadas
           </Button>
+          <Button
+            variant="ghost"
+            className={`py-3 px-4 ${
+              activeTab === "rejected"
+                ? "border-b-2 border-teal-700 font-medium text-black"
+                : "text-gray-400"
+            }`}
+            onClick={() => setActiveTab("rejected")}
+          >
+            Rechazadas
+          </Button>
         </div>
       </div>
       <div className="p-4 space-y-4">
@@ -138,6 +152,7 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
                   variant="ghost"
                   onClick={() => handleTaskClick(task)}
                   className="text-sm text-red-500"
+                  disabled={task.state === "IS_REJECTED"}
                 >
                   Ver Detalles <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
