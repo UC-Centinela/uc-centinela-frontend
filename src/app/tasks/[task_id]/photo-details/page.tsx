@@ -1,8 +1,8 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import client from "@/lib/apollo-client";
 import { gql } from "@apollo/client";
 import PhotoDetailsClient from "./PhotoDetailsClient";
-import { getTaskData, validateTaskAccess } from "@/services/task";
+import { validateTaskAccess } from "@/services/task";
 
 const FIND_MULTIMEDIA_BY_TASK_ID = gql`
   query FindMultimediaByTaskId($taskId: Int!) {
@@ -29,18 +29,14 @@ interface PhotoData {
 
 async function getPhotoData(taskId: string): Promise<PhotoData[]> {
   try {
-    const { data } = await client.query<{
-      findMultimediaByTaskId: MultimediaItem[];
-    }>({
+    const { data } = await client.query<{ findMultimediaByTaskId: MultimediaItem[] }>({
       query: FIND_MULTIMEDIA_BY_TASK_ID,
       variables: { taskId: Number(taskId) },
       fetchPolicy: "no-cache",
     });
 
     // Filtramos solo los que tengan photoUrl != null
-    const soloConFoto = data.findMultimediaByTaskId.filter(
-      (item) => item.photoUrl !== null
-    );
+    const soloConFoto = data.findMultimediaByTaskId.filter((item) => item.photoUrl !== null);
 
     // Mapeamos a PhotoData (le decimos a TS que photoUrl nunca será null tras el filtro)
     return soloConFoto.map((item) => ({
@@ -61,7 +57,7 @@ interface PageProps {
 export default async function PhotoDetailsPage({ params }: PageProps) {
   // <-- Aquí esperamos que se resuelva la promesa “params”
   const { task_id } = await params;
-  const taskData = await getTaskData(task_id);
+
   // Validar acceso
   const hasAccess = await validateTaskAccess(task_id);
   if (!hasAccess) {
@@ -73,14 +69,6 @@ export default async function PhotoDetailsPage({ params }: PageProps) {
   // Si no hay fotos, mostrar 404
   if (!photoData || photoData.length === 0) {
     notFound();
-  }
-
-  if (taskData?.state === "COMPLETED") {
-    redirect(`/tasks/${task_id}/send`);
-  } else if (taskData?.state === "REVIEWED") {
-    redirect(`/tasks/${task_id}/approved`);
-  } else if (taskData?.state === "IS_REJECTED") {
-    redirect(`/tasks`);
   }
 
   // photoData ya es PhotoData[], sin photoUrl null

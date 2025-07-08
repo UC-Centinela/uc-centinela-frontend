@@ -1,10 +1,9 @@
 "use server";
 
-import { getTokenAndEmail, getUserProfile } from "./users";
+import { getTokenAndEmail } from "./users";
 import { Task, ArtpData } from "@/types/task";
 import { gql } from "@apollo/client";
 import client from "@/lib/apollo-client";
-import { cookies } from "next/headers";
 
 // Función para obtener todas las tareas
 export async function getAllTasks(): Promise<Task[]> {
@@ -146,39 +145,6 @@ export async function getTasksByReviewer(revisorId: number): Promise<Task[]> {
   }
 }
 
-export async function getTaskData(taskId: string) {
-  try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get("accessToken")?.value;
-
-    if (!accessToken) {
-      return null;
-    }
-
-    // Obtener perfil del usuario
-    const user = await getUserProfile();
-    if (!user?.data?.getUserByEmail?.id) {
-      return null;
-    }
-
-    const userId = parseInt(user.data.getUserByEmail.id);
-    console.log("Getting tasks for user:", userId);
-
-    const tasks = await getTasksByUser(userId);
-    console.log("All tasks received:", tasks);
-    console.log("Task ID:", taskId);
-
-    const task = tasks.find((t: Task) => t.id.toString() === taskId);
-    console.log("Found task:", task);
-    console.log("Task comments:", task?.comments);
-
-    return task || null;
-  } catch (error) {
-    console.error("Error fetching task data:", error);
-    return null;
-  }
-}
-
 export async function createTask(formData: FormData) {
   const rawFormData = Object.fromEntries(formData);
   const data = await getTokenAndEmail();
@@ -269,9 +235,9 @@ export async function updateTask(formData: FormData) {
   if (!data?.accessToken) {
     return null;
   }
-
+  
   const { accessToken } = data;
-
+  
   if (!rawFormData.id) {
     return { success: false, error: "Task ID is required" };
   }
@@ -413,9 +379,9 @@ export async function deleteTask(formData: FormData) {
       },
     }),
   });
-  console.log("Delete Task:", rawFormData.id);
+  console.log("Delete Task:", rawFormData.id)
   const result = await response.json();
-  console.log("Delete Task Result:", result);
+  console.log("Delete Task Result:", result)
   if (result.data && result.data.deleteTask === true) {
     return { success: true };
   } else if (result.errors && result.errors.length > 0) {
@@ -428,9 +394,7 @@ export async function deleteTask(formData: FormData) {
   }
 }
 
-export async function generateArtp(
-  formData: FormData
-): Promise<ArtpData | null> {
+export async function generateArtp(formData: FormData):Promise<ArtpData | null> {
   const rawFormData = Object.fromEntries(formData);
   const data = await getTokenAndEmail();
 
@@ -439,7 +403,7 @@ export async function generateArtp(
   }
 
   const { accessToken } = data;
-
+  
   const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
     method: "POST",
     headers: {
@@ -483,13 +447,13 @@ export async function generateArtp(
       `,
       variables: {
         input: {
-          taskId: Number(rawFormData.taskId),
+          taskId: Number(rawFormData.taskId)
         },
       },
     }),
   });
   const result = await response.json();
-  console.log("ARTP Result:", result);
+  console.log("ARTP Result:", result)
   if (result.data && result.data.generateArtp) {
     return result.data.generateArtp as ArtpData;
   } else if (result.errors && result.errors.length > 0) {
@@ -508,7 +472,7 @@ export async function deleteArtp(formData: FormData) {
   }
 
   const { accessToken } = data;
-
+  
   const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
     method: "POST",
     headers: {
@@ -522,13 +486,13 @@ export async function deleteArtp(formData: FormData) {
         }
       `,
       variables: {
-        taskId: Number(rawFormData.taskId),
+        taskId: Number(rawFormData.taskId)
       },
     }),
   });
   const result = await response.json();
   if (result.data && result.data.deleteArtp === true) {
-    return { success: true };
+    return { success: true }
   } else if (result.errors && result.errors.length > 0) {
     return {
       success: false,
@@ -536,7 +500,7 @@ export async function deleteArtp(formData: FormData) {
     };
   } else {
     return { success: false, error: "Unknown error" };
-  }
+  } 
 }
 
 export async function updateTool(formData: FormData) {
@@ -548,7 +512,7 @@ export async function updateTool(formData: FormData) {
   }
 
   const { accessToken } = data;
-
+  
   const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
     method: "POST",
     headers: {
@@ -568,14 +532,14 @@ export async function updateTool(formData: FormData) {
       variables: {
         input: {
           id: Number.parseInt(rawFormData.id as string),
-          title: rawFormData.title,
+          title: rawFormData.title
         },
       },
     }),
   });
   const result = await response.json();
   if (result.data && result.data.updateTool) {
-    return { success: true };
+   return { success: true };
   } else if (result.errors && result.errors.length > 0) {
     return {
       success: false,
@@ -595,7 +559,7 @@ export async function updateUndesiredEvent(formData: FormData) {
   }
 
   const { accessToken } = data;
-
+  
   const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
     method: "POST",
     headers: {
@@ -624,7 +588,7 @@ export async function updateUndesiredEvent(formData: FormData) {
   });
   const result = await response.json();
   if (result.data && result.data.updateUndesiredEvent) {
-    return { success: true };
+   return { success: true };
   } else if (result.errors && result.errors.length > 0) {
     return {
       success: false,
@@ -644,7 +608,7 @@ export async function updateControl(formData: FormData) {
   }
 
   const { accessToken } = data;
-
+  
   const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
     method: "POST",
     headers: {
@@ -673,7 +637,7 @@ export async function updateControl(formData: FormData) {
   });
   const result = await response.json();
   if (result.data && result.data.updateControl) {
-    return { success: true };
+   return { success: true };
   } else if (result.errors && result.errors.length > 0) {
     return {
       success: false,
@@ -693,7 +657,7 @@ export async function updateVerificationQuestion(formData: FormData) {
   }
 
   const { accessToken } = data;
-
+  
   const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
     method: "POST",
     headers: {
@@ -722,7 +686,7 @@ export async function updateVerificationQuestion(formData: FormData) {
   });
   const result = await response.json();
   if (result.data && result.data.updateVerificationQuestion) {
-    return { success: true };
+   return { success: true };
   } else if (result.errors && result.errors.length > 0) {
     return {
       success: false,

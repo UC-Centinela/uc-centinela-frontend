@@ -1,19 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CheckCircle } from "lucide-react";
+import { ChevronLeft, CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { gql, useMutation } from "@apollo/client";
 import client from "@/lib/apollo-client";
 
 const UPDATE_TASK_STATE = gql`
-  mutation UpdateTaskState($input: UpdateTaskInput!) {
-    updateTask(input: $input) {
-      id
-      state
+    mutation UpdateTaskState($input: UpdateTaskInput!) {
+        updateTask(input: $input) {
+            id
+            state
+        }
     }
-  }
 `;
 
 interface SendContentProps {
@@ -26,24 +26,24 @@ export default function SendContent({ taskId }: SendContentProps) {
   const [updateTaskState] = useMutation(UPDATE_TASK_STATE, {
     client: client,
     onCompleted: (data) => {
-      console.log("Task state updated", data);
+        console.log("Task state updated", data);
     },
     onError: (error) => {
-      console.error("Error updating task state:", error);
-    },
+        console.error("Error updating task state:", error);
+    }
   });
 
   useEffect(() => {
     const updateTaskStateMutation = async () => {
-      try {
-        await updateTaskState({
-          variables: {
-            input: { id: Number(taskId), state: "COMPLETED" },
-          },
-        });
-      } catch (error) {
-        console.error("Error updating task state:", error);
-      }
+        try {
+            await updateTaskState({
+                variables: {
+                    input: { id: Number(taskId), state: "COMPLETED" }
+                }
+            });
+        } catch (error) {
+            console.error("Error updating task state:", error);
+        }
     };
     updateTaskStateMutation();
   }, [taskId, updateTaskState]);
@@ -51,6 +51,14 @@ export default function SendContent({ taskId }: SendContentProps) {
   return (
     <div className="min-h-screen bg-gray-100 pb-6">
       <div className="bg-white p-4 shadow-sm">
+        <Button
+          variant="ghost"
+          onClick={() => router.push(`/tasks/${taskId}/artp-result`)}
+          className="text-red-500 mb-2"
+        >
+          <ChevronLeft className="h-5 w-5 mr-1" /> Volver
+        </Button>
+
         <h1 className="text-2xl font-bold text-teal-800 mb-6 mt-4">
           Estado ARTP
         </h1>
@@ -91,11 +99,10 @@ export default function SendContent({ taskId }: SendContentProps) {
             </div>
           </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-8">
-            Tu propuesta de ARTP ha sido enviada con éxito y se encuentra en
-            revisión
+            Tu propuesta de ARTP ha sido enviada con éxito y se encuentra en revisión
           </h2>
-          <Button
-            onClick={() => router.push("/tasks")}
+          <Button 
+            onClick={() => router.push('/tasks')}
             className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg h-12"
           >
             Volver a tareas
@@ -104,4 +111,4 @@ export default function SendContent({ taskId }: SendContentProps) {
       </div>
     </div>
   );
-}
+} 
