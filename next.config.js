@@ -7,9 +7,11 @@ const withPWA = require('next-pwa')({
 })
 
 const nextConfig = {
+  output: 'standalone',
+  basePath: process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_BASE_URL : '',
   images: {
     domains: [
-      "cloud-object-storage-cos-standard-nck.s3.us-south.cloud-object-storage.appdomain.cloud"
+      process.env.NEXT_PUBLIC_IBM_COS_ENDPOINT
     ]
   },
 

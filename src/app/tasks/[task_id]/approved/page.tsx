@@ -4,7 +4,7 @@ import ApprovedContent from "./ApprovedContent";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function ApprovedPage({ params }: any) {
-  const task_id = params.task_id;
+  const task_id = (await params).task_id;
   const taskData = await getTaskData(task_id);
 
   const hasAccess = await validateTaskAccess(task_id);
