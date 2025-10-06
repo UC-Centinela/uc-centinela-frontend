@@ -5,9 +5,15 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:analyze": "ANALYZE=true npm run build",
     "start": "next start",
     "clean": "rm -rf .next && rm -rf node_modules/.cache",
     "rebuild": "npm run clean && npm run build",
+    "analyze": "node scripts/analyze-performance.js",
+    "diagnose": "node scripts/diagnose-current.js",
+    "network": "node scripts/network-analysis.js",
+    "vercel-check": "node scripts/vercel-analysis.js",
+    "performance": "node scripts/performance-analysis.js",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "test": "jest",
@@ -22,6 +28,7 @@
     "@radix-ui/react-slot": "^1.2.0",
     "@types/form-data": "^2.2.1",
     "@types/node-fetch": "^2.6.12",
+    "@vercel/speed-insights": "^1.2.0",
     "apollo-upload-client": "^17.0.0",
     "axios": "^1.9.0",
     "buffer": "^6.0.3",
@@ -54,6 +61,7 @@
     "eslint-config-next": "15.2.5",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.0.0-beta.3",
+    "puppeteer": "^21.0.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

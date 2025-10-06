@@ -22,7 +22,8 @@ async function getMultimediaData(taskId: string): Promise<MultimediaItem[]> {
     const { data } = await client.query({
       query: FIND_MULTIMEDIA_BY_TASK_ID,
       variables: { taskId: Number(taskId) },
-      fetchPolicy: "no-cache", // Ensure we always get fresh data
+      fetchPolicy: "cache-first", // ✅ Usar cache para mejor rendimiento
+      errorPolicy: "all",
     });
     console.log("Multimedia data received:", data.findMultimediaByTaskId);
     return data.findMultimediaByTaskId;

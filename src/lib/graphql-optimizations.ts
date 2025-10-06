@@ -1,9 +1,10 @@
-import { ApolloClient, InMemoryCache, from, split } from '@apollo/client'
-import { createUploadLink } from 'apollo-upload-client'
-import { setContext } from '@apollo/client/link/context'
-import { RetryLink } from '@apollo/client/link/retry'
-import { BatchHttpLink } from '@apollo/client/link/batch-http'
-import { getTokenAndEmail } from '@/services/users'
+// Optimizaciones críticas para GraphQL
+import { ApolloClient, InMemoryCache, from, split } from '@apollo/client';
+import { createUploadLink } from 'apollo-upload-client';
+import { setContext } from '@apollo/client/link/context';
+import { RetryLink } from '@apollo/client/link/retry';
+import { BatchHttpLink } from '@apollo/client/link/batch-http';
+import { getTokenAndEmail } from '@/services/users';
 
 // ✅ Link de retry para requests fallidos
 const retryLink = new RetryLink({
@@ -15,6 +16,7 @@ const retryLink = new RetryLink({
   attempts: {
     max: 3,
     retryIf: (error) => {
+      // Solo reintentar en errores de red
       return !!error && error.networkError;
     }
   }
@@ -27,6 +29,7 @@ const batchLink = new BatchHttpLink({
   batchInterval: 20, // 20ms de delay
 });
 
+// ✅ Link de upload optimizado
 const uploadLink = createUploadLink({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_API_URL || '/api/graphql',
   credentials: 'include',
@@ -34,12 +37,13 @@ const uploadLink = createUploadLink({
   fetchOptions: {
     timeout: 10000, // 10 segundos timeout
   }
-})
+});
 
+// ✅ Link de autenticación optimizado
 const authLink = setContext(async (_, { headers }) => {
   try {
-    const auth = await getTokenAndEmail()
-    const accessToken = auth?.accessToken
+    const auth = await getTokenAndEmail();
+    const accessToken = auth?.accessToken;
     
     return {
       headers: {
@@ -51,12 +55,13 @@ const authLink = setContext(async (_, { headers }) => {
       }
     }
   } catch (error) {
-    console.error('Error getting access token:', error)
-    return { headers }
+    console.error('Error getting access token:', error);
+    return { headers };
   }
-})
+});
 
-const client = new ApolloClient({
+// ✅ Cliente Apollo optimizado
+export const optimizedClient = new ApolloClient({
   link: from([
     retryLink,
     authLink,
@@ -68,7 +73,7 @@ const client = new ApolloClient({
     )
   ]),
   cache: new InMemoryCache({
-    // ✅ Optimización de cache
+    // ✅ Configuración de cache optimizada
     typePolicies: {
       Query: {
         fields: {
@@ -111,6 +116,5 @@ const client = new ApolloClient({
   },
   // ✅ Configuración de conexión
   connectToDevTools: process.env.NODE_ENV === 'development',
-})
+});
 
-export default client

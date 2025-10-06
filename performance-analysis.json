@@ -1,0 +1,66 @@
+{
+  "timestamp": "2025-10-06T20:25:16.805Z",
+  "criticalIssues": [
+    {
+      "issue": "Tiempo de navegación excesivo",
+      "value": "2629.2ms",
+      "threshold": "2000ms",
+      "impact": "CRÍTICO"
+    },
+    {
+      "issue": "First Contentful Paint muy lento",
+      "value": "2560ms",
+      "threshold": "1800ms",
+      "impact": "CRÍTICO"
+    },
+    {
+      "issue": "Demasiados requests GraphQL",
+      "value": "5 requests",
+      "threshold": "3 requests",
+      "impact": "ALTO"
+    },
+    {
+      "issue": "Requests GraphQL muy lentos",
+      "value": "874.72ms promedio",
+      "threshold": "500ms",
+      "impact": "CRÍTICO"
+    },
+    {
+      "issue": "Bundle JavaScript muy grande",
+      "value": "588.97KB",
+      "threshold": "500KB",
+      "impact": "ALTO"
+    },
+    {
+      "issue": "Chunk JavaScript muy grande",
+      "value": "194.98KB",
+      "threshold": "150KB",
+      "impact": "ALTO"
+    }
+  ],
+  "recommendations": [
+    "🚨 IMPLEMENTAR OPTIMIZACIONES CRÍTICAS:",
+    "1. Implementar lazy loading de componentes pesados",
+    "2. Optimizar code splitting en next.config.js",
+    "3. Preload de recursos críticos",
+    "4. Implementar batching de GraphQL queries",
+    "5. Agregar retry logic para requests fallidos",
+    "6. Optimizar cache de Apollo Client",
+    "7. Implementar dynamic imports para componentes",
+    "8. Optimizar splitChunks en webpack",
+    "9. Remover dependencias no utilizadas",
+    "10. Combinar queries GraphQL en una sola request",
+    "11. Implementar prefetching de datos críticos",
+    "12. Usar cache-first para queries repetitivas"
+  ],
+  "metrics": {
+    "navigationTime": 2629.2,
+    "fcp": 2560,
+    "graphqlRequests": 5,
+    "totalGraphqlTime": 4373.6,
+    "avgGraphqlTime": 874.72,
+    "totalJsSize": 603104,
+    "largestChunk": 199662,
+    "jsChunks": 5
+  }
+}
