@@ -7,8 +7,13 @@ const withPWA = require('next-pwa')({
 })
 
 const nextConfig = {
-  output: 'standalone',
+  output: 'standalone', // ✅ CRÍTICO para Vercel
   basePath: process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_BASE_URL : '',
+  
+  // ✅ Compresión y optimización básica
+  compress: true,
+  poweredByHeader: false,
+  
   images: {
     domains: [
       process.env.NEXT_PUBLIC_IBM_COS_ENDPOINT
