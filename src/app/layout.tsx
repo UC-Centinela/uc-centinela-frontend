@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavigationWrapper from "@/components/NavigationWrapper";
+import ChatbotWrapper from "@/components/ChatbotWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default async function RootLayout({
         <NavigationWrapper>
           {children}
         </NavigationWrapper>
+        <ChatbotWrapper />
       </body>
     </html>
   );
