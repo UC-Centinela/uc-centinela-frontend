@@ -22,6 +22,13 @@ const nextConfig = {
   },
 
   experimental: {
+    // ✅ Optimización de RSC - Cache para reducir latencia
+    staleTimes: {
+      dynamic: 30, // 30 segundos para contenido dinámico
+      static: 180, // 3 minutos para contenido estático
+    },
+    // ✅ Optimización de package imports
+    optimizePackageImports: ['@apollo/client', 'lucide-react'],
   },
   webpack: (config) => {
     config.resolve.fallback = {
