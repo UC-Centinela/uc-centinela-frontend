@@ -10,31 +10,59 @@ const nextConfig = {
   output: 'standalone',
   basePath: process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_BASE_URL : '',
   
-  // ✅ PRUEBA 1: Solo compress
+  // ✅ Optimizaciones de rendimiento
   compress: true,
-  // ✅ PRUEBA 2: Agregar poweredByHeader
   poweredByHeader: false,
   
+  // ✅ Optimización de imágenes
   images: {
     domains: [
       process.env.NEXT_PUBLIC_IBM_COS_ENDPOINT
-    ]
+    ],
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 60,
   },
 
   experimental: {
-    // ✅ Optimización de RSC - Cache para reducir latencia
-    staleTimes: {
-      dynamic: 30, // 30 segundos para contenido dinámico
-      static: 180, // 3 minutos para contenido estático
-    },
-    // ✅ Optimización de package imports
+    // ✅ Optimización de package imports (seguro)
     optimizePackageImports: ['@apollo/client', 'lucide-react'],
+    // ✅ Mejoras de rendimiento sin interferir con Apollo
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
-  webpack: (config) => {
+  webpack: (config, { dev, isServer }) => {
+    // ✅ Fallbacks para compatibilidad
     config.resolve.fallback = {
       ...config.resolve.fallback,
       buffer: require.resolve("buffer"),
     };
+    
+    // ✅ Optimizaciones de producción
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+          apollo: {
+            test: /[\\/]node_modules[\\/]@apollo[\\/]/,
+            name: 'apollo',
+            chunks: 'all',
+            priority: 20,
+          },
+        },
+      };
+    }
+    
     return config;
   },
   reactStrictMode: false

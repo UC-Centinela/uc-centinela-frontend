@@ -1,39 +1,11 @@
-import { ApolloClient, InMemoryCache, from, split } from '@apollo/client'
+import { ApolloClient, InMemoryCache, from } from '@apollo/client'
 import { createUploadLink } from 'apollo-upload-client'
 import { setContext } from '@apollo/client/link/context'
-import { RetryLink } from '@apollo/client/link/retry'
-import { BatchHttpLink } from '@apollo/client/link/batch-http'
 import { getTokenAndEmail } from '@/services/users'
-
-// ✅ Link de retry para requests fallidos
-const retryLink = new RetryLink({
-  delay: {
-    initial: 300,
-    max: Infinity,
-    jitter: true
-  },
-  attempts: {
-    max: 3,
-    retryIf: (error) => {
-      return !!error && error.networkError;
-    }
-  }
-});
-
-// ✅ Link de batch para múltiples queries
-const batchLink = new BatchHttpLink({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_API_URL || '/api/graphql',
-  batchMax: 5, // Agrupar hasta 5 requests
-  batchInterval: 20, // 20ms de delay
-});
 
 const uploadLink = createUploadLink({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_API_URL || '/api/graphql',
   credentials: 'include',
-  // ✅ Configuración de timeout
-  fetchOptions: {
-    timeout: 10000, // 10 segundos timeout
-  }
 })
 
 const authLink = setContext(async (_, { headers }) => {
@@ -45,9 +17,6 @@ const authLink = setContext(async (_, { headers }) => {
       headers: {
         ...headers,
         ...(accessToken && { authorization: `Bearer ${accessToken}` }),
-        // ✅ Headers de optimización
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
       }
     }
   } catch (error) {
@@ -57,60 +26,8 @@ const authLink = setContext(async (_, { headers }) => {
 })
 
 const client = new ApolloClient({
-  link: from([
-    retryLink,
-    authLink,
-    // Usar batch para queries normales, upload para archivos
-    split(
-      operation => operation.getContext().hasUpload,
-      uploadLink,
-      batchLink
-    )
-  ]),
-  cache: new InMemoryCache({
-    // ✅ Optimización de cache
-    typePolicies: {
-      Query: {
-        fields: {
-          findMultimediaByTaskId: {
-            merge(_, incoming) {
-              return incoming;
-            },
-          },
-          findAllTasks: {
-            merge(_, incoming) {
-              return incoming;
-            },
-          },
-          findControlStrategiesByTask: {
-            merge(_, incoming) {
-              return incoming;
-            },
-          },
-        },
-      },
-    },
-    // ✅ Configuración de cache
-    possibleTypes: {},
-    addTypename: false,
-  }),
-  // ✅ Configuración de conexión optimizada
-  defaultOptions: {
-    watchQuery: {
-      fetchPolicy: 'cache-first',
-      errorPolicy: 'all',
-      notifyOnNetworkStatusChange: false,
-    },
-    query: {
-      fetchPolicy: 'cache-first',
-      errorPolicy: 'all',
-    },
-    mutate: {
-      errorPolicy: 'all',
-    },
-  },
-  // ✅ Configuración de conexión
-  connectToDevTools: process.env.NODE_ENV === 'development',
+  link: from([authLink, uploadLink]),
+  cache: new InMemoryCache(),
 })
 
 export default client
