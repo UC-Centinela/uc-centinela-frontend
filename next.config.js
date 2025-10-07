@@ -9,6 +9,12 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   output: 'standalone',
   basePath: process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_BASE_URL : '',
+  
+  // ✅ PRUEBA 1: Solo compress
+  compress: true,
+  // ✅ PRUEBA 2: Agregar poweredByHeader
+  poweredByHeader: false,
+  
   images: {
     domains: [
       process.env.NEXT_PUBLIC_IBM_COS_ENDPOINT
