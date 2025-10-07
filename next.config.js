@@ -14,6 +14,15 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   
+  // ✅ Optimización para Vercel
+  trailingSlash: false,
+  generateEtags: false,
+  
+  // ✅ Optimización de compilación para Vercel
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  
   // ✅ Optimización de imágenes
   images: {
     domains: [
