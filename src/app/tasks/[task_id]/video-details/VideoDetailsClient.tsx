@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouterLoading } from '@/hooks/useRouterLoading'
 import { ChevronLeft } from 'lucide-react'
 import Image from 'next/image'
 import type { TranscriptionResult } from '@/app/transcription/components/TranscriptionForm'
@@ -24,7 +24,7 @@ const DELETE_MULTIMEDIA = gql`
 `;
 
 export default function VideoDetailsClient({ taskId, initialVideoData }: { taskId: string, initialVideoData?: MultimediaData }) {
-  const router = useRouter();
+  const { push: pushWithLoading } = useRouterLoading();
   const [videoData] = useState<MultimediaData | undefined>(initialVideoData);
   const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ export default function VideoDetailsClient({ taskId, initialVideoData }: { taskI
         console.error('Error removing item from localStorage:', error);
       }
       
-      router.push(`/tasks/${taskId}/risk_analysis`);
+      pushWithLoading(`/tasks/${taskId}/risk_analysis`);
     },
     onError: (error) => {
       console.error('Error deleting video:', error);
@@ -111,7 +111,7 @@ export default function VideoDetailsClient({ taskId, initialVideoData }: { taskI
     <div className="min-h-screen bg-gray-100 pb-6">
       <div className="bg-white p-4 shadow-sm">
         <button
-          onClick={() => router.push(`/tasks/${taskId}/risk_analysis`)}
+          onClick={() => pushWithLoading(`/tasks/${taskId}/risk_analysis`)}
           className="text-base text-red-500 mb-2 flex items-center font-medium"
         >
           <ChevronLeft className="h-5 w-5 mr-1" /> Volver

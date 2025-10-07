@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouterLoading } from "@/hooks/useRouterLoading";
 import { ChevronLeft, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { gql, useMutation } from "@apollo/client";
@@ -26,7 +26,7 @@ const DELETE_MULTIMEDIA = gql`
 `;
 
 export default function PhotoDetailsClient({ taskId, initialPhotos }: Props) {
-  const router = useRouter();
+  const { push: pushWithLoading } = useRouterLoading();
 
   // Estado local con todas las fotos que llegaron desde el servidor
   const [photos, setPhotos] = useState<PhotoData[]>(initialPhotos);
@@ -64,7 +64,7 @@ export default function PhotoDetailsClient({ taskId, initialPhotos }: Props) {
     <div className="min-h-screen bg-gray-100 pb-6">
       <div className="bg-white p-4 shadow-sm">
         <button
-          onClick={() => router.push(`/tasks/${taskId}/risk_analysis`)}
+          onClick={() => pushWithLoading(`/tasks/${taskId}/risk_analysis`)}
           className="text-base text-red-500 mb-2 flex items-center font-medium"
         >
           <ChevronLeft className="h-5 w-5 mr-1" /> Volver

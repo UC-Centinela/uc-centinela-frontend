@@ -31,7 +31,7 @@ import {
 import type { Task, TaskState } from "@/types/task";
 import type { User as TaskUser } from "@/types/user";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouterLoading } from "@/hooks/useRouterLoading";
 
 interface TaskDetailsDialogProps {
   task: Task | null;
@@ -62,6 +62,7 @@ export function TaskDetailsDialog({
   onClose,
   onSaveChanges,
 }: TaskDetailsDialogProps) {
+  const { push: pushWithLoading } = useRouterLoading();
   const [comment, setComment] = useState(task?.comments || "");
   const [selectedResponsibleId, setSelectedResponsibleId] = useState<
     number | null
@@ -104,7 +105,6 @@ export function TaskDetailsDialog({
     setIsEditingDate(false);
   }, [task]);
 
-  const router = useRouter();
   if (!task) return null;
 
   // Obtener el supervisor actual de la tarea
@@ -337,7 +337,7 @@ export function TaskDetailsDialog({
               variant="outline"
               size="lg"
               className="flex items-center gap-3 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all duration-200 px-6 py-3"
-              onClick={() => router.push(`/supervisor/${task.id}/register`)}
+              onClick={() => pushWithLoading(`/supervisor/${task.id}/register`)}
             >
               <FileText size={18} className="text-blue-600" />
               Ver Registro

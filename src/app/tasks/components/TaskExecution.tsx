@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
+import { useRouterLoading } from "@/hooks/useRouterLoading";
 import {
   ChevronLeft,
   Info,
@@ -62,7 +62,7 @@ export default function TaskExecution({
   multimediaData = [],
   taskComments = null,
 }: TaskExecutionProps) {
-  const router = useRouter();
+  const { push: pushWithLoading } = useRouterLoading();
   const [isGeneratingARTP, setIsGeneratingARTP] = useState(false);
   const [transcriptionResult, setTranscriptionResult] =
     useState<TranscriptionResult | null>(null);
@@ -254,7 +254,7 @@ export default function TaskExecution({
       console.error("Error generating ARTP:", error);
     } finally {
       setIsGeneratingARTP(false);
-      router.push(`/tasks/${taskId}/artp-result`);
+      pushWithLoading(`/tasks/${taskId}/artp-result`);
     }
   };
 
@@ -264,7 +264,7 @@ export default function TaskExecution({
       <div className="bg-white p-4 shadow-sm">
         <Button
           variant="ghost"
-          onClick={() => router.push(`/tasks/${taskId}`)}
+          onClick={() => pushWithLoading(`/tasks/${taskId}`)}
           className="text-red-500 mb-2"
           disabled={isGeneratingARTP}
         >
@@ -360,7 +360,7 @@ export default function TaskExecution({
                   <Button
                     variant="ghost"
                     onClick={() =>
-                      router.push(`/tasks/${taskId}/video-details`)
+                      pushWithLoading(`/tasks/${taskId}/video-details`)
                     }
                     className="text-red-500"
                     disabled={isGeneratingARTP}
@@ -442,7 +442,7 @@ export default function TaskExecution({
               <div className="flex justify-end mt-2">
                 <Button
                   variant="ghost"
-                  onClick={() => router.push(`/tasks/${taskId}/photo-details`)}
+                  onClick={() => pushWithLoading(`/tasks/${taskId}/photo-details`)}
                   className="text-red-500"
                   disabled={isGeneratingARTP}
                 >

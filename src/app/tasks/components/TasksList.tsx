@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowRight, Calendar, Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { handleLogout } from "@/services/users";
+import { useRouterLoading } from "@/hooks/useRouterLoading";
 import type { Task } from "@/types/task";
 
 export default function TasksList({ tasks }: { tasks: Task[] }) {
   const [activeTab, setActiveTab] = useState("assigned");
-  const router = useRouter();
+  const { push: pushWithLoading } = useRouterLoading();
 
   const getStatesByTab = (tab: string) => {
     switch (tab) {
@@ -47,11 +47,11 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
 
   const handleTaskClick = (task: Task) => {
     if (task.state === "COMPLETED") {
-      router.push(`/tasks/${task.id}/send`);
+      pushWithLoading(`/tasks/${task.id}/send`);
     } else if (task.state === "REVIEWED") {
-      router.push(`/tasks/${task.id}/approved`);
+      pushWithLoading(`/tasks/${task.id}/approved`);
     } else {
-      router.push(`/tasks/${task.id}`);
+      pushWithLoading(`/tasks/${task.id}`);
     }
   };
 

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Task } from "@/types/task"
-import { useRouter } from "next/navigation"
+import { useRouterLoading } from "@/hooks/useRouterLoading"
 import { XCircle } from "lucide-react"
 
 interface RejectedTaskProps {
@@ -10,7 +10,7 @@ interface RejectedTaskProps {
 }
 
 export default function RejectedTask({ taskData }: RejectedTaskProps) {
-    const router = useRouter()
+    const { push: pushWithLoading } = useRouterLoading()
     
     return (
         <div className="min-h-screen bg-gray-10 pb-6">
@@ -51,7 +51,7 @@ export default function RejectedTask({ taskData }: RejectedTaskProps) {
 
                         <div className="space-y-3">
                             <Button
-                                onClick={() => router.push("/supervisor")}
+                                onClick={() => pushWithLoading("/supervisor")}
                                 className="w-full bg-red-700 hover:bg-red-800 text-white py-3 text-lg font-semibold"
                                 size="lg"
                             >

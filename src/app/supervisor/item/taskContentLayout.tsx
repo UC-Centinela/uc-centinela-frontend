@@ -5,18 +5,18 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import TaskForm from "../components/taskForm";
 import { createTask } from "@/services/task";
-import { useRouter } from "next/navigation";
+import { useRouterLoading } from "@/hooks/useRouterLoading";
 
 interface TaskContentLayoutProps {
   users: User[];
 }
 
 export default function TaskContentLayout({ users }: TaskContentLayoutProps) {
-  const router = useRouter();
+  const { push: pushWithLoading } = useRouterLoading();
   const handleSubmit = async (formData: FormData) => {
     const response = await createTask(formData);
     if (response?.success) {
-      router.push("/supervisor");
+      pushWithLoading("/supervisor");
     } else {
       console.log(response);
     }

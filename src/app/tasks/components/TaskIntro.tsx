@@ -1,12 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useRouterLoading } from "@/hooks/useRouterLoading";
 import { ChevronLeft, FileText, Edit } from "lucide-react";
 import React from "react";
 
 export default function TaskIntro({ taskId, taskTitle }: { taskId?: string, taskTitle?: string }) {
-  const router = useRouter();
+  const { push: pushWithLoading } = useRouterLoading();
 
   const steps = [
     {
@@ -34,7 +34,7 @@ export default function TaskIntro({ taskId, taskTitle }: { taskId?: string, task
             <Button
               variant="ghost"
               className="text-sm md:text-base text-red-600 mb-3 p-0 flex items-center font-normal"
-              onClick={() => router.push("/tasks")}
+              onClick={() => pushWithLoading("/tasks")}
             >
               <ChevronLeft className="h-4 w-4 mr-1" /> Volver a Tareas Asignadas
             </Button>
@@ -82,7 +82,7 @@ export default function TaskIntro({ taskId, taskTitle }: { taskId?: string, task
         <div className="p-4 w-full mt-8 md:mt-auto pb-8">
           <Button
             onClick={() => {
-              window.location.href = `/tasks/${taskId || 'id'}/risk_analysis`;
+              pushWithLoading(`/tasks/${taskId || 'id'}/risk_analysis`);
             }}
             className="w-full md:max-w-xs md:mx-auto md:block bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg mb-4 flex items-center justify-center h-12"
           >
