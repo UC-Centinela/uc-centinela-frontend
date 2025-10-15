@@ -37,6 +37,10 @@ export async function getAllTasks(): Promise<Task[]> {
               revisorUserId
               state
               title
+              latitude
+              longitude
+              locationTitle
+              locationDescription
             }
           }
         `,
@@ -82,6 +86,10 @@ export async function getTasksByUser(userId: number): Promise<Task[]> {
               requiredSendDate
               creatorUserId
               revisorUserId
+              latitude
+              longitude
+              locationTitle
+              locationDescription
             }
           }
         `,
@@ -129,6 +137,10 @@ export async function getTasksByReviewer(revisorId: number): Promise<Task[]> {
               requiredSendDate
               creatorUserId
               revisorUserId
+              latitude
+              longitude
+              locationTitle
+              locationDescription
             }
           }
         `,
@@ -208,6 +220,10 @@ export async function createTask(formData: FormData) {
             assignationDate
             requiredSendDate
             comments
+            latitude
+            longitude
+            locationTitle
+            locationDescription
           }
         }
       `,
@@ -221,6 +237,10 @@ export async function createTask(formData: FormData) {
           assignationDate: rawFormData.assignationDate,
           requiredSendDate: rawFormData.requiredSendDate,
           comments: rawFormData.comments,
+          latitude: rawFormData.latitude ? Number(rawFormData.latitude) : undefined,
+          longitude: rawFormData.longitude ? Number(rawFormData.longitude) : undefined,
+          locationTitle: rawFormData.locationTitle || undefined,
+          locationDescription: rawFormData.locationDescription || undefined,
         },
       },
     }),
