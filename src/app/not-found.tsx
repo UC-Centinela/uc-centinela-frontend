@@ -1,10 +1,10 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
+import { useRouterLoading } from '@/hooks/useRouterLoading';
 
 export default function NotFound() {
-  const router = useRouter();
+  const { push: pushWithLoading } = useRouterLoading();
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background">
@@ -15,7 +15,7 @@ export default function NotFound() {
           Lo sentimos, la página que estás buscando no existe o ha sido movida.
         </p>
         <Button
-          onClick={() => router.push('/')}
+          onClick={() => pushWithLoading('/')}
           className="mt-4"
           variant="default"
           size="lg"

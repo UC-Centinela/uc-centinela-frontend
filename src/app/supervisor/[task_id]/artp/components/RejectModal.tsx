@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouterLoading } from "@/hooks/useRouterLoading";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
@@ -26,7 +26,7 @@ const RejectModal: React.FC<RejectModalProps> = ({
   taskId,
 }) => {
   const formRef = useRef<HTMLFormElement>(null);
-  const router = useRouter();
+  const { push: pushWithLoading } = useRouterLoading();
 
   useEffect(() => {
     if (!isOpen) {
@@ -41,7 +41,7 @@ const RejectModal: React.FC<RejectModalProps> = ({
     const success = await onConfirm(comment);
     if (success) {
       setTimeout(() => {
-        router.push(`/supervisor/${taskId}/artp/rejected`);
+        pushWithLoading(`/supervisor/${taskId}/artp/rejected`);
       }, 300);
     }
   };

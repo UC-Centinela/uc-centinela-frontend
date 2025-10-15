@@ -11,6 +11,10 @@ export interface Task {
     comments: string;
     instruction: string;
     revisorUserId: number;
+    latitude?: number;
+    longitude?: number;
+    locationTitle?: string;
+    locationDescription?: string;
 }
 
 export interface TaskComment {

@@ -1,11 +1,33 @@
 import { Button } from "@/components/ui/button";
 import { User } from "@/types/user";
+import LocationPicker from "@/components/LocationPicker";
+import { useState } from "react";
 
 interface TaskFormProps {
   users: User[];
 }
 
 export default function TaskForm({ users }: TaskFormProps) {
+  const [selectedLocation, setSelectedLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    title?: string;
+    description?: string;
+  } | undefined>();
+
+  const handleLocationSelect = (location: {
+    latitude: number;
+    longitude: number;
+    title?: string;
+    description?: string;
+  }) => {
+    setSelectedLocation(location);
+  };
+
+  const handleLocationClear = () => {
+    setSelectedLocation(undefined);
+  };
+
   return (
     <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-md px-4 md:px-8 py-10">
       <h2 className="text-2xl font-semibold text-[#176170] mb-8">
@@ -158,6 +180,45 @@ export default function TaskForm({ users }: TaskFormProps) {
             className="border border-gray-300 rounded-lg px-4 py-2 min-h-[60px] bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#176170]"
           />
         </div>
+        
+        {/* Ubicación */}
+        <div className="flex flex-col gap-2 md:col-span-3">
+          <LocationPicker
+            onLocationSelect={handleLocationSelect}
+            onLocationClear={handleLocationClear}
+            selectedLocation={selectedLocation}
+          />
+        </div>
+        
+        {/* Hidden inputs for location data */}
+        {selectedLocation && (
+          <>
+            <input
+              type="hidden"
+              name="latitude"
+              value={selectedLocation.latitude}
+            />
+            <input
+              type="hidden"
+              name="longitude"
+              value={selectedLocation.longitude}
+            />
+            {selectedLocation.title && (
+              <input
+                type="hidden"
+                name="locationTitle"
+                value={selectedLocation.title}
+              />
+            )}
+            {selectedLocation.description && (
+              <input
+                type="hidden"
+                name="locationDescription"
+                value={selectedLocation.description}
+              />
+            )}
+          </>
+        )}
       </div>
       <div className="flex flex-col gap-4 md:col-span-3 mt-6">
         <Button type="submit" className="self-start">

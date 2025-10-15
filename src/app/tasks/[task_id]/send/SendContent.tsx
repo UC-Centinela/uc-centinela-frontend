@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useRouterLoading } from "@/hooks/useRouterLoading";
 import { gql, useMutation } from "@apollo/client";
 import client from "@/lib/apollo-client";
 
@@ -21,7 +21,7 @@ interface SendContentProps {
 }
 
 export default function SendContent({ taskId }: SendContentProps) {
-  const router = useRouter();
+  const { push: pushWithLoading } = useRouterLoading();
 
   const [updateTaskState] = useMutation(UPDATE_TASK_STATE, {
     client: client,
@@ -95,7 +95,7 @@ export default function SendContent({ taskId }: SendContentProps) {
             revisión
           </h2>
           <Button
-            onClick={() => router.push("/tasks")}
+            onClick={() => pushWithLoading("/tasks")}
             className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg h-12"
           >
             Volver a tareas

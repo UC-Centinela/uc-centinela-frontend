@@ -5,6 +5,7 @@ import { gql, useMutation } from '@apollo/client'
 import { Buffer } from 'buffer'
 import { Button } from "@/components/ui/button"
 import client from '@/lib/apollo-client'
+import { useRouterLoading } from '@/hooks/useRouterLoading'
 
 const UPLOAD_VIDEO = gql`
   mutation UploadVideo($input: UploadVideoInput!) {
@@ -33,6 +34,7 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
   const [isLoading, setIsLoading] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState('')
+  const { push: pushWithLoading } = useRouterLoading()
   const [showFileInput, setShowFileInput] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -107,7 +109,7 @@ export default function TranscriptionForm({ onTranscriptionComplete, taskId }: T
           setTimeout(() => {
             const detailsUrl = `/tasks/${taskId}/video-details`;
             console.log('Redirecting to:', detailsUrl);
-            window.location.href = detailsUrl;
+            pushWithLoading(detailsUrl);
           }, 300);
           
           return;

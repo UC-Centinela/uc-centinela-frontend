@@ -1,7 +1,7 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { ChevronLeft, Info } from "lucide-react"
+import { useRouterLoading } from "@/hooks/useRouterLoading"
 import { Button } from "@/components/ui/button"
 import type { Task } from "@/types/task"
 import type { MultimediaItem } from "@/types/multimedia"
@@ -18,7 +18,7 @@ export default function TaskRegister({
     multimediaData,
     controlStrategies,
 }: TaskRegisterProps) {
-    const router = useRouter();
+    const { push: pushWithLoading } = useRouterLoading();
 
     const videoUrl:string = multimediaData.find(item => item.videoUrl)?.videoUrl || "";
     const photoUrls:string[]  = multimediaData
@@ -42,7 +42,7 @@ export default function TaskRegister({
             <div className="bg-white p-4 shadow-sm">
                 <Button
                     variant="ghost"
-                    onClick={() => router.push(`/supervisor`)}
+                    onClick={() => pushWithLoading(`/supervisor`)}
                     className="text-red-500 mb-2"
                 >
                     <ChevronLeft className="h-5 w-5 mr-1" /> Volver
@@ -154,7 +154,7 @@ export default function TaskRegister({
 
                 <div className="mt-8 flex justify-end">
                     <Button
-                        onClick={() => router.push(`/supervisor/${taskData.id}/artp`)}
+                        onClick={() => pushWithLoading(`/supervisor/${taskData.id}/artp`)}
                         className="bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg px-8 py-3"
                     >
                         Ver ARTP

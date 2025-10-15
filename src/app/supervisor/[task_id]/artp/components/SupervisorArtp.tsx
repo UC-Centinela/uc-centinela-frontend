@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useRouterLoading } from "@/hooks/useRouterLoading"
 import { ChevronLeft, Edit, X, Wrench, AlertTriangle, Shield, HelpCircle, ChevronDown, ChevronRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { ArtpData, Task, Tools, UndesiredEvent, Control, VerificationQuestion } from "@/types/task"
@@ -88,6 +89,7 @@ export default function SupervisorArtp({
     approveTaskAction,
     rejectTaskAction
 }: SupervisorArtpProps) {
+    const { push: pushWithLoading } = useRouterLoading();
     const router = useRouter();
 
     const [expandedActivities, setExpandedActivities] = useState<Set<number>>(new Set())
@@ -227,7 +229,7 @@ export default function SupervisorArtp({
         try {
             const success = await approveTaskAction(taskData.id.toString())
             if (success) {
-                router.push(`/supervisor/${taskData.id}/artp/approved`)
+                pushWithLoading(`/supervisor/${taskData.id}/artp/approved`)
             } else {
                 console.error("Error approving task")
             }

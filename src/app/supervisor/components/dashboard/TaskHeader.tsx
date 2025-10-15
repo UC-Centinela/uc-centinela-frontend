@@ -3,9 +3,10 @@
 import { useState } from "react";
 import type React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Plus, MapPin } from "lucide-react";
 import { handleLogout } from "@/services/users";
 import { Button } from "@/components/ui/button";
+import { useRouterLoading } from "@/hooks/useRouterLoading";
 
 interface HeaderProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ interface HeaderProps {
 
 export function Header({ children, onTabChange }: HeaderProps) {
   const [currentTab, setCurrentTab] = useState("all-tasks");
+  const { push: pushWithLoading } = useRouterLoading();
 
   const handleTabChange = (value: string) => {
     setCurrentTab(value);
@@ -69,10 +71,14 @@ export function Header({ children, onTabChange }: HeaderProps) {
               <TabsTrigger value="rejected" className={tabStyles}>
                 Rechazadas
               </TabsTrigger>
+              <TabsTrigger value="map" className={tabStyles}>
+                <MapPin className="h-4 w-4 mr-2" />
+                Mapa
+              </TabsTrigger>
             </TabsList>
             <Button
               className="bg-[#176170] hover:bg-[#134b57] text-white flex items-center gap-2 mb-2"
-              onClick={() => (window.location.href = "/supervisor/item")}
+              onClick={() => pushWithLoading("/supervisor/item")}
             >
               <Plus className="h-4 w-4" />
               Crear nueva tarea
@@ -92,6 +98,9 @@ export function Header({ children, onTabChange }: HeaderProps) {
             {children}
           </TabsContent>
           <TabsContent value="rejected" className="mt-4">
+            {children}
+          </TabsContent>
+          <TabsContent value="map" className="mt-4">
             {children}
           </TabsContent>
         </Tabs>

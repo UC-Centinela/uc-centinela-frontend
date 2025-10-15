@@ -2,21 +2,21 @@
 
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, CheckCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouterLoading } from "@/hooks/useRouterLoading";
 
 interface ApprovedContentProps {
   taskId: string;
 }
 
 export default function ApprovedContent({ taskId }: ApprovedContentProps) {
-  const router = useRouter();
+  const { push: pushWithLoading } = useRouterLoading();
   console.log("taskId", taskId);
   return (
     <div className="min-h-screen bg-gray-100 pb-6">
       <div className="bg-white p-4 shadow-sm">
         <Button
           variant="ghost"
-          onClick={() => router.push('/tasks')}
+          onClick={() => pushWithLoading('/tasks')}
           className="text-red-500 mb-2"
         >
           <ChevronLeft className="h-5 w-5 mr-1" /> Volver a tareas
@@ -65,7 +65,7 @@ export default function ApprovedContent({ taskId }: ApprovedContentProps) {
             Tu propuesta de ARTP ha sido aprobada
           </h2>
           <Button 
-            onClick={() => router.push('/tasks')}
+            onClick={() => pushWithLoading('/tasks')}
             className="w-full bg-teal-700 hover:bg-teal-800 text-white rounded-md font-normal text-lg h-12"
           >
             Volver a tareas
