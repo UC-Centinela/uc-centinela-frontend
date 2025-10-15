@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { useRouterLoading } from "@/hooks/useRouterLoading";
 
 // Fix for default markers in react-leaflet
 import L from "leaflet";
@@ -57,6 +58,8 @@ export default function DynamicMap({
   isInteractive = false,
   selectedLocation 
 }: DynamicMapProps) {
+  const { push: pushWithLoading } = useRouterLoading();
+  
   // Default center (Santiago, Chile)
   const defaultCenter: [number, number] = [-33.4489, -70.6693];
   
@@ -112,7 +115,17 @@ export default function DynamicMap({
             >
               <Popup>
                 <div className="p-2">
-                  <h3 className="font-semibold text-sm">{task.title}</h3>
+                  <h3 className="font-semibold text-sm">
+                    <button 
+                      className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
+                      onClick={() => {
+                        console.log('🗺️ [DynamicMap] Navegando a detalle de tarea:', task.id);
+                        pushWithLoading(`/tasks/${task.id}`);
+                      }}
+                    >
+                      {task.title}
+                    </button>
+                  </h3>
                   {task.locationTitle && (
                     <p className="text-xs text-gray-600 mt-1">{task.locationTitle}</p>
                   )}

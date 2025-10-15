@@ -21,12 +21,17 @@ export default function TaskForm({ users }: TaskFormProps) {
     title?: string;
     description?: string;
   }) => {
+    console.log('🗺️ [TaskForm] Ubicación seleccionada:', location);
     setSelectedLocation(location);
   };
 
   const handleLocationClear = () => {
+    console.log('🗺️ [TaskForm] Ubicación eliminada');
     setSelectedLocation(undefined);
   };
+
+  // Log del estado actual de la ubicación
+  console.log('🗺️ [TaskForm] Estado actual de ubicación:', selectedLocation);
 
   return (
     <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-md px-4 md:px-8 py-10">

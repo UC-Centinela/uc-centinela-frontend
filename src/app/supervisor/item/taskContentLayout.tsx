@@ -14,11 +14,27 @@ interface TaskContentLayoutProps {
 export default function TaskContentLayout({ users }: TaskContentLayoutProps) {
   const { push: pushWithLoading } = useRouterLoading();
   const handleSubmit = async (formData: FormData) => {
+    console.log('📝 [TaskContentLayout] === INICIANDO ENVÍO DE FORMULARIO ===');
+    console.log('📝 [TaskContentLayout] FormData recibido:', formData);
+    
+    // Log de todos los campos del formulario
+    const formDataEntries = Array.from(formData.entries());
+    console.log('📝 [TaskContentLayout] Campos del formulario:', formDataEntries);
+    
+    // Log específico de campos de ubicación
+    const locationFields = formDataEntries.filter(([key]) => 
+      key.includes('latitude') || key.includes('longitude') || key.includes('location')
+    );
+    console.log('📝 [TaskContentLayout] Campos de ubicación:', locationFields);
+    
     const response = await createTask(formData);
+    console.log('📝 [TaskContentLayout] Respuesta del servicio:', response);
+    
     if (response?.success) {
+      console.log('📝 [TaskContentLayout] ✅ Tarea creada exitosamente, redirigiendo...');
       pushWithLoading("/supervisor");
     } else {
-      console.log(response);
+      console.error('📝 [TaskContentLayout] ❌ Error en la creación de tarea:', response);
     }
   };
 

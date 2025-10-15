@@ -34,22 +34,27 @@ export default function LocationPicker({
   const [locationDescription, setLocationDescription] = useState(selectedLocation?.description || "");
 
   const handleMapClick = (lat: number, lng: number) => {
-    onLocationSelect({
+    console.log('🗺️ [LocationPicker] Ubicación seleccionada en el mapa:', { lat, lng });
+    const locationData = {
       latitude: lat,
       longitude: lng,
       title: locationTitle || undefined,
       description: locationDescription || undefined
-    });
+    };
+    console.log('🗺️ [LocationPicker] Datos de ubicación a enviar:', locationData);
+    onLocationSelect(locationData);
     setShowMap(false);
   };
 
   const handleSaveLocation = () => {
     if (selectedLocation) {
-      onLocationSelect({
+      const locationData = {
         ...selectedLocation,
         title: locationTitle || undefined,
         description: locationDescription || undefined
-      });
+      };
+      console.log('🗺️ [LocationPicker] Guardando información de ubicación:', locationData);
+      onLocationSelect(locationData);
       setShowMap(false);
     }
   };

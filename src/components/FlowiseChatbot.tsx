@@ -1,11 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 export default function FlowiseChatbot() {
   const [isMobile, setIsMobile] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const [BubbleChat, setBubbleChat] = useState<React.ComponentType<Record<string, unknown>> | null>(null)
+  const [chatbotKey, setChatbotKey] = useState(0)
+  const pathname = usePathname()
 
   useEffect(() => {
     // Asegurar que solo se ejecute en el cliente
@@ -33,6 +36,18 @@ export default function FlowiseChatbot() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  // Efecto para reiniciar el chatbot cuando cambie la ruta
+  useEffect(() => {
+    console.log('🤖 [FlowiseChatbot] Ruta cambiada:', pathname)
+    // Reiniciar el chatbot para evitar que se maximice
+    // Agregar un pequeño delay para evitar reinicios muy rápidos
+    const timeoutId = setTimeout(() => {
+      setChatbotKey(prev => prev + 1)
+    }, 100)
+    
+    return () => clearTimeout(timeoutId)
+  }, [pathname])
+
   // No renderizar hasta que estemos en el cliente y el componente esté cargado
   if (!isClient || !BubbleChat) {
     return null
@@ -40,6 +55,7 @@ export default function FlowiseChatbot() {
 
   return (
     <BubbleChat
+      key={chatbotKey}
       chatflowid="f3ae519d-89c5-4704-ac2f-788e55876421"
       apiHost="https://flowise-1032065525651.us-central1.run.app"
       chatflowConfig={{
@@ -58,7 +74,7 @@ export default function FlowiseChatbot() {
           iconColor: 'white',
           customIconSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
           autoWindowOpen: {
-            autoOpen: true,
+            autoOpen: false, // Deshabilitado para evitar que se abra automáticamente
             openDelay: 2,
             autoOpenOnMobile: false // Deshabilitado en móvil para mejor UX
           }

@@ -192,14 +192,70 @@ export async function getTaskData(taskId: string) {
 }
 
 export async function createTask(formData: FormData) {
+  console.log('🚀 [createTask] === INICIANDO CREACIÓN DE TAREA ===');
+  console.log('🚀 [createTask] FormData recibido:', formData);
+  
   const rawFormData = Object.fromEntries(formData);
+  console.log('🚀 [createTask] Datos extraídos del FormData:', rawFormData);
+  
   const data = await getTokenAndEmail();
+  console.log('🚀 [createTask] Datos de autenticación:', { hasAccessToken: !!data?.accessToken });
 
   if (!data?.accessToken) {
+    console.error('🚀 [createTask] ERROR: No hay token de acceso');
     return null;
   }
 
   const { accessToken } = data;
+  console.log('🚀 [createTask] Token de acceso obtenido correctamente');
+
+  // Log de datos de ubicación
+  console.log('🚀 [createTask] Datos de ubicación:', {
+    latitude: rawFormData.latitude,
+    longitude: rawFormData.longitude,
+    locationTitle: rawFormData.locationTitle,
+    locationDescription: rawFormData.locationDescription
+  });
+
+  const requestBody = {
+    query: `
+      mutation CreateTask($input: CreateTaskInput!) {
+        createTask(input: $input) {
+          creatorUserId
+          id
+          instruction
+          revisorUserId
+          state
+          title
+          assignationDate
+          requiredSendDate
+          comments
+          latitude
+          longitude
+          locationTitle
+          locationDescription
+        }
+      }
+    `,
+    variables: {
+      input: {
+        creatorUserId: Number(rawFormData.creatorUserId),
+        revisorUserId: Number(rawFormData.revisorUserId),
+        state: rawFormData.state,
+        title: rawFormData.title,
+        instruction: rawFormData.instruction,
+        assignationDate: rawFormData.assignationDate,
+        requiredSendDate: rawFormData.requiredSendDate,
+        comments: rawFormData.comments,
+        latitude: rawFormData.latitude ? Number(rawFormData.latitude) : undefined,
+        longitude: rawFormData.longitude ? Number(rawFormData.longitude) : undefined,
+        locationTitle: rawFormData.locationTitle || undefined,
+        locationDescription: rawFormData.locationDescription || undefined,
+      },
+    },
+  };
+
+  console.log('🚀 [createTask] Cuerpo de la petición:', JSON.stringify(requestBody, null, 2));
 
   const response = await fetch(`${process.env.NEXT_PUBLIC_GRAPHQL_API_URL}`, {
     method: "POST",
@@ -207,50 +263,23 @@ export async function createTask(formData: FormData) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({
-      query: `
-        mutation CreateTask($input: CreateTaskInput!) {
-          createTask(input: $input) {
-            creatorUserId
-            id
-            instruction
-            revisorUserId
-            state
-            title
-            assignationDate
-            requiredSendDate
-            comments
-            latitude
-            longitude
-            locationTitle
-            locationDescription
-          }
-        }
-      `,
-      variables: {
-        input: {
-          creatorUserId: Number(rawFormData.creatorUserId),
-          revisorUserId: Number(rawFormData.revisorUserId),
-          state: rawFormData.state,
-          title: rawFormData.title,
-          instruction: rawFormData.instruction,
-          assignationDate: rawFormData.assignationDate,
-          requiredSendDate: rawFormData.requiredSendDate,
-          comments: rawFormData.comments,
-          latitude: rawFormData.latitude ? Number(rawFormData.latitude) : undefined,
-          longitude: rawFormData.longitude ? Number(rawFormData.longitude) : undefined,
-          locationTitle: rawFormData.locationTitle || undefined,
-          locationDescription: rawFormData.locationDescription || undefined,
-        },
-      },
-    }),
+    body: JSON.stringify(requestBody),
+  });
+
+  console.log('🚀 [createTask] Respuesta HTTP:', {
+    status: response.status,
+    statusText: response.statusText,
+    ok: response.ok
   });
 
   const result = await response.json();
+  console.log('🚀 [createTask] Respuesta JSON:', JSON.stringify(result, null, 2));
 
   if (result.data?.createTask) {
+    console.log('🚀 [createTask] ✅ Tarea creada exitosamente:', result.data.createTask);
     return { success: true };
   } else {
+    console.error('🚀 [createTask] ❌ Error en la creación de tarea:', result.errors);
     return { success: false };
   }
 }
