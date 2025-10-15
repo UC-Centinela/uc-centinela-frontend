@@ -5,6 +5,7 @@ import { TaskSummaryCards } from "./dashboard/TaskSummaryCards";
 import { TaskFilters } from "./dashboard/TaskFilters";
 import { TaskTable } from "./dashboard/TaskTable";
 import { Header } from "./dashboard/TaskHeader";
+import MapComponent from "@/components/MapComponent";
 import type {
   Task,
   TaskState,
@@ -220,14 +221,27 @@ export function SupervisorDashboard({
         onApplyFilters={handleApplyFilters}
       />
 
-      {/* Tabla de Tareas */}
-      <TaskTable
-        tasks={tasks}
-        users={users}
-        onViewDetails={handleViewDetails}
-        onSaveChanges={handleTaskChanges}
-        onDeleteTask={handleDeleteTask}
-      />
+      {/* Contenido según la pestaña seleccionada */}
+      {currentTab === "map" ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Mapa de Tareas</h2>
+            <p className="text-sm text-gray-600">
+              {tasks.filter(task => task.latitude && task.longitude).length} tareas con ubicación
+            </p>
+          </div>
+          <MapComponent tasks={tasks} />
+        </div>
+      ) : (
+        /* Tabla de Tareas */
+        <TaskTable
+          tasks={tasks}
+          users={users}
+          onViewDetails={handleViewDetails}
+          onSaveChanges={handleTaskChanges}
+          onDeleteTask={handleDeleteTask}
+        />
+      )}
     </div>
   );
 
