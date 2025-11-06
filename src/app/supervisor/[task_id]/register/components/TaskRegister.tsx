@@ -3,6 +3,7 @@
 import { ChevronLeft, Info } from "lucide-react"
 import { useRouterLoading } from "@/hooks/useRouterLoading"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 import type { Task } from "@/types/task"
 import type { MultimediaItem } from "@/types/multimedia"
 import type { ControlStrategy } from "@/types/controlStrategies"
@@ -135,9 +136,11 @@ export default function TaskRegister({
                             {photoUrls.map((photoUrl, index) => (
                                 <div key={index} className="bg-white rounded-lg p-2 shadow-sm">
                                     <div className="bg-gray-100 rounded-md overflow-hidden flex justify-center items-center">
-                                        <img
+                                        <Image
                                             src={photoUrl}
                                             alt={`Imagen ${index + 1}`}
+                                            width={300}
+                                            height={200}
                                             className="rounded max-w-full h-auto"
                                         />
                                     </div>
