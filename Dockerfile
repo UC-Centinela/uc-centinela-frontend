@@ -9,7 +9,8 @@ RUN apk add --no-cache libc6-compat python3 make g++
 COPY package*.json ./
 
 # Install all dependencies (including devDependencies for build)
-RUN npm ci && npm cache clean --force
+# Using --legacy-peer-deps to resolve conflict between React 19 and flowise-embed-react (requires React 18)
+RUN npm ci --legacy-peer-deps && npm cache clean --force
 
 # Copy source code
 COPY . .
