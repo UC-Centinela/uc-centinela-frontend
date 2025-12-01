@@ -21,8 +21,8 @@ jobs:
 
       - name: Authenticate with IBM Cloud
         run: |
-          ibmcloud login --apikey ${{ secrets.IBM_CLOUD_API_KEY }}
-          ibmcloud target -r us-east -g Mutual_POC
+          ibmcloud login --apikey ${{ secrets.IBM_CLOUD_API_KEY }} --quiet
+          ibmcloud target -r us-east -g Mutual_POC --quiet
           ibmcloud cr login
 
       - name: Update Code Engine Application
